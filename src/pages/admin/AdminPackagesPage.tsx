@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useTastingPackages, useWines, type Winery, type TastingPackage } from "@/hooks/useWinery";
+import type { AdminUser } from "@/hooks/useAdminAuth";
 import { Package, Plus, Pencil, Trash2 } from "lucide-react";
 import PackageFormModal from "@/components/admin/PackageFormModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
@@ -9,7 +10,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function AdminPackagesPage() {
-  const { winery } = useOutletContext<{ winery: Winery }>();
+  const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
   const { data: packages } = useTastingPackages(winery.id);
   const { data: wines } = useWines(winery.id);
   const [formPkg, setFormPkg] = useState<TastingPackage | null | undefined>(undefined);
@@ -21,8 +22,16 @@ export default function AdminPackagesPage() {
     if (!deletePkg) return;
     setDeleting(true);
     try {
-      const { error } = await supabase.from("tasting_packages").delete().eq("id", deletePkg.id);
+      const { data, error } = await supabase.functions.invoke("admin-packages", {
+        body: {
+          action: "delete",
+          admin_id: admin.id,
+          winery_id: winery.id,
+          package_id: deletePkg.id,
+        },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success("Pacote excluído!");
       qc.invalidateQueries({ queryKey: ["tasting_packages"] });
     } catch {
@@ -80,7 +89,7 @@ export default function AdminPackagesPage() {
       </div>
 
       {formPkg !== undefined && (
-        <PackageFormModal wineryId={winery.id} pkg={formPkg} wines={wines ?? []} onClose={() => setFormPkg(undefined)} />
+        <PackageFormModal wineryId={winery.id} adminId={admin.id} pkg={formPkg} wines={wines ?? []} onClose={() => setFormPkg(undefined)} />
       )}
 
       {deletePkg && (

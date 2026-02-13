@@ -23,3 +23,12 @@ verify_jwt = false
 
 [functions.master-dashboard]
 verify_jwt = false
+
+[functions.tourist-actions]
+verify_jwt = false
+
+[functions.admin-packages]
+verify_jwt = false
+
+[functions.admin-vouchers]
+verify_jwt = false

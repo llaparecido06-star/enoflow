@@ -2,12 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Palette, QrCode, CheckCircle, XCircle, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function AdminSettingsPage() {
-  const { winery } = useOutletContext<{ winery: Winery }>();
+  const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
   const [voucherCode, setVoucherCode] = useState("");
   const [validating, setValidating] = useState(false);
   const [scannerActive, setScannerActive] = useState(false);
@@ -18,34 +19,29 @@ export default function AdminSettingsPage() {
     if (!code.trim()) return;
     setValidating(true);
     try {
-      const { data, error } = await supabase
-        .from("vouchers")
-        .select("*")
-        .eq("winery_id", winery.id)
-        .eq("code", code.trim().toUpperCase())
-        .maybeSingle();
+      const { data, error } = await supabase.functions.invoke("admin-vouchers", {
+        body: {
+          action: "validate",
+          admin_id: admin.id,
+          winery_id: winery.id,
+          voucher_code: code,
+        },
+      });
 
       if (error) throw error;
 
-      if (!data) {
-        toast.error("Voucher não encontrado", { icon: <XCircle className="w-4 h-4" /> });
+      if (data?.error) {
+        if (data.error === "Voucher não encontrado") {
+          toast.error("Voucher não encontrado", { icon: <XCircle className="w-4 h-4" /> });
+        } else if (data.error === "Voucher já foi resgatado") {
+          toast.error("Voucher já foi resgatado", { icon: <XCircle className="w-4 h-4" /> });
+        } else {
+          throw new Error(data.error);
+        }
         return;
       }
 
-      if (data.redeemed) {
-        toast.error("Voucher já foi resgatado", { icon: <XCircle className="w-4 h-4" /> });
-        return;
-      }
-
-      // Mark as redeemed
-      const { error: updateErr } = await supabase
-        .from("vouchers")
-        .update({ redeemed: true })
-        .eq("id", data.id);
-
-      if (updateErr) throw updateErr;
-
-      toast.success(`Voucher resgatado! Total: R$ ${Number(data.total).toFixed(2)}`, {
+      toast.success(`Voucher resgatado! Total: R$ ${Number(data.voucher.total).toFixed(2)}`, {
         icon: <CheckCircle className="w-4 h-4" />,
       });
       setVoucherCode("");
