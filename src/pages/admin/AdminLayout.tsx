@@ -5,12 +5,12 @@ import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut, UtensilsCro
 import AdminLoginForm from "@/components/admin/AdminLoginForm";
 
 const navItems = [
-  { id: "wines", label: "Vinhos", icon: Wine, path: "", minRole: "gerente" as AdminRole },
-  { id: "packages", label: "Pacotes", icon: Package, path: "/packages", minRole: "gerente" as AdminRole },
-  { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", minRole: "gerente" as AdminRole },
-  { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "dono" as AdminRole },
-  { id: "reports", label: "Relatórios", icon: BarChart3, path: "/reports", minRole: "dono" as AdminRole },
-  { id: "settings", label: "Config.", icon: Settings, path: "/settings", minRole: "funcionario" as AdminRole },
+  { id: "wines", label: "Vinhos", icon: Wine, path: "", minRole: "manager" as AdminRole },
+  { id: "packages", label: "Pacotes", icon: Package, path: "/packages", minRole: "manager" as AdminRole },
+  { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", minRole: "manager" as AdminRole },
+  { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "owner" as AdminRole },
+  { id: "reports", label: "Relatórios", icon: BarChart3, path: "/reports", minRole: "owner" as AdminRole },
+  { id: "settings", label: "Config.", icon: Settings, path: "/settings", minRole: "staff" as AdminRole },
 ];
 
 export default function AdminLayout() {
@@ -46,9 +46,10 @@ export default function AdminLayout() {
   const activeItem = visibleNav.find((n) => location.pathname === basePath + n.path)?.id ?? visibleNav[0]?.id;
 
   const roleLabel: Record<AdminRole, string> = {
-    funcionario: "Funcionário",
-    gerente: "Gerente",
-    dono: "Dono",
+    staff: "Staff",
+    manager: "Manager",
+    owner: "Owner",
+    master: "Master",
   };
 
   return (

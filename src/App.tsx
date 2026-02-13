@@ -16,6 +16,9 @@ import AdminMenuPage from "./pages/admin/AdminMenuPage";
 import AdminLeadsPage from "./pages/admin/AdminLeadsPage";
 import AdminReportsPage from "./pages/admin/AdminReportsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
+import MasterLayout from "./pages/master/MasterLayout";
+import MasterDashboardPage from "./pages/master/MasterDashboardPage";
+import MasterWineriesPage from "./pages/master/MasterWineriesPage";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +46,12 @@ const App = () => (
             <Route path="leads" element={<AdminLeadsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
+          </Route>
+
+          {/* Master Admin routes */}
+          <Route path="/master" element={<MasterLayout />}>
+            <Route index element={<MasterDashboardPage />} />
+            <Route path="wineries" element={<MasterWineriesPage />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

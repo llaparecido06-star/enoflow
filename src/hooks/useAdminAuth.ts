@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-export type AdminRole = "funcionario" | "gerente" | "dono";
+export type AdminRole = "staff" | "manager" | "owner" | "master";
 
 export interface AdminUser {
   id: string;
@@ -59,7 +59,7 @@ export function useAdminAuth(wineryId: string) {
   const hasPermission = useCallback(
     (minRole: AdminRole): boolean => {
       if (!admin) return false;
-      const hierarchy: AdminRole[] = ["funcionario", "gerente", "dono"];
+      const hierarchy: AdminRole[] = ["staff", "manager", "owner", "master"];
       return hierarchy.indexOf(admin.role) >= hierarchy.indexOf(minRole);
     },
     [admin]
