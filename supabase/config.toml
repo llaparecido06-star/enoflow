@@ -15,5 +15,8 @@ verify_jwt = false
 [functions.sommelier-suggest]
 verify_jwt = false
 
+[functions.admin-menu]
+verify_jwt = false
+
 [functions.admin-leads]
 verify_jwt = false
