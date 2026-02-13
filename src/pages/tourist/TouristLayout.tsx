@@ -21,14 +21,14 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
 
   return (
     <div className="min-h-screen bg-background max-w-lg mx-auto relative pb-20">
-      <header className="sticky top-0 z-40 glass border-b border-border px-4 py-3">
+      <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-xl border-b border-border/30 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {winery.logo_url ? (
-              <img src={winery.logo_url} alt={winery.name} className="w-8 h-8 rounded-full object-cover" />
+              <img src={winery.logo_url} alt={winery.name} className="w-8 h-8 rounded-full object-cover ring-1 ring-gold/20" />
             ) : (
               <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ring-1 ring-gold/20"
                 style={{ backgroundColor: winery.primary_color, color: '#fff' }}
               >
                 {winery.name.charAt(0)}
@@ -39,7 +39,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
               <p className="text-[10px] text-muted-foreground">Olá, {lead?.name}</p>
             </div>
           </div>
-          <button onClick={logout} className="p-2 rounded-lg hover:bg-secondary transition-colors">
+          <button onClick={logout} className="p-2 rounded-lg hover:bg-muted transition-colors">
             <LogOut className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
