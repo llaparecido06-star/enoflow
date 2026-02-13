@@ -104,6 +104,57 @@ export type Database = {
           },
         ]
       }
+      menu_items: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          price: number
+          suggested_wine_id: string | null
+          winery_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          price?: number
+          suggested_wine_id?: string | null
+          winery_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          price?: number
+          suggested_wine_id?: string | null
+          winery_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_suggested_wine_id_fkey"
+            columns: ["suggested_wine_id"]
+            isOneToOne: false
+            referencedRelation: "wines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_items_winery_id_fkey"
+            columns: ["winery_id"]
+            isOneToOne: false
+            referencedRelation: "wineries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ratings: {
         Row: {
           created_at: string
