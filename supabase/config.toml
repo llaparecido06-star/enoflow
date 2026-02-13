@@ -12,5 +12,8 @@ verify_jwt = false
 [functions.generate-wine-image]
 verify_jwt = false
 
+[functions.sommelier-suggest]
+verify_jwt = false
+
 [functions.admin-leads]
 verify_jwt = false
