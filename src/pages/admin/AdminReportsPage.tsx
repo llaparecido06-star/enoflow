@@ -2,25 +2,25 @@ import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Winery } from "@/hooks/useWinery";
+import type { AdminUser } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart3, TrendingUp, Send, Clock, CheckCircle, Timer, Play, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminReportsPage() {
-  const { winery } = useOutletContext<{ winery: Winery }>();
+  const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
   const [processing, setProcessing] = useState(false);
   const qc = useQueryClient();
 
   const { data: automations } = useQuery({
     queryKey: ["automations", winery.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("automations")
-        .select("*, users_leads(name, whatsapp)")
-        .eq("winery_id", winery.id)
-        .order("created_at", { ascending: false });
+      const { data, error } = await supabase.functions.invoke("admin-reports", {
+        body: { admin_id: admin.id, winery_id: winery.id },
+      });
       if (error) throw error;
-      return data ?? [];
+      if (data?.error) throw new Error(data.error);
+      return data.automations ?? [];
     },
   });
 
