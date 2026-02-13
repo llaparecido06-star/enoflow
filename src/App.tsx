@@ -17,6 +17,7 @@ import AdminMenuPage from "./pages/admin/AdminMenuPage";
 import AdminLeadsPage from "./pages/admin/AdminLeadsPage";
 import AdminReportsPage from "./pages/admin/AdminReportsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
+import AdminStaffPage from "./pages/admin/AdminStaffPage";
 import MasterLayout from "./pages/master/MasterLayout";
 import MasterDashboardPage from "./pages/master/MasterDashboardPage";
 import MasterWineriesPage from "./pages/master/MasterWineriesPage";
@@ -60,6 +61,7 @@ const App = () => {
             <Route path="menu" element={<AdminMenuPage />} />
             <Route path="leads" element={<AdminLeadsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="staff" element={<AdminStaffPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
           </Route>
 
