@@ -363,10 +363,53 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_users_public: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string | null
+          name: string | null
+          role: Database["public"]["Enums"]["admin_role"] | null
+          winery_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          name?: string | null
+          role?: Database["public"]["Enums"]["admin_role"] | null
+          winery_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          name?: string | null
+          role?: Database["public"]["Enums"]["admin_role"] | null
+          winery_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_winery_id_fkey"
+            columns: ["winery_id"]
+            isOneToOne: false
+            referencedRelation: "wineries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      admin_login: {
+        Args: { p_email: string; p_password: string; p_winery_id: string }
+        Returns: {
+          email: string
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["admin_role"]
+          winery_id: string
+        }[]
+      }
     }
     Enums: {
       admin_role: "funcionario" | "gerente" | "dono"

@@ -33,16 +33,17 @@ export function useAdminAuth(wineryId: string) {
     async (email: string, password: string) => {
       const { supabase } = await import("@/integrations/supabase/client");
       const { data, error } = await supabase
-        .from("admin_users")
-        .select("id, winery_id, email, name, role")
-        .eq("winery_id", wineryId)
-        .eq("email", email)
-        .eq("password_hash", password)
-        .maybeSingle();
+        .rpc("admin_login", {
+          p_email: email,
+          p_password: password,
+          p_winery_id: wineryId,
+        });
 
-      if (error || !data) throw new Error("Credenciais inválidas");
+      const result = Array.isArray(data) ? data[0] : data;
 
-      const user = data as AdminUser;
+      if (error || !result) throw new Error("Credenciais inválidas");
+
+      const user = result as unknown as AdminUser;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
       setAdmin(user);
       return user;
