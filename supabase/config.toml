@@ -2,3 +2,6 @@ project_id = "eprfurwvmzkbezaupimy"
 
 [functions.process-automations]
 verify_jwt = false
+
+[functions.admin-wines]
+verify_jwt = false
