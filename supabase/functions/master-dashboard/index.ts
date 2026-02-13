@@ -5,6 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -16,14 +22,10 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { admin_id, action, winery_id, plan_level } = await req.json();
+    const body = await req.json();
+    const { admin_id, action } = body;
 
-    if (!admin_id) {
-      return new Response(JSON.stringify({ error: "admin_id required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!admin_id) return json({ error: "admin_id required" }, 400);
 
     // Verify master role
     const { data: admin, error: adminErr } = await supabase
@@ -33,38 +35,102 @@ Deno.serve(async (req) => {
       .single();
 
     if (adminErr || !admin || admin.role !== "master") {
-      return new Response(JSON.stringify({ error: "Acesso restrito a Master Admin" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Acesso restrito a Master Admin" }, 403);
     }
 
+    // ─── ACTION: update_plan ─────────────────────────────
     if (action === "update_plan") {
-      if (!winery_id || !plan_level) {
-        return new Response(JSON.stringify({ error: "winery_id and plan_level required" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const { error } = await supabase
-        .from("wineries")
-        .update({ plan_level })
-        .eq("id", winery_id);
+      const { winery_id, plan_level } = body;
+      if (!winery_id || !plan_level) return json({ error: "winery_id and plan_level required" }, 400);
+      const { error } = await supabase.from("wineries").update({ plan_level }).eq("id", winery_id);
       if (error) throw error;
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ success: true });
     }
 
-    // Default: fetch dashboard metrics
-    const [
-      wineriesRes,
-      leadsRes,
-      winesRes,
-      vouchersRes,
-      automationsRes,
-      adminsRes,
-    ] = await Promise.all([
+    // ─── ACTION: create_winery ───────────────────────────
+    if (action === "create_winery") {
+      const { name, slug, primary_color, plan_level, logo_url } = body;
+      if (!name || !slug) return json({ error: "name and slug required" }, 400);
+      const slugClean = slug.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 50);
+      const { data: winery, error } = await supabase.from("wineries").insert({
+        name: String(name).slice(0, 100),
+        slug: slugClean,
+        primary_color: primary_color || "#630D16",
+        plan_level: plan_level || "bronze",
+        logo_url: logo_url || null,
+      }).select().single();
+      if (error) throw error;
+      return json({ success: true, winery });
+    }
+
+    // ─── ACTION: list_admins ─────────────────────────────
+    if (action === "list_admins") {
+      const { data, error } = await supabase
+        .from("admin_users")
+        .select("id, name, email, role, winery_id, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const { data: wineries } = await supabase.from("wineries").select("id, name, slug");
+      return json({ success: true, admins: data ?? [], wineries: wineries ?? [] });
+    }
+
+    // ─── ACTION: create_admin ────────────────────────────
+    if (action === "create_admin") {
+      const { name, email, password, role, winery_id } = body;
+      if (!name || !email || !password || !role || !winery_id) {
+        return json({ error: "name, email, password, role, winery_id required" }, 400);
+      }
+      const validRoles = ["staff", "manager", "owner"];
+      if (!validRoles.includes(role)) return json({ error: "Invalid role" }, 400);
+      // Check duplicate email in same winery
+      const { data: existing } = await supabase
+        .from("admin_users")
+        .select("id")
+        .eq("email", email)
+        .eq("winery_id", winery_id);
+      if (existing && existing.length > 0) return json({ error: "Email já cadastrado nesta vinícola" }, 400);
+      const { data: newAdmin, error } = await supabase.from("admin_users").insert({
+        name: String(name).slice(0, 100),
+        email: String(email).slice(0, 255),
+        password_hash: String(password).slice(0, 100),
+        role,
+        winery_id,
+      }).select("id, name, email, role, winery_id, created_at").single();
+      if (error) throw error;
+      return json({ success: true, admin: newAdmin });
+    }
+
+    // ─── ACTION: update_admin ────────────────────────────
+    if (action === "update_admin") {
+      const { target_id, name, email, password, role } = body;
+      if (!target_id) return json({ error: "target_id required" }, 400);
+      // Prevent editing master
+      const { data: target } = await supabase.from("admin_users").select("role").eq("id", target_id).single();
+      if (target?.role === "master") return json({ error: "Não é possível editar master" }, 403);
+      const updates: Record<string, string> = {};
+      if (name) updates.name = String(name).slice(0, 100);
+      if (email) updates.email = String(email).slice(0, 255);
+      if (password) updates.password_hash = String(password).slice(0, 100);
+      if (role && ["staff", "manager", "owner"].includes(role)) updates.role = role;
+      if (Object.keys(updates).length === 0) return json({ error: "Nothing to update" }, 400);
+      const { error } = await supabase.from("admin_users").update(updates).eq("id", target_id);
+      if (error) throw error;
+      return json({ success: true });
+    }
+
+    // ─── ACTION: delete_admin ────────────────────────────
+    if (action === "delete_admin") {
+      const { target_id } = body;
+      if (!target_id) return json({ error: "target_id required" }, 400);
+      const { data: target } = await supabase.from("admin_users").select("role").eq("id", target_id).single();
+      if (target?.role === "master") return json({ error: "Não é possível remover master" }, 403);
+      const { error } = await supabase.from("admin_users").delete().eq("id", target_id);
+      if (error) throw error;
+      return json({ success: true });
+    }
+
+    // ─── DEFAULT: dashboard metrics ──────────────────────
+    const [wineriesRes, leadsRes, winesRes, vouchersRes, automationsRes, adminsRes] = await Promise.all([
       supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at"),
       supabase.from("users_leads").select("id, winery_id, created_at"),
       supabase.from("wines").select("id, winery_id"),
@@ -84,7 +150,6 @@ Deno.serve(async (req) => {
     const redeemedVoucherValue = vouchers.filter(v => v.redeemed).reduce((s, v) => s + Number(v.total || 0), 0);
     const totalCommissions = automations.reduce((s, a) => s + Number(a.commission_value || 0), 0);
 
-    // Per-winery breakdown
     const wineryMetrics = wineries.map(w => ({
       ...w,
       leads_count: leads.filter(l => l.winery_id === w.id).length,
@@ -94,7 +159,6 @@ Deno.serve(async (req) => {
       admins_count: admins.filter(a => a.winery_id === w.id).length,
     }));
 
-    // Leads per day (last 30 days)
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const leadsPerDay: Record<string, number> = {};
@@ -110,7 +174,7 @@ Deno.serve(async (req) => {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, count]) => ({ date, count }));
 
-    return new Response(JSON.stringify({
+    return json({
       success: true,
       metrics: {
         total_wineries: wineries.length,
@@ -124,13 +188,8 @@ Deno.serve(async (req) => {
       },
       wineries: wineryMetrics,
       leads_chart: leadsChart,
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: error.message }, 500);
   }
 });
