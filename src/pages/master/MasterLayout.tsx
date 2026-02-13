@@ -1,12 +1,15 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useMasterAuth } from "@/hooks/useMasterAuth";
-import { BarChart3, Building2, Users, Loader2, LogOut, Lock, Mail, Shield } from "lucide-react";
+import { BarChart3, Building2, Users, Loader2, LogOut, Lock, Mail, Shield, Upload, FileBarChart } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useState } from "react";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3, path: "" },
   { id: "wineries", label: "Vinícolas", icon: Building2, path: "/wineries" },
   { id: "admins", label: "Admins", icon: Users, path: "/admins" },
+  { id: "reports", label: "Relatórios", icon: FileBarChart, path: "/reports" },
+  { id: "import", label: "Importar", icon: Upload, path: "/import" },
 ];
 
 export default function MasterLayout() {
@@ -62,11 +65,12 @@ export default function MasterLayout() {
             );
           })}
         </nav>
-        <div className="p-3 border-t border-sidebar-border">
-          <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 transition-colors">
+        <div className="p-3 border-t border-sidebar-border flex items-center justify-between">
+          <button onClick={logout} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 transition-colors">
             <LogOut className="w-4 h-4" />
             Sair
           </button>
+          <ThemeToggle />
         </div>
       </aside>
 

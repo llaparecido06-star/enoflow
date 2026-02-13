@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Users, Wine, Receipt, Loader2, ExternalLink, Plus } from "lucide-react";
+import { Building2, Users, Wine, Receipt, Loader2, ExternalLink, Plus, Pencil, Trash2, Image } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ interface WineryMetric {
   slug: string;
   plan_level: string;
   primary_color: string;
+  logo_url: string | null;
   created_at: string;
   leads_count: number;
   wines_count: number;
@@ -26,8 +27,8 @@ interface WineryMetric {
 
 const planOptions = ["bronze", "silver", "gold"] as const;
 const planColors: Record<string, string> = {
-  bronze: "bg-orange-500/10 text-orange-400",
-  silver: "bg-gray-400/10 text-gray-300",
+  bronze: "bg-orange-500/10 text-orange-500",
+  silver: "bg-muted text-muted-foreground",
   gold: "bg-accent/10 text-accent",
 };
 
@@ -36,9 +37,11 @@ export default function MasterWineriesPage() {
   const [wineries, setWineries] = useState<WineryMetric[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<WineryMetric | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<WineryMetric | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze" });
+  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "" });
 
   const fetchData = async () => {
     try {
@@ -57,6 +60,83 @@ export default function MasterWineriesPage() {
 
   useEffect(() => { fetchData(); }, [admin.id]);
 
+  const openCreate = () => {
+    setEditTarget(null);
+    setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "" });
+    setModalOpen(true);
+  };
+
+  const openEdit = (w: WineryMetric) => {
+    setEditTarget(w);
+    setForm({ name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "" });
+    setModalOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.name || !form.slug) { toast.error("Nome e slug obrigatórios"); return; }
+    setSaving(true);
+    try {
+      if (editTarget) {
+        const res = await supabase.functions.invoke("master-dashboard", {
+          body: {
+            admin_id: admin.id,
+            action: "update_winery",
+            winery_id: editTarget.id,
+            name: form.name,
+            slug: form.slug,
+            primary_color: form.primary_color,
+            plan_level: form.plan_level,
+            logo_url: form.logo_url || null,
+          },
+        });
+        if (res.data?.error) throw new Error(res.data.error);
+        toast.success("Vinícola atualizada!");
+      } else {
+        const res = await supabase.functions.invoke("master-dashboard", {
+          body: { admin_id: admin.id, action: "create_winery", ...form, logo_url: form.logo_url || null },
+        });
+        if (res.data?.error) throw new Error(res.data.error);
+        toast.success("Vinícola criada!");
+      }
+      setModalOpen(false);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setSaving(true);
+    try {
+      const res = await supabase.functions.invoke("master-dashboard", {
+        body: { admin_id: admin.id, action: "delete_winery", winery_id: deleteTarget.id },
+      });
+      if (res.data?.error) throw new Error(res.data.error);
+      toast.success("Vinícola removida!");
+      setDeleteTarget(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao remover");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop();
+    const path = `logos/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("wine-images").upload(path, file, { upsert: true });
+    if (error) { toast.error("Erro ao enviar logo"); return; }
+    const { data: urlData } = supabase.storage.from("wine-images").getPublicUrl(path);
+    setForm(f => ({ ...f, logo_url: urlData.publicUrl }));
+    toast.success("Logo enviado!");
+  };
+
   const updatePlan = async (wineryId: string, plan: string) => {
     setUpdatingId(wineryId);
     try {
@@ -64,32 +144,12 @@ export default function MasterWineriesPage() {
         body: { admin_id: admin.id, action: "update_plan", winery_id: wineryId, plan_level: plan },
       });
       if (res.error) throw res.error;
-      if (res.data?.error) throw new Error(res.data.error);
       toast.success("Plano atualizado!");
       setWineries(prev => prev.map(w => w.id === wineryId ? { ...w, plan_level: plan } : w));
     } catch {
       toast.error("Erro ao atualizar plano");
     } finally {
       setUpdatingId(null);
-    }
-  };
-
-  const handleCreateWinery = async () => {
-    if (!form.name || !form.slug) { toast.error("Nome e slug obrigatórios"); return; }
-    setSaving(true);
-    try {
-      const res = await supabase.functions.invoke("master-dashboard", {
-        body: { admin_id: admin.id, action: "create_winery", ...form },
-      });
-      if (res.data?.error) throw new Error(res.data.error);
-      toast.success("Vinícola criada!");
-      setCreateOpen(false);
-      setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze" });
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao criar vinícola");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -108,7 +168,7 @@ export default function MasterWineriesPage() {
           <h1 className="font-display text-2xl font-bold text-foreground">Vinícolas</h1>
           <p className="text-sm text-muted-foreground">{wineries.length} vinícolas na plataforma</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-2">
+        <Button onClick={openCreate} size="sm" className="gap-2">
           <Plus className="w-4 h-4" /> Nova Vinícola
         </Button>
       </div>
@@ -118,15 +178,21 @@ export default function MasterWineriesPage() {
           <div key={w.id} className="bg-card rounded-xl border border-border p-5">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold text-white"
-                  style={{ backgroundColor: w.primary_color }}
-                >
-                  {w.name.charAt(0)}
-                </div>
+                {w.logo_url ? (
+                  <img src={w.logo_url} alt={w.name} className="w-10 h-10 rounded-lg object-cover" />
+                ) : (
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold text-white"
+                    style={{ backgroundColor: w.primary_color }}
+                  >
+                    {w.name.charAt(0)}
+                  </div>
+                )}
                 <div>
                   <h3 className="font-display text-base font-semibold text-foreground">{w.name}</h3>
-                  <p className="text-[11px] text-muted-foreground">/{w.slug} · desde {new Date(w.created_at).toLocaleDateString("pt-BR")}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    /{w.slug} · desde {new Date(w.created_at).toLocaleDateString("pt-BR")}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -140,12 +206,13 @@ export default function MasterWineriesPage() {
                     <option key={p} value={p} className="bg-card text-foreground">{p.charAt(0).toUpperCase() + p.slice(1)}</option>
                   ))}
                 </select>
-                <a
-                  href={`/admin/${w.slug}`}
-                  target="_blank"
-                  rel="noopener"
-                  className="p-1.5 rounded-lg hover:bg-secondary transition-colors"
-                >
+                <button onClick={() => openEdit(w)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+                <button onClick={() => setDeleteTarget(w)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                </button>
+                <a href={`/admin/${w.slug}`} target="_blank" rel="noopener" className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
                   <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
                 </a>
               </div>
@@ -185,16 +252,24 @@ export default function MasterWineriesPage() {
         ))}
       </div>
 
-      {/* Create Winery Modal */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      {/* Create/Edit Modal */}
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Nova Vinícola</DialogTitle>
+            <DialogTitle>{editTarget ? "Editar Vinícola" : "Nova Vinícola"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
               <Label>Nome</Label>
-              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") }))} placeholder="Vinícola Example" />
+              <Input
+                value={form.name}
+                onChange={e => setForm(f => ({
+                  ...f,
+                  name: e.target.value,
+                  ...(editTarget ? {} : { slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") }),
+                }))}
+                placeholder="Vinícola Example"
+              />
             </div>
             <div>
               <Label>Slug (URL)</Label>
@@ -209,6 +284,23 @@ export default function MasterWineriesPage() {
               </div>
             </div>
             <div>
+              <Label>Logo</Label>
+              <div className="flex items-center gap-3">
+                {form.logo_url ? (
+                  <img src={form.logo_url} alt="Logo" className="w-12 h-12 rounded-lg object-cover border border-border" />
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center">
+                    <Image className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Input type="file" accept="image/*" onChange={handleLogoUpload} className="text-xs" />
+                  <p className="text-[10px] text-muted-foreground mt-1">Ou cole a URL abaixo</p>
+                  <Input value={form.logo_url} onChange={e => setForm(f => ({ ...f, logo_url: e.target.value }))} placeholder="https://..." className="mt-1" />
+                </div>
+              </div>
+            </div>
+            <div>
               <Label>Plano</Label>
               <Select value={form.plan_level} onValueChange={v => setForm(f => ({ ...f, plan_level: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -220,11 +312,29 @@ export default function MasterWineriesPage() {
               </Select>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancelar</Button>
-              <Button onClick={handleCreateWinery} disabled={saving || !form.name || !form.slug}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Criar Vinícola"}
+              <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
+              <Button onClick={handleSave} disabled={saving || !form.name || !form.slug}>
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : editTarget ? "Salvar" : "Criar Vinícola"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirm */}
+      <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Remover Vinícola</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Tem certeza que deseja remover <strong>{deleteTarget?.name}</strong>? Todos os dados (vinhos, leads, vouchers, admins) serão permanentemente excluídos.
+          </p>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Remover Tudo"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
