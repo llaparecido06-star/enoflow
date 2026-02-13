@@ -33,5 +33,8 @@ verify_jwt = false
 [functions.admin-vouchers]
 verify_jwt = false
 
+[functions.admin-staff]
+verify_jwt = false
+
 [functions.admin-reports]
 verify_jwt = false

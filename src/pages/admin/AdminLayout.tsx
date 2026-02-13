@@ -1,7 +1,7 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
-import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut, UtensilsCrossed } from "lucide-react";
+import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut, UtensilsCrossed, UserCog } from "lucide-react";
 import AdminLoginForm from "@/components/admin/AdminLoginForm";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -11,6 +11,7 @@ const navItems = [
   { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", minRole: "manager" as AdminRole },
   { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "owner" as AdminRole },
   { id: "reports", label: "Relatórios", icon: BarChart3, path: "/reports", minRole: "owner" as AdminRole },
+  { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", minRole: "owner" as AdminRole },
   { id: "settings", label: "Config.", icon: Settings, path: "/settings", minRole: "staff" as AdminRole },
 ];
 
@@ -102,7 +103,7 @@ export default function AdminLayout() {
       {/* Mobile nav */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border">
         <div className="flex justify-around py-2">
-          {visibleNav.slice(0, 5).map((item) => {
+          {visibleNav.slice(0, 6).map((item) => {
             const isActive = activeItem === item.id;
             return (
               <button
