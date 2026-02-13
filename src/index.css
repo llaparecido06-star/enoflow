@@ -6,6 +6,60 @@
 
 @layer base {
   :root {
+    /* Light Luxury Theme */
+    --background: 30 20% 97%;
+    --foreground: 0 0% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12%;
+
+    --primary: 350 82% 22%;
+    --primary-foreground: 30 25% 97%;
+
+    --secondary: 30 15% 93%;
+    --secondary-foreground: 0 0% 20%;
+
+    --muted: 30 10% 90%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 38 70% 50%;
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 30 15% 88%;
+    --input: 30 15% 88%;
+    --ring: 38 70% 50%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 30 15% 95%;
+    --sidebar-foreground: 0 0% 15%;
+    --sidebar-primary: 350 82% 22%;
+    --sidebar-primary-foreground: 30 25% 97%;
+    --sidebar-accent: 30 15% 90%;
+    --sidebar-accent-foreground: 0 0% 15%;
+    --sidebar-border: 30 15% 88%;
+    --sidebar-ring: 350 82% 22%;
+
+    /* Custom tokens */
+    --wine: 350 82% 22%;
+    --wine-foreground: 30 25% 97%;
+    --wine-light: 350 60% 35%;
+    --gold: 38 70% 50%;
+    --gold-foreground: 0 0% 100%;
+    --cream: 30 25% 97%;
+    --cream-dark: 30 15% 92%;
+
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  .dark {
     /* Dark Luxury Theme */
     --background: 0 0% 10%;
     --foreground: 30 20% 92%;
@@ -35,8 +89,6 @@
     --input: 0 0% 18%;
     --ring: 38 70% 50%;
 
-    --radius: 0.75rem;
-
     --sidebar-background: 0 0% 8%;
     --sidebar-foreground: 30 25% 92%;
     --sidebar-primary: 38 70% 50%;
@@ -54,9 +106,6 @@
     --gold-foreground: 0 0% 10%;
     --cream: 30 25% 97%;
     --cream-dark: 30 15% 92%;
-
-    --font-display: 'Playfair Display', serif;
-    --font-body: 'Inter', sans-serif;
   }
 }
 

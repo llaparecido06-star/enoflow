@@ -24,7 +24,19 @@ import MasterAdminsPage from "./pages/master/MasterAdminsPage";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  // Initialize theme from localStorage on mount
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("smartsommelier_theme");
+    const prefersDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (prefersDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -63,6 +75,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

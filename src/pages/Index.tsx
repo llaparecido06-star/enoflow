@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Wine, ArrowRight, Grape } from "lucide-react";
 import heroImage from "@/assets/hero-winery.jpg";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -15,15 +16,18 @@ const Index = () => {
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        <div className="absolute top-4 right-4 z-10">
+          <ThemeToggle className="bg-background/60 backdrop-blur-sm" />
+        </div>
         <div className="absolute bottom-0 left-0 right-0 p-6 max-w-lg mx-auto">
           <div className="flex items-center gap-2 mb-3">
             <Grape className="w-5 h-5 text-gold" />
             <span className="text-xs font-medium text-gold tracking-wider uppercase">SmartSommelier</span>
           </div>
-          <h1 className="font-display text-3xl font-bold text-foreground leading-tight mb-2">
+          <h1 className="font-display text-3xl font-bold text-white leading-tight mb-2 drop-shadow-lg">
             Inteligência em<br />Enoturismo
           </h1>
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <p className="text-sm text-white/80 leading-relaxed drop-shadow-md">
             A plataforma que conecta vinícolas aos seus visitantes com experiências digitais memoráveis.
           </p>
         </div>

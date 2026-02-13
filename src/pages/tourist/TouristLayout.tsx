@@ -5,6 +5,7 @@ import { TouristAuthProvider, useTouristAuth } from "@/hooks/useTouristAuth";
 import BottomNav from "@/components/tourist/BottomNav";
 import WhatsAppLogin from "@/components/tourist/WhatsAppLogin";
 import { Loader2, LogOut } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const { isAuthenticated, lead, login, logout } = useTouristAuth();
@@ -39,9 +40,12 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
               <p className="text-[10px] text-muted-foreground">Olá, {lead?.name}</p>
             </div>
           </div>
-          <button onClick={logout} className="p-2 rounded-lg hover:bg-muted transition-colors">
-            <LogOut className="w-4 h-4 text-muted-foreground" />
-          </button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <button onClick={logout} className="p-2 rounded-lg hover:bg-muted transition-colors">
+              <LogOut className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
         </div>
       </header>
 

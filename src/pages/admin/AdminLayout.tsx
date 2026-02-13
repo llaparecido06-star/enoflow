@@ -3,6 +3,7 @@ import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
 import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut, UtensilsCrossed } from "lucide-react";
 import AdminLoginForm from "@/components/admin/AdminLoginForm";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navItems = [
   { id: "wines", label: "Vinhos", icon: Wine, path: "", minRole: "manager" as AdminRole },
@@ -89,11 +90,12 @@ export default function AdminLayout() {
             );
           })}
         </nav>
-        <div className="p-3 border-t border-sidebar-border">
-          <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 transition-colors">
+        <div className="p-3 border-t border-sidebar-border flex items-center justify-between">
+          <button onClick={logout} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 transition-colors">
             <LogOut className="w-4 h-4" />
             Sair
           </button>
+          <ThemeToggle />
         </div>
       </aside>
 
