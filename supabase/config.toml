@@ -1,1 +1,4 @@
 project_id = "eprfurwvmzkbezaupimy"
+
+[functions.process-automations]
+verify_jwt = false

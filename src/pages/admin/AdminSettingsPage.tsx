@@ -1,9 +1,95 @@
+import { useState, useRef, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { Winery } from "@/hooks/useWinery";
-import { Palette, QrCode } from "lucide-react";
+import type { AdminUser } from "@/hooks/useAdminAuth";
+import { Palette, QrCode, CheckCircle, XCircle, Camera } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function AdminSettingsPage() {
   const { winery } = useOutletContext<{ winery: Winery }>();
+  const [voucherCode, setVoucherCode] = useState("");
+  const [validating, setValidating] = useState(false);
+  const [scannerActive, setScannerActive] = useState(false);
+  const scannerRef = useRef<HTMLDivElement>(null);
+  const html5QrcodeRef = useRef<any>(null);
+
+  const validateVoucher = async (code: string) => {
+    if (!code.trim()) return;
+    setValidating(true);
+    try {
+      const { data, error } = await supabase
+        .from("vouchers")
+        .select("*")
+        .eq("winery_id", winery.id)
+        .eq("code", code.trim().toUpperCase())
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        toast.error("Voucher não encontrado", { icon: <XCircle className="w-4 h-4" /> });
+        return;
+      }
+
+      if (data.redeemed) {
+        toast.error("Voucher já foi resgatado", { icon: <XCircle className="w-4 h-4" /> });
+        return;
+      }
+
+      // Mark as redeemed
+      const { error: updateErr } = await supabase
+        .from("vouchers")
+        .update({ redeemed: true })
+        .eq("id", data.id);
+
+      if (updateErr) throw updateErr;
+
+      toast.success(`Voucher resgatado! Total: R$ ${Number(data.total).toFixed(2)}`, {
+        icon: <CheckCircle className="w-4 h-4" />,
+      });
+      setVoucherCode("");
+    } catch {
+      toast.error("Erro ao validar voucher");
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const startScanner = async () => {
+    setScannerActive(true);
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      const scanner = new Html5Qrcode("qr-reader");
+      html5QrcodeRef.current = scanner;
+
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decoded: string) => {
+          scanner.stop().catch(() => {});
+          setScannerActive(false);
+          setVoucherCode(decoded);
+          validateVoucher(decoded);
+        },
+        () => {}
+      );
+    } catch (err) {
+      toast.error("Não foi possível acessar a câmera");
+      setScannerActive(false);
+    }
+  };
+
+  const stopScanner = () => {
+    html5QrcodeRef.current?.stop().catch(() => {});
+    setScannerActive(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      html5QrcodeRef.current?.stop().catch(() => {});
+    };
+  }, []);
 
   return (
     <div>
@@ -40,13 +126,49 @@ export default function AdminSettingsPage() {
             <QrCode className="w-4 h-4 text-gold" />
             <span className="text-sm font-semibold text-foreground">Validação de Voucher</span>
           </div>
+
+          {/* QR Scanner */}
+          <div className="mb-3">
+            {scannerActive ? (
+              <div>
+                <div id="qr-reader" ref={scannerRef} className="rounded-lg overflow-hidden mb-2" />
+                <button
+                  onClick={stopScanner}
+                  className="w-full border border-border py-2 rounded-lg text-sm text-muted-foreground hover:bg-secondary transition-colors"
+                >
+                  Cancelar scan
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={startScanner}
+                className="w-full flex items-center justify-center gap-2 border border-border py-2.5 rounded-lg text-sm text-foreground hover:bg-secondary transition-colors"
+              >
+                <Camera className="w-4 h-4" />
+                Escanear QR Code
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 mb-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-[10px] text-muted-foreground">ou digite o código</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
           <input
             type="text"
-            placeholder="Digite o código do voucher..."
-            className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+            value={voucherCode}
+            onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
+            placeholder="Ex: #GOIS-12"
+            className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono"
           />
-          <button className="mt-2 w-full bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-            Validar
+          <button
+            onClick={() => validateVoucher(voucherCode)}
+            disabled={validating || !voucherCode.trim()}
+            className="mt-2 w-full bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {validating ? "Validando..." : "Validar Voucher"}
           </button>
         </div>
       </div>

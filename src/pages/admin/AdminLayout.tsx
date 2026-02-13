@@ -1,13 +1,15 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
-import { Wine, Package, BarChart3, Users, Settings, Loader2 } from "lucide-react";
+import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
+import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut } from "lucide-react";
+import AdminLoginForm from "@/components/admin/AdminLoginForm";
 
 const navItems = [
-  { id: "wines", label: "Vinhos", icon: Wine, path: "" },
-  { id: "packages", label: "Pacotes", icon: Package, path: "/packages" },
-  { id: "leads", label: "Leads", icon: Users, path: "/leads" },
-  { id: "reports", label: "Relatórios", icon: BarChart3, path: "/reports" },
-  { id: "settings", label: "Configurações", icon: Settings, path: "/settings" },
+  { id: "wines", label: "Vinhos", icon: Wine, path: "", minRole: "gerente" as AdminRole },
+  { id: "packages", label: "Pacotes", icon: Package, path: "/packages", minRole: "gerente" as AdminRole },
+  { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "dono" as AdminRole },
+  { id: "reports", label: "Relatórios", icon: BarChart3, path: "/reports", minRole: "dono" as AdminRole },
+  { id: "settings", label: "Configurações", icon: Settings, path: "/settings", minRole: "funcionario" as AdminRole },
 ];
 
 export default function AdminLayout() {
@@ -17,7 +19,9 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const basePath = `/admin/${slug}`;
 
-  if (isLoading) {
+  const { admin, loading: authLoading, login, logout, hasPermission } = useAdminAuth(winery?.id ?? "");
+
+  if (isLoading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -33,7 +37,18 @@ export default function AdminLayout() {
     );
   }
 
-  const activeItem = navItems.find((n) => location.pathname === basePath + n.path)?.id ?? "wines";
+  if (!admin) {
+    return <AdminLoginForm onLogin={login} wineryName={winery.name} />;
+  }
+
+  const visibleNav = navItems.filter((n) => hasPermission(n.minRole));
+  const activeItem = visibleNav.find((n) => location.pathname === basePath + n.path)?.id ?? visibleNav[0]?.id;
+
+  const roleLabel: Record<AdminRole, string> = {
+    funcionario: "Funcionário",
+    gerente: "Gerente",
+    dono: "Dono",
+  };
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -47,14 +62,14 @@ export default function AdminLayout() {
             >
               {winery.name.charAt(0)}
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="font-display text-sm font-semibold text-sidebar-foreground truncate">{winery.name}</p>
-              <p className="text-[10px] text-sidebar-foreground/60">Painel Administrativo</p>
+              <p className="text-[10px] text-sidebar-foreground/60">{admin.name} · {roleLabel[admin.role]}</p>
             </div>
           </div>
         </div>
         <nav className="flex-1 p-3 space-y-1">
-          {navItems.map((item) => {
+          {visibleNav.map((item) => {
             const isActive = activeItem === item.id;
             return (
               <button
@@ -72,12 +87,18 @@ export default function AdminLayout() {
             );
           })}
         </nav>
+        <div className="p-3 border-t border-sidebar-border">
+          <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 transition-colors">
+            <LogOut className="w-4 h-4" />
+            Sair
+          </button>
+        </div>
       </aside>
 
       {/* Mobile nav */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border">
         <div className="flex justify-around py-2">
-          {navItems.slice(0, 4).map((item) => {
+          {visibleNav.slice(0, 5).map((item) => {
             const isActive = activeItem === item.id;
             return (
               <button
@@ -97,7 +118,7 @@ export default function AdminLayout() {
 
       {/* Content */}
       <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
-        <Outlet context={{ winery }} />
+        <Outlet context={{ winery, admin, hasPermission }} />
       </main>
     </div>
   );
