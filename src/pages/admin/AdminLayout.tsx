@@ -1,15 +1,16 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
-import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut } from "lucide-react";
+import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut, UtensilsCrossed } from "lucide-react";
 import AdminLoginForm from "@/components/admin/AdminLoginForm";
 
 const navItems = [
   { id: "wines", label: "Vinhos", icon: Wine, path: "", minRole: "gerente" as AdminRole },
   { id: "packages", label: "Pacotes", icon: Package, path: "/packages", minRole: "gerente" as AdminRole },
+  { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", minRole: "gerente" as AdminRole },
   { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "dono" as AdminRole },
   { id: "reports", label: "Relatórios", icon: BarChart3, path: "/reports", minRole: "dono" as AdminRole },
-  { id: "settings", label: "Configurações", icon: Settings, path: "/settings", minRole: "funcionario" as AdminRole },
+  { id: "settings", label: "Config.", icon: Settings, path: "/settings", minRole: "funcionario" as AdminRole },
 ];
 
 export default function AdminLayout() {
