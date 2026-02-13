@@ -465,7 +465,6 @@ export type Database = {
       admin_users_public: {
         Row: {
           created_at: string | null
-          email: string | null
           id: string | null
           name: string | null
           role: Database["public"]["Enums"]["admin_role"] | null
@@ -473,7 +472,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          email?: string | null
           id?: string | null
           name?: string | null
           role?: Database["public"]["Enums"]["admin_role"] | null
@@ -481,7 +479,6 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          email?: string | null
           id?: string | null
           name?: string | null
           role?: Database["public"]["Enums"]["admin_role"] | null
