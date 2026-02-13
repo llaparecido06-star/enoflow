@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useWines, useTastingPackages, type Winery, type Wine } from "@/hooks/useWinery";
 import { useTouristAuth } from "@/hooks/useTouristAuth";
+import { useFavorites } from "@/hooks/useFavorites";
 import TastingCard from "@/components/tourist/TastingCard";
 import { motion } from "framer-motion";
 import { Sparkles, Package, ChevronLeft, ChevronRight } from "lucide-react";
@@ -14,6 +15,7 @@ export default function TastingPage() {
   const { lead } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { data: packages } = useTastingPackages(winery.id);
+  const { isFavorite, toggleFavorite } = useFavorites(lead?.id);
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -33,6 +35,13 @@ export default function TastingPage() {
       toast.success("Avaliação enviada com sucesso!");
     } catch {
       toast.error("Erro ao enviar avaliação");
+    }
+  };
+
+  const handleToggleFavorite = (wineId: string) => {
+    toggleFavorite(wineId);
+    if (!isFavorite(wineId)) {
+      toast.success("Adicionado aos favoritos! ❤️");
     }
   };
 
@@ -93,7 +102,6 @@ export default function TastingPage() {
           )}
         </div>
 
-        {/* Cards carousel */}
         <div
           ref={scrollRef}
           className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2 -mx-4 px-4"
@@ -107,14 +115,15 @@ export default function TastingPage() {
           {tastingWines.map((wine, i) => (
             <TastingCard
               key={wine.id}
-              wine={wine}
+              wine={wine as any}
               isActive={i === currentIndex}
               onRate={(ratings) => handleRatingSubmit(wine, ratings)}
+              isFavorite={isFavorite(wine.id)}
+              onToggleFavorite={() => handleToggleFavorite(wine.id)}
             />
           ))}
         </div>
 
-        {/* Dot indicators */}
         {tastingWines.length > 1 && (
           <div className="flex justify-center gap-1.5 mt-4">
             {tastingWines.map((_, i) => (

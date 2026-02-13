@@ -373,8 +373,14 @@ export type Database = {
       }
       wines: {
         Row: {
+          aging: string | null
+          alcohol_content: string | null
+          aromatic_notes: string[] | null
           created_at: string
           description: string | null
+          enologist: string | null
+          grape: string | null
+          harmonization: string[] | null
           id: string
           image_url: string | null
           name: string
@@ -383,15 +389,24 @@ export type Database = {
           on_tasting: boolean
           price_bottle: number
           price_glass: number | null
+          region: string | null
           sensory_acidity: number
           sensory_body: number
           sensory_sweetness: number
+          serving_temp: string | null
           type: string
           winery_id: string
+          year: number | null
         }
         Insert: {
+          aging?: string | null
+          alcohol_content?: string | null
+          aromatic_notes?: string[] | null
           created_at?: string
           description?: string | null
+          enologist?: string | null
+          grape?: string | null
+          harmonization?: string[] | null
           id?: string
           image_url?: string | null
           name: string
@@ -400,15 +415,24 @@ export type Database = {
           on_tasting?: boolean
           price_bottle?: number
           price_glass?: number | null
+          region?: string | null
           sensory_acidity?: number
           sensory_body?: number
           sensory_sweetness?: number
+          serving_temp?: string | null
           type: string
           winery_id: string
+          year?: number | null
         }
         Update: {
+          aging?: string | null
+          alcohol_content?: string | null
+          aromatic_notes?: string[] | null
           created_at?: string
           description?: string | null
+          enologist?: string | null
+          grape?: string | null
+          harmonization?: string[] | null
           id?: string
           image_url?: string | null
           name?: string
@@ -417,11 +441,14 @@ export type Database = {
           on_tasting?: boolean
           price_bottle?: number
           price_glass?: number | null
+          region?: string | null
           sensory_acidity?: number
           sensory_body?: number
           sensory_sweetness?: number
+          serving_temp?: string | null
           type?: string
           winery_id?: string
+          year?: number | null
         }
         Relationships: [
           {
