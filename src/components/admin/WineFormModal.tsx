@@ -7,13 +7,14 @@ import type { Wine } from "@/hooks/useWinery";
 
 interface WineFormModalProps {
   wineryId: string;
+  adminId: string;
   wine?: Wine | null;
   onClose: () => void;
 }
 
 const wineTypes = ["Tinto", "Branco", "Rosé", "Espumante"];
 
-export default function WineFormModal({ wineryId, wine, onClose }: WineFormModalProps) {
+export default function WineFormModal({ wineryId, adminId, wine, onClose }: WineFormModalProps) {
   const qc = useQueryClient();
   const isEdit = !!wine;
   const [loading, setLoading] = useState(false);
@@ -56,12 +57,18 @@ export default function WineFormModal({ wineryId, wine, onClose }: WineFormModal
       };
 
       if (isEdit) {
-        const { error } = await supabase.from("wines").update(payload).eq("id", wine!.id);
-        if (error) throw error;
+        const res = await supabase.functions.invoke("admin-wines", {
+          body: { action: "update", admin_id: adminId, winery_id: wineryId, wine_id: wine!.id, wine_data: payload },
+        });
+        if (res.error) throw res.error;
+        if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinho atualizado!");
       } else {
-        const { error } = await supabase.from("wines").insert(payload);
-        if (error) throw error;
+        const res = await supabase.functions.invoke("admin-wines", {
+          body: { action: "create", admin_id: adminId, winery_id: wineryId, wine_data: payload },
+        });
+        if (res.error) throw res.error;
+        if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinho criado!");
       }
       qc.invalidateQueries({ queryKey: ["wines"] });

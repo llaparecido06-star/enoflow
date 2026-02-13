@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
+import type { AdminUser } from "@/hooks/useAdminAuth";
 import { Wine as WineIcon, Plus, Pencil, Trash2 } from "lucide-react";
 import WineFormModal from "@/components/admin/WineFormModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
@@ -9,7 +10,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function AdminWinesPage() {
-  const { winery } = useOutletContext<{ winery: Winery }>();
+  const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
   const { data: wines } = useWines(winery.id);
   const [formWine, setFormWine] = useState<Wine | null | undefined>(undefined); // undefined = closed, null = new, Wine = edit
   const [deleteWine, setDeleteWine] = useState<Wine | null>(null);
@@ -20,8 +21,11 @@ export default function AdminWinesPage() {
     if (!deleteWine) return;
     setDeleting(true);
     try {
-      const { error } = await supabase.from("wines").delete().eq("id", deleteWine.id);
-      if (error) throw error;
+      const res = await supabase.functions.invoke("admin-wines", {
+        body: { action: "delete", admin_id: admin.id, winery_id: winery.id, wine_id: deleteWine.id },
+      });
+      if (res.error) throw res.error;
+      if (res.data?.error) throw new Error(res.data.error);
       toast.success("Vinho excluído!");
       qc.invalidateQueries({ queryKey: ["wines"] });
     } catch {
@@ -91,7 +95,7 @@ export default function AdminWinesPage() {
       </div>
 
       {formWine !== undefined && (
-        <WineFormModal wineryId={winery.id} wine={formWine} onClose={() => setFormWine(undefined)} />
+        <WineFormModal wineryId={winery.id} adminId={admin.id} wine={formWine} onClose={() => setFormWine(undefined)} />
       )}
 
       {deleteWine && (
