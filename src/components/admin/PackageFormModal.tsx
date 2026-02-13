@@ -7,12 +7,13 @@ import type { TastingPackage, Wine } from "@/hooks/useWinery";
 
 interface PackageFormModalProps {
   wineryId: string;
+  adminId: string;
   pkg?: TastingPackage | null;
   wines: Wine[];
   onClose: () => void;
 }
 
-export default function PackageFormModal({ wineryId, pkg, wines, onClose }: PackageFormModalProps) {
+export default function PackageFormModal({ wineryId, adminId, pkg, wines, onClose }: PackageFormModalProps) {
   const qc = useQueryClient();
   const isEdit = !!pkg;
   const [loading, setLoading] = useState(false);
@@ -38,23 +39,25 @@ export default function PackageFormModal({ wineryId, pkg, wines, onClose }: Pack
     }
     setLoading(true);
     try {
-      const payload = {
-        winery_id: wineryId,
+      const package_data = {
         name: form.name.trim(),
         price: parseFloat(form.price),
         description: form.description.trim() || null,
         wine_ids: Array.from(form.wine_ids),
       };
 
-      if (isEdit) {
-        const { error } = await supabase.from("tasting_packages").update(payload).eq("id", pkg!.id);
-        if (error) throw error;
-        toast.success("Pacote atualizado!");
-      } else {
-        const { error } = await supabase.from("tasting_packages").insert(payload);
-        if (error) throw error;
-        toast.success("Pacote criado!");
-      }
+      const { data, error } = await supabase.functions.invoke("admin-packages", {
+        body: {
+          action: isEdit ? "update" : "create",
+          admin_id: adminId,
+          winery_id: wineryId,
+          package_id: isEdit ? pkg!.id : undefined,
+          package_data,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(isEdit ? "Pacote atualizado!" : "Pacote criado!");
       qc.invalidateQueries({ queryKey: ["tasting_packages"] });
       onClose();
     } catch (e: any) {

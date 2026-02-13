@@ -24,14 +24,18 @@ export default function TastingPage() {
   const handleRatingSubmit = async (wine: Wine, ratings: { acidity: number; body: number; sweetness: number }) => {
     if (!lead) return;
     try {
-      const { error } = await supabase.from("ratings").upsert({
-        user_id: lead.id,
-        wine_id: wine.id,
-        stars_acidity: ratings.acidity,
-        stars_body: ratings.body,
-        stars_sweetness: ratings.sweetness,
-      }, { onConflict: "user_id,wine_id" });
+      const { data, error } = await supabase.functions.invoke("tourist-actions", {
+        body: {
+          action: "upsert_rating",
+          user_id: lead.id,
+          wine_id: wine.id,
+          stars_acidity: ratings.acidity,
+          stars_body: ratings.body,
+          stars_sweetness: ratings.sweetness,
+        },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast.success("Avaliação enviada com sucesso!");
     } catch {
       toast.error("Erro ao enviar avaliação");
