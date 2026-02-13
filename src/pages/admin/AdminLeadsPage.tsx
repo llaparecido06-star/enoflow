@@ -1,25 +1,41 @@
+import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import type { Winery } from "@/hooks/useWinery";
+import type { AdminUser } from "@/hooks/useAdminAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Users, Download, Phone, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
-export default function AdminLeadsPage() {
-  const { winery } = useOutletContext<{ winery: Winery }>();
+interface Lead {
+  id: string;
+  name: string;
+  whatsapp: string;
+  created_at: string;
+  preferences_summary: string | null;
+}
 
-  const { data: leads } = useQuery({
-    queryKey: ["leads", winery.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("users_leads")
-        .select("*")
-        .eq("winery_id", winery.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+export default function AdminLeadsPage() {
+  const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        const res = await supabase.functions.invoke("admin-leads", {
+          body: { admin_id: admin.id, winery_id: winery.id },
+        });
+        if (res.error) throw res.error;
+        if (res.data?.error) throw new Error(res.data.error);
+        setLeads(res.data.leads ?? []);
+      } catch {
+        toast.error("Erro ao carregar leads");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLeads();
+  }, [admin.id, winery.id]);
 
   const exportCSV = () => {
     if (!leads || leads.length === 0) {
@@ -49,7 +65,7 @@ export default function AdminLeadsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Leads</h1>
-          <p className="text-sm text-muted-foreground">{leads?.length ?? 0} visitantes capturados</p>
+          <p className="text-sm text-muted-foreground">{leads.length} visitantes capturados</p>
         </div>
         <button onClick={exportCSV}
           className="flex items-center gap-2 border border-border px-4 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-secondary transition-colors">
@@ -57,7 +73,11 @@ export default function AdminLeadsPage() {
         </button>
       </div>
 
-      {leads && leads.length > 0 ? (
+      {loading ? (
+        <div className="bg-card rounded-xl border border-border p-8 text-center">
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        </div>
+      ) : leads.length > 0 ? (
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <table className="w-full">
             <thead>
