@@ -1,20 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wine, Star, Heart, Grape, MapPin, Thermometer, Clock, User, FlaskConical, UtensilsCrossed } from "lucide-react";
+import { Wine, Star, Heart, Grape, MapPin, Thermometer, Clock, User, FlaskConical } from "lucide-react";
 import type { Wine as WineType } from "@/hooks/useWinery";
 
 interface TastingCardProps {
-  wine: WineType & {
-    grape?: string | null;
-    region?: string | null;
-    alcohol_content?: string | null;
-    serving_temp?: string | null;
-    aging?: string | null;
-    enologist?: string | null;
-    aromatic_notes?: string[] | null;
-    harmonization?: string[] | null;
-    year?: number | null;
-  };
+  wine: WineType;
   isActive: boolean;
   onRate: (ratings: { acidity: number; body: number; sweetness: number }) => void;
   isFavorite: boolean;
@@ -45,19 +35,15 @@ function StarRow({ label, value, onChange }: { label: string; value: number; onC
   );
 }
 
-function SensoryBar({ label, value, percentage }: { label: string; value: number; percentage: number }) {
+function SensoryStars({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-xs text-muted-foreground w-16">{label}</span>
-      <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-        <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-          className="h-full bg-gradient-to-r from-gold/80 to-gold rounded-full"
-        />
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <div className="flex gap-0.5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Star key={i} className={`w-3.5 h-3.5 ${i < value ? "fill-gold text-gold" : "text-muted-foreground/20"}`} />
+        ))}
       </div>
-      <span className="text-[10px] text-muted-foreground w-8 text-right">{percentage}%</span>
     </div>
   );
 }
@@ -89,8 +75,8 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
     { id: "harmonizacao", label: "Harmonização" },
   ];
 
-  const harmonizationItems = (wine as any).harmonization?.length
-    ? (wine as any).harmonization
+  const harmonizationItems = wine.harmonization?.length
+    ? wine.harmonization
     : defaultHarmonizacoes[wine.type] ?? [];
 
   return (
@@ -124,7 +110,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
             <div className="flex-1 min-w-0">
               <h2 className="font-display text-xl font-bold text-foreground leading-tight">{wine.name}</h2>
               <p className="text-[11px] text-muted-foreground">
-                {(wine as any).year && `${(wine as any).year} · `}{wine.type}
+                {wine.year && `${wine.year} · `}{wine.type}
               </p>
             </div>
             <div className="flex items-center gap-2 ml-2 mt-1">
@@ -167,15 +153,15 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
                   </blockquote>
                 )}
 
-                {/* Perfil Sensorial */}
+                {/* Perfil Sensorial - Stars */}
                 <div className="bg-muted/30 rounded-xl p-4 mb-4">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs font-semibold text-foreground">✨ Perfil Sensorial</span>
                   </div>
-                  <div className="space-y-2.5">
-                    <SensoryBar label="Corpo" value={wine.sensory_body} percentage={wine.sensory_body * 20} />
-                    <SensoryBar label="Acidez" value={wine.sensory_acidity} percentage={wine.sensory_acidity * 20} />
-                    <SensoryBar label="Doçura" value={wine.sensory_sweetness} percentage={wine.sensory_sweetness * 20} />
+                  <div className="space-y-2">
+                    <SensoryStars label="Corpo" value={wine.sensory_body} />
+                    <SensoryStars label="Acidez" value={wine.sensory_acidity} />
+                    <SensoryStars label="Doçura" value={wine.sensory_sweetness} />
                   </div>
                 </div>
 
@@ -191,12 +177,12 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               <motion.div key="ficha" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   {[
-                    { icon: Grape, label: "Uva", value: (wine as any).grape },
-                    { icon: MapPin, label: "Região", value: (wine as any).region },
-                    { icon: FlaskConical, label: "Teor Alcoólico", value: (wine as any).alcohol_content },
-                    { icon: Thermometer, label: "Servir a", value: (wine as any).serving_temp },
-                    { icon: Clock, label: "Envelhecimento", value: (wine as any).aging },
-                    { icon: User, label: "Enólogo", value: (wine as any).enologist },
+                    { icon: Grape, label: "Uva", value: wine.grape },
+                    { icon: MapPin, label: "Região", value: wine.region },
+                    { icon: FlaskConical, label: "Teor Alcoólico", value: wine.alcohol_content },
+                    { icon: Thermometer, label: "Servir a", value: wine.serving_temp },
+                    { icon: Clock, label: "Envelhecimento", value: wine.aging },
+                    { icon: User, label: "Enólogo", value: wine.enologist },
                   ].filter(item => item.value).map((item) => (
                     <div key={item.label} className="bg-muted/30 rounded-xl p-3">
                       <div className="flex items-center gap-1.5 mb-1">
@@ -209,11 +195,11 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
                 </div>
 
                 {/* Aromatic notes */}
-                {(wine as any).aromatic_notes && (wine as any).aromatic_notes.length > 0 && (
+                {wine.aromatic_notes && wine.aromatic_notes.length > 0 && (
                   <div className="bg-muted/30 rounded-xl p-4">
                     <span className="text-xs font-semibold text-foreground block mb-2">Notas Aromáticas</span>
                     <div className="flex flex-wrap gap-1.5">
-                      {(wine as any).aromatic_notes.map((note: string) => (
+                      {wine.aromatic_notes.map((note: string) => (
                         <span key={note} className="text-[11px] bg-card border border-border/30 rounded-full px-2.5 py-1 text-muted-foreground">
                           {note}
                         </span>
@@ -245,7 +231,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
             )}
           </AnimatePresence>
 
-          {/* Rating section - always visible at bottom */}
+          {/* Rating section */}
           <div className="mt-4 border-t border-border/30 pt-4">
             {!showRating && !rated ? (
               <button

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,6 +13,22 @@ interface WineFormModalProps {
 }
 
 const wineTypes = ["Tinto", "Branco", "Rosé", "Espumante"];
+
+function SensoryStarInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-xs w-14 text-muted-foreground">{label}</span>
+      <div className="flex gap-1">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <button key={i} type="button" onClick={() => onChange(i + 1)} className="transition-transform hover:scale-110">
+            <Star className={`w-5 h-5 ${i < value ? "fill-gold text-gold" : "text-muted-foreground/30"}`} />
+          </button>
+        ))}
+      </div>
+      <span className="text-xs font-medium w-4 text-center text-muted-foreground">{value}</span>
+    </div>
+  );
+}
 
 export default function WineFormModal({ wineryId, adminId, wine, onClose }: WineFormModalProps) {
   const qc = useQueryClient();
@@ -30,6 +46,16 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
     on_tasting: wine?.on_tasting ?? false,
     on_restaurant: wine?.on_restaurant ?? false,
     on_shop: wine?.on_shop ?? true,
+    // Ficha Técnica fields
+    grape: wine?.grape ?? "",
+    region: wine?.region ?? "",
+    alcohol_content: wine?.alcohol_content ?? "",
+    serving_temp: wine?.serving_temp ?? "",
+    aging: wine?.aging ?? "",
+    enologist: wine?.enologist ?? "",
+    year: wine?.year?.toString() ?? "",
+    aromatic_notes: wine?.aromatic_notes?.join(", ") ?? "",
+    harmonization: wine?.harmonization?.join(", ") ?? "",
   });
 
   const set = (key: string, val: unknown) => setForm((f) => ({ ...f, [key]: val }));
@@ -41,6 +67,9 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
     }
     setLoading(true);
     try {
+      const aromaticArr = form.aromatic_notes.split(",").map(s => s.trim()).filter(Boolean);
+      const harmonizationArr = form.harmonization.split(",").map(s => s.trim()).filter(Boolean);
+
       const payload = {
         winery_id: wineryId,
         name: form.name.trim(),
@@ -54,6 +83,15 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
         on_tasting: form.on_tasting,
         on_restaurant: form.on_restaurant,
         on_shop: form.on_shop,
+        grape: form.grape.trim() || null,
+        region: form.region.trim() || null,
+        alcohol_content: form.alcohol_content.trim() || null,
+        serving_temp: form.serving_temp.trim() || null,
+        aging: form.aging.trim() || null,
+        enologist: form.enologist.trim() || null,
+        year: form.year ? parseInt(form.year) : null,
+        aromatic_notes: aromaticArr.length > 0 ? aromaticArr : null,
+        harmonization: harmonizationArr.length > 0 ? harmonizationArr : null,
       };
 
       if (isEdit) {
@@ -83,7 +121,7 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm">
       <div className="bg-card w-full max-w-lg mx-4 rounded-2xl border border-border max-h-[90vh] overflow-y-auto animate-scale-in">
-        <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card rounded-t-2xl">
+        <div className="flex items-center justify-between p-4 border-b border-border sticky top-0 bg-card rounded-t-2xl z-10">
           <h2 className="font-display text-lg font-semibold">{isEdit ? "Editar Vinho" : "Novo Vinho"}</h2>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-secondary"><X className="w-5 h-5 text-muted-foreground" /></button>
         </div>
@@ -117,6 +155,55 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
             </div>
           </div>
 
+          {/* Year */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Safra (Ano)</label>
+              <input type="number" value={form.year} onChange={(e) => set("year", e.target.value)} placeholder="2022"
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Uva</label>
+              <input value={form.grape} onChange={(e) => set("grape", e.target.value)} placeholder="Cabernet Sauvignon" maxLength={100}
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            </div>
+          </div>
+
+          {/* Region & Alcohol */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Região</label>
+              <input value={form.region} onChange={(e) => set("region", e.target.value)} placeholder="São Roque, SP" maxLength={100}
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Teor Alcoólico</label>
+              <input value={form.alcohol_content} onChange={(e) => set("alcohol_content", e.target.value)} placeholder="12.5%" maxLength={20}
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            </div>
+          </div>
+
+          {/* Temp & Aging */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Temperatura de Serviço</label>
+              <input value={form.serving_temp} onChange={(e) => set("serving_temp", e.target.value)} placeholder="16-18°C" maxLength={20}
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Envelhecimento</label>
+              <input value={form.aging} onChange={(e) => set("aging", e.target.value)} placeholder="12 meses em carvalho" maxLength={100}
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
+            </div>
+          </div>
+
+          {/* Enologist */}
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">Enólogo</label>
+            <input value={form.enologist} onChange={(e) => set("enologist", e.target.value)} placeholder="Nome do enólogo" maxLength={100}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+
           {/* Description */}
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Descrição</label>
@@ -124,21 +211,28 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
               className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none" />
           </div>
 
-          {/* Sensory sliders */}
+          {/* Aromatic notes */}
           <div>
-            <label className="text-xs text-muted-foreground block mb-2">Perfil Sensorial (1–5)</label>
-            {(["sensory_acidity", "sensory_body", "sensory_sweetness"] as const).map((key) => {
-              const labels: Record<string, string> = { sensory_acidity: "Acidez", sensory_body: "Corpo", sensory_sweetness: "Doçura" };
-              return (
-                <div key={key} className="flex items-center gap-3 mb-2">
-                  <span className="text-xs w-14 text-muted-foreground">{labels[key]}</span>
-                  <input type="range" min={1} max={5} value={form[key]}
-                    onChange={(e) => set(key, parseInt(e.target.value))}
-                    className="flex-1 accent-primary" />
-                  <span className="text-xs font-medium w-4 text-center">{form[key]}</span>
-                </div>
-              );
-            })}
+            <label className="text-xs text-muted-foreground block mb-1">Notas Aromáticas (separar por vírgula)</label>
+            <input value={form.aromatic_notes} onChange={(e) => set("aromatic_notes", e.target.value)} placeholder="Frutas vermelhas, Baunilha, Especiarias" maxLength={300}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+
+          {/* Harmonization */}
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">Harmonização (separar por vírgula)</label>
+            <input value={form.harmonization} onChange={(e) => set("harmonization", e.target.value)} placeholder="Carnes vermelhas, Queijos maturados" maxLength={300}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
+          </div>
+
+          {/* Sensory - Stars */}
+          <div>
+            <label className="text-xs text-muted-foreground block mb-2">Perfil Sensorial</label>
+            <div className="space-y-2">
+              <SensoryStarInput label="Acidez" value={form.sensory_acidity} onChange={(v) => set("sensory_acidity", v)} />
+              <SensoryStarInput label="Corpo" value={form.sensory_body} onChange={(v) => set("sensory_body", v)} />
+              <SensoryStarInput label="Doçura" value={form.sensory_sweetness} onChange={(v) => set("sensory_sweetness", v)} />
+            </div>
           </div>
 
           {/* Availability toggles */}

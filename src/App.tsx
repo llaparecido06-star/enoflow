@@ -9,6 +9,7 @@ import TouristLayout from "./pages/tourist/TouristLayout";
 import TastingPage from "./pages/tourist/TastingPage";
 import RestaurantPage from "./pages/tourist/RestaurantPage";
 import ShopPage from "./pages/tourist/ShopPage";
+import JourneyPage from "./pages/tourist/JourneyPage";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminWinesPage from "./pages/admin/AdminWinesPage";
 import AdminPackagesPage from "./pages/admin/AdminPackagesPage";
@@ -37,6 +38,7 @@ const App = () => (
             <Route index element={<TastingPage />} />
             <Route path="restaurant" element={<RestaurantPage />} />
             <Route path="shop" element={<ShopPage />} />
+            <Route path="journey" element={<JourneyPage />} />
           </Route>
 
           {/* Admin routes */}
