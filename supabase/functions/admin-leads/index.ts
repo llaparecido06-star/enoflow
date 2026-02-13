@@ -40,9 +40,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const roleHierarchy = ["funcionario", "gerente", "dono"];
-    if (roleHierarchy.indexOf(admin.role) < roleHierarchy.indexOf("dono")) {
-      return new Response(JSON.stringify({ error: "Apenas donos podem acessar leads" }), {
+    const roleHierarchy = ["staff", "manager", "owner", "master"];
+    if (roleHierarchy.indexOf(admin.role) < roleHierarchy.indexOf("owner")) {
+      return new Response(JSON.stringify({ error: "Apenas owners podem acessar leads" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

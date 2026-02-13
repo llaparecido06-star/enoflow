@@ -34,9 +34,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check minimum role (gerente)
-    const roleHierarchy = ["funcionario", "gerente", "dono"];
-    if (roleHierarchy.indexOf(admin.role) < roleHierarchy.indexOf("gerente")) {
+    // Check minimum role (manager)
+    const roleHierarchy = ["staff", "manager", "owner", "master"];
+    if (roleHierarchy.indexOf(admin.role) < roleHierarchy.indexOf("manager")) {
       return new Response(JSON.stringify({ error: "Permissão insuficiente" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
