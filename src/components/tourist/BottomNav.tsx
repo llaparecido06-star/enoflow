@@ -1,4 +1,4 @@
-import { Wine, UtensilsCrossed, ShoppingBag } from "lucide-react";
+import { Wine, UtensilsCrossed, ShoppingBag, Trophy } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -10,6 +10,7 @@ const tabs = [
   { id: "tasting", label: "Degustação", icon: Wine, path: "" },
   { id: "restaurant", label: "Restaurante", icon: UtensilsCrossed, path: "/restaurant" },
   { id: "shop", label: "Loja", icon: ShoppingBag, path: "/shop" },
+  { id: "journey", label: "Jornada", icon: Trophy, path: "/journey" },
 ];
 
 export default function BottomNav({ slug }: BottomNavProps) {
@@ -28,7 +29,7 @@ export default function BottomNav({ slug }: BottomNavProps) {
             <button
               key={tab.id}
               onClick={() => navigate(basePath + tab.path)}
-              className="relative flex flex-col items-center gap-0.5 px-5 py-1.5 transition-colors duration-300"
+              className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 transition-colors duration-300"
             >
               {isActive && (
                 <motion.div

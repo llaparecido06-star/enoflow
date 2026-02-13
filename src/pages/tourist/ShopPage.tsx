@@ -7,7 +7,8 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingBag, Minus, Plus, Trash2, QrCode, Copy,
-  Search, SlidersHorizontal, X, Wine as WineIcon, Droplets, Circle, Heart
+  Search, SlidersHorizontal, X, Wine as WineIcon, Heart, Star,
+  Grape, MapPin, Thermometer, Clock, User, FlaskConical, ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,20 +27,20 @@ const flavorProfiles = [
   { label: "Ácido", key: "sensory_acidity" as const, min: 4 },
 ];
 
-function SensoryMini({ value, label }: { value: number; label: string }) {
+function SensoryStarsMini({ value }: { value: number }) {
   return (
-    <div className="flex items-center gap-1">
-      <div className="flex gap-px">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className={`w-1 h-3 rounded-sm ${i < value ? "bg-gold" : "bg-muted"}`} />
-        ))}
-      </div>
-      <span className="text-[9px] text-muted-foreground">{label}</span>
+    <div className="flex gap-px">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star key={i} className={`w-2.5 h-2.5 ${i < value ? "fill-gold text-gold" : "text-muted-foreground/20"}`} />
+      ))}
     </div>
   );
 }
 
-function ShopWineCard({ wine, onAdd }: { wine: Wine; onAdd: () => void }) {
+function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite }: {
+  wine: Wine; onAdd: () => void; onDetail: () => void;
+  isFavorite: boolean; onToggleFavorite: () => void;
+}) {
   return (
     <motion.div
       layout
@@ -50,7 +51,7 @@ function ShopWineCard({ wine, onAdd }: { wine: Wine; onAdd: () => void }) {
       className="bg-card rounded-xl border border-border/30 overflow-hidden luxury-shadow group"
     >
       {/* Image area */}
-      <div className="relative h-36 bg-gradient-to-b from-wine/15 to-transparent flex items-center justify-center">
+      <div className="relative h-36 bg-gradient-to-b from-wine/15 to-transparent flex items-center justify-center cursor-pointer" onClick={onDetail}>
         {wine.image_url ? (
           <img src={wine.image_url} alt={wine.name} className="w-full h-full object-cover" />
         ) : (
@@ -59,17 +60,22 @@ function ShopWineCard({ wine, onAdd }: { wine: Wine; onAdd: () => void }) {
         <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-background/30 backdrop-blur-md text-foreground border border-foreground/10">
           {wine.type}
         </span>
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-background/30 backdrop-blur-md border border-foreground/10"
+        >
+          <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-red-500 text-red-500" : "text-foreground/60"}`} />
+        </button>
       </div>
 
       <div className="p-3 space-y-2">
-        <h3 className="font-display text-xs font-semibold text-foreground leading-tight line-clamp-2 min-h-[2rem]">
+        <h3 className="font-display text-xs font-semibold text-foreground leading-tight line-clamp-2 min-h-[2rem] cursor-pointer" onClick={onDetail}>
           {wine.name}
         </h3>
 
-        <div className="flex gap-2">
-          <SensoryMini value={wine.sensory_acidity} label="Ac" />
-          <SensoryMini value={wine.sensory_body} label="Co" />
-          <SensoryMini value={wine.sensory_sweetness} label="Do" />
+        <div className="flex items-center gap-1">
+          <SensoryStarsMini value={Math.round((wine.sensory_acidity + wine.sensory_body + wine.sensory_sweetness) / 3)} />
+          <span className="text-[9px] text-muted-foreground ml-1">{wine.year || ""}</span>
         </div>
 
         <div className="flex items-center justify-between pt-1">
@@ -95,6 +101,145 @@ function ShopWineCard({ wine, onAdd }: { wine: Wine; onAdd: () => void }) {
   );
 }
 
+function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => void; onAdd: () => void }) {
+  const harmonizationItems = wine.harmonization?.length ? wine.harmonization : [];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-background/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-card w-full max-w-md rounded-t-2xl sm:rounded-2xl border border-border/30 luxury-shadow max-h-[85vh] overflow-y-auto"
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+      >
+        {/* Hero */}
+        <div className="relative h-48 bg-gradient-to-b from-wine/20 to-transparent flex items-center justify-center">
+          {wine.image_url ? (
+            <img src={wine.image_url} alt={wine.name} className="w-full h-full object-cover rounded-t-2xl" />
+          ) : (
+            <WineIcon className="w-12 h-12 text-muted-foreground/30" />
+          )}
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
+          <button onClick={onClose} className="absolute top-3 right-3 p-2 rounded-full bg-background/30 backdrop-blur-md">
+            <X className="w-4 h-4 text-foreground" />
+          </button>
+        </div>
+
+        <div className="px-5 pb-5 -mt-4 relative z-10">
+          <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-wine/10 text-wine-light border border-wine/20 mb-2 inline-block">
+            {wine.type}
+          </span>
+          <h2 className="font-display text-xl font-bold text-foreground">{wine.name}</h2>
+          <p className="text-[11px] text-muted-foreground mb-4">{wine.year && `${wine.year} · `}{wine.grape || ""}</p>
+
+          {wine.description && (
+            <p className="text-sm text-muted-foreground italic leading-relaxed mb-4 border-l-2 border-gold/30 pl-3">
+              "{wine.description}"
+            </p>
+          )}
+
+          {/* Sensory stars */}
+          <div className="bg-muted/30 rounded-xl p-4 mb-4">
+            <span className="text-xs font-semibold text-foreground block mb-2">✨ Perfil Sensorial</span>
+            <div className="space-y-1.5">
+              {[
+                { label: "Corpo", value: wine.sensory_body },
+                { label: "Acidez", value: wine.sensory_acidity },
+                { label: "Doçura", value: wine.sensory_sweetness },
+              ].map(s => (
+                <div key={s.label} className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{s.label}</span>
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className={`w-3.5 h-3.5 ${i < s.value ? "fill-gold text-gold" : "text-muted-foreground/20"}`} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Ficha Técnica */}
+          {(wine.grape || wine.region || wine.alcohol_content || wine.serving_temp || wine.aging || wine.enologist) && (
+            <div className="mb-4">
+              <span className="text-xs font-semibold text-foreground block mb-2">Ficha Técnica</span>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { icon: Grape, label: "Uva", value: wine.grape },
+                  { icon: MapPin, label: "Região", value: wine.region },
+                  { icon: FlaskConical, label: "Teor", value: wine.alcohol_content },
+                  { icon: Thermometer, label: "Servir", value: wine.serving_temp },
+                  { icon: Clock, label: "Envelhecimento", value: wine.aging },
+                  { icon: User, label: "Enólogo", value: wine.enologist },
+                ].filter(i => i.value).map(item => (
+                  <div key={item.label} className="bg-muted/30 rounded-lg p-2.5">
+                    <div className="flex items-center gap-1 mb-0.5">
+                      <item.icon className="w-3 h-3 text-gold" />
+                      <span className="text-[9px] text-muted-foreground">{item.label}</span>
+                    </div>
+                    <p className="text-[11px] font-medium text-foreground">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Aromatic notes */}
+          {wine.aromatic_notes && wine.aromatic_notes.length > 0 && (
+            <div className="mb-4">
+              <span className="text-xs font-semibold text-foreground block mb-2">Notas Aromáticas</span>
+              <div className="flex flex-wrap gap-1.5">
+                {wine.aromatic_notes.map((note) => (
+                  <span key={note} className="text-[11px] bg-muted/50 border border-border/30 rounded-full px-2.5 py-1 text-muted-foreground">
+                    {note}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Harmonization */}
+          {harmonizationItems.length > 0 && (
+            <div className="mb-4">
+              <span className="text-xs font-semibold text-foreground block mb-2">Harmonização</span>
+              <div className="space-y-1.5">
+                {harmonizationItems.map((item) => (
+                  <div key={item} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-gold flex-shrink-0" />
+                    <span className="text-[11px] text-foreground">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Price + Add to cart */}
+          <div className="flex items-center justify-between pt-3 border-t border-border/30">
+            <div>
+              <span className="font-display text-xl font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(2)}</span>
+              {wine.price_glass && (
+                <span className="text-[10px] text-muted-foreground ml-2">Taça R$ {Number(wine.price_glass).toFixed(0)}</span>
+              )}
+            </div>
+            <button
+              onClick={() => { onAdd(); onClose(); }}
+              className="bg-gold text-gold-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gold/90 transition-colors flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> Carrinho
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function ShopPage() {
   const { winery } = useOutletContext<{ winery: Winery }>();
   const { lead } = useTouristAuth();
@@ -110,33 +255,22 @@ export default function ShopPage() {
   const [selectedPrice, setSelectedPrice] = useState(0);
   const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [detailWine, setDetailWine] = useState<Wine | null>(null);
 
   const shopWines = wines?.filter((w) => w.on_shop) ?? [];
 
+  const favoriteWines = useMemo(() => shopWines.filter(w => isFavorite(w.id)), [shopWines, favorites]);
+
   const filteredWines = useMemo(() => {
     let result = shopWines;
-
-    // Favorites filter
-    if (showFavoritesOnly) {
-      result = result.filter((w) => isFavorite(w.id));
-    }
-
-    // Search
+    if (showFavoritesOnly) result = result.filter((w) => isFavorite(w.id));
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((w) => w.name.toLowerCase().includes(q) || w.type.toLowerCase().includes(q) || w.description?.toLowerCase().includes(q));
     }
-
-    // Type filter
-    if (selectedType !== "Todos") {
-      result = result.filter((w) => w.type === selectedType);
-    }
-
-    // Price filter
+    if (selectedType !== "Todos") result = result.filter((w) => w.type === selectedType);
     const range = priceRanges[selectedPrice];
     result = result.filter((w) => w.price_bottle >= range.min && w.price_bottle < range.max);
-
-    // Flavor filter
     if (selectedFlavor) {
       const profile = flavorProfiles.find((f) => f.label === selectedFlavor);
       if (profile) {
@@ -148,12 +282,10 @@ export default function ShopPage() {
         });
       }
     }
-
     return result;
   }, [shopWines, search, selectedType, selectedPrice, selectedFlavor, showFavoritesOnly, favorites]);
 
   const activeFilterCount = (selectedType !== "Todos" ? 1 : 0) + (selectedPrice !== 0 ? 1 : 0) + (selectedFlavor ? 1 : 0) + (showFavoritesOnly ? 1 : 0);
-  const favoriteWinesCount = shopWines.filter(w => isFavorite(w.id)).length;
 
   const generateVoucher = async () => {
     if (!lead) return;
@@ -273,6 +405,40 @@ export default function ShopPage() {
         </motion.div>
       )}
 
+      {/* Favorites Shelf */}
+      {!voucher && favoriteWines.length > 0 && !showFavoritesOnly && (
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+              <h2 className="font-display text-sm font-semibold text-foreground">Seus Favoritos</h2>
+            </div>
+            <button onClick={() => setShowFavoritesOnly(true)} className="text-[11px] text-gold font-medium flex items-center gap-0.5">
+              Ver todos <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
+            {favoriteWines.slice(0, 6).map((wine) => (
+              <div key={wine.id} className="flex-shrink-0 w-32">
+                <div className="bg-card rounded-xl border border-border/30 overflow-hidden" onClick={() => setDetailWine(wine)}>
+                  <div className="h-24 bg-gradient-to-b from-wine/15 to-transparent flex items-center justify-center cursor-pointer">
+                    {wine.image_url ? (
+                      <img src={wine.image_url} alt={wine.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <WineIcon className="w-6 h-6 text-muted-foreground/30" />
+                    )}
+                  </div>
+                  <div className="p-2">
+                    <p className="text-[10px] font-semibold text-foreground line-clamp-1">{wine.name}</p>
+                    <p className="text-[10px] font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(0)}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Shop */}
       {!voucher && (
         <section>
@@ -311,7 +477,7 @@ export default function ShopPage() {
           </div>
 
           {/* Favorites toggle */}
-          {favoriteWinesCount > 0 && (
+          {favoriteWines.length > 0 && (
             <button
               onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
               className={`flex items-center gap-2 mb-3 text-[11px] font-medium px-3 py-2 rounded-full border transition-all ${
@@ -321,9 +487,10 @@ export default function ShopPage() {
               }`}
             >
               <Heart className={`w-3.5 h-3.5 ${showFavoritesOnly ? "fill-red-400" : ""}`} />
-              Meus Favoritos ({favoriteWinesCount})
+              Meus Favoritos ({favoriteWines.length})
             </button>
           )}
+
           <AnimatePresence>
             {showFilters && (
               <motion.div
@@ -338,63 +505,40 @@ export default function ShopPage() {
                     <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-2">Tipo</label>
                     <div className="flex flex-wrap gap-1.5">
                       {wineTypes.map((t) => (
-                        <button
-                          key={t}
-                          onClick={() => setSelectedType(t)}
+                        <button key={t} onClick={() => setSelectedType(t)}
                           className={`text-[11px] font-medium px-3 py-1.5 rounded-full border transition-all ${
                             selectedType === t ? "bg-gold text-gold-foreground border-gold" : "bg-muted/50 text-muted-foreground border-border/30 hover:border-gold/30"
-                          }`}
-                        >
-                          {t}
-                        </button>
+                          }`}>{t}</button>
                       ))}
                     </div>
                   </div>
-
                   {/* Price */}
                   <div>
                     <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-2">Faixa de preço</label>
                     <div className="flex flex-wrap gap-1.5">
                       {priceRanges.map((r, i) => (
-                        <button
-                          key={r.label}
-                          onClick={() => setSelectedPrice(i)}
+                        <button key={r.label} onClick={() => setSelectedPrice(i)}
                           className={`text-[11px] font-medium px-3 py-1.5 rounded-full border transition-all ${
                             selectedPrice === i ? "bg-gold text-gold-foreground border-gold" : "bg-muted/50 text-muted-foreground border-border/30 hover:border-gold/30"
-                          }`}
-                        >
-                          {r.label}
-                        </button>
+                          }`}>{r.label}</button>
                       ))}
                     </div>
                   </div>
-
                   {/* Flavor */}
                   <div>
                     <label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold block mb-2">Perfil de sabor</label>
                     <div className="flex flex-wrap gap-1.5">
                       {flavorProfiles.map((f) => (
-                        <button
-                          key={f.label}
-                          onClick={() => setSelectedFlavor(selectedFlavor === f.label ? null : f.label)}
+                        <button key={f.label} onClick={() => setSelectedFlavor(selectedFlavor === f.label ? null : f.label)}
                           className={`text-[11px] font-medium px-3 py-1.5 rounded-full border transition-all ${
                             selectedFlavor === f.label ? "bg-gold text-gold-foreground border-gold" : "bg-muted/50 text-muted-foreground border-border/30 hover:border-gold/30"
-                          }`}
-                        >
-                          {f.label}
-                        </button>
+                          }`}>{f.label}</button>
                       ))}
                     </div>
                   </div>
-
-                  {/* Clear all */}
                   {activeFilterCount > 0 && (
-                    <button
-                      onClick={() => { setSelectedType("Todos"); setSelectedPrice(0); setSelectedFlavor(null); }}
-                      className="text-[11px] text-gold font-medium hover:underline"
-                    >
-                      Limpar filtros
-                    </button>
+                    <button onClick={() => { setSelectedType("Todos"); setSelectedPrice(0); setSelectedFlavor(null); setShowFavoritesOnly(false); }}
+                      className="text-[11px] text-gold font-medium hover:underline">Limpar filtros</button>
                   )}
                 </div>
               </motion.div>
@@ -414,6 +558,12 @@ export default function ShopPage() {
                   key={wine.id}
                   wine={wine}
                   onAdd={() => { addItem(wine); toast.success(`${wine.name} adicionado!`); }}
+                  onDetail={() => setDetailWine(wine)}
+                  isFavorite={isFavorite(wine.id)}
+                  onToggleFavorite={() => {
+                    toggleFavorite(wine.id);
+                    if (!isFavorite(wine.id)) toast.success("Adicionado aos favoritos! ❤️");
+                  }}
                 />
               ))}
             </AnimatePresence>
@@ -426,6 +576,17 @@ export default function ShopPage() {
           )}
         </section>
       )}
+
+      {/* Wine Detail Modal */}
+      <AnimatePresence>
+        {detailWine && (
+          <WineDetailModal
+            wine={detailWine}
+            onClose={() => setDetailWine(null)}
+            onAdd={() => { addItem(detailWine); toast.success(`${detailWine.name} adicionado!`); }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
