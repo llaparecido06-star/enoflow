@@ -3,10 +3,11 @@ import { useOutletContext } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useTouristAuth } from "@/hooks/useTouristAuth";
 import { useCart } from "@/hooks/useCart";
+import { useFavorites } from "@/hooks/useFavorites";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingBag, Minus, Plus, Trash2, QrCode, Copy,
-  Search, SlidersHorizontal, X, Wine as WineIcon, Droplets, Circle
+  Search, SlidersHorizontal, X, Wine as WineIcon, Droplets, Circle, Heart
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,6 +100,7 @@ export default function ShopPage() {
   const { lead } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart();
+  const { favorites, isFavorite, toggleFavorite } = useFavorites(lead?.id);
   const [voucher, setVoucher] = useState<{ code: string } | null>(null);
   const [showCart, setShowCart] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -107,11 +109,17 @@ export default function ShopPage() {
   const [selectedType, setSelectedType] = useState("Todos");
   const [selectedPrice, setSelectedPrice] = useState(0);
   const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   const shopWines = wines?.filter((w) => w.on_shop) ?? [];
 
   const filteredWines = useMemo(() => {
     let result = shopWines;
+
+    // Favorites filter
+    if (showFavoritesOnly) {
+      result = result.filter((w) => isFavorite(w.id));
+    }
 
     // Search
     if (search.trim()) {
@@ -142,9 +150,10 @@ export default function ShopPage() {
     }
 
     return result;
-  }, [shopWines, search, selectedType, selectedPrice, selectedFlavor]);
+  }, [shopWines, search, selectedType, selectedPrice, selectedFlavor, showFavoritesOnly, favorites]);
 
-  const activeFilterCount = (selectedType !== "Todos" ? 1 : 0) + (selectedPrice !== 0 ? 1 : 0) + (selectedFlavor ? 1 : 0);
+  const activeFilterCount = (selectedType !== "Todos" ? 1 : 0) + (selectedPrice !== 0 ? 1 : 0) + (selectedFlavor ? 1 : 0) + (showFavoritesOnly ? 1 : 0);
+  const favoriteWinesCount = shopWines.filter(w => isFavorite(w.id)).length;
 
   const generateVoucher = async () => {
     if (!lead) return;
@@ -301,7 +310,20 @@ export default function ShopPage() {
             </button>
           </div>
 
-          {/* Filters panel */}
+          {/* Favorites toggle */}
+          {favoriteWinesCount > 0 && (
+            <button
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`flex items-center gap-2 mb-3 text-[11px] font-medium px-3 py-2 rounded-full border transition-all ${
+                showFavoritesOnly
+                  ? "bg-red-500/10 text-red-400 border-red-500/30"
+                  : "bg-muted/50 text-muted-foreground border-border/30 hover:border-red-500/30"
+              }`}
+            >
+              <Heart className={`w-3.5 h-3.5 ${showFavoritesOnly ? "fill-red-400" : ""}`} />
+              Meus Favoritos ({favoriteWinesCount})
+            </button>
+          )}
           <AnimatePresence>
             {showFilters && (
               <motion.div
