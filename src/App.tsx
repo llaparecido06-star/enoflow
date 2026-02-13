@@ -22,6 +22,8 @@ import MasterLayout from "./pages/master/MasterLayout";
 import MasterDashboardPage from "./pages/master/MasterDashboardPage";
 import MasterWineriesPage from "./pages/master/MasterWineriesPage";
 import MasterAdminsPage from "./pages/master/MasterAdminsPage";
+import MasterReportsPage from "./pages/master/MasterReportsPage";
+import MasterImportPage from "./pages/master/MasterImportPage";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +72,8 @@ const App = () => {
             <Route index element={<MasterDashboardPage />} />
             <Route path="wineries" element={<MasterWineriesPage />} />
             <Route path="admins" element={<MasterAdminsPage />} />
+            <Route path="reports" element={<MasterReportsPage />} />
+            <Route path="import" element={<MasterImportPage />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
