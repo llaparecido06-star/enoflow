@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          password_hash: string
+          role: Database["public"]["Enums"]["admin_role"]
+          winery_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          password_hash: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          winery_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          password_hash?: string
+          role?: Database["public"]["Enums"]["admin_role"]
+          winery_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_winery_id_fkey"
+            columns: ["winery_id"]
+            isOneToOne: false
+            referencedRelation: "wineries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automations: {
         Row: {
           commission_value: number | null
@@ -331,6 +369,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      admin_role: "funcionario" | "gerente" | "dono"
       automation_status: "sent" | "scheduled"
       plan_level: "bronze" | "silver" | "gold"
       trigger_type: "D+1" | "D+15"
@@ -461,6 +500,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      admin_role: ["funcionario", "gerente", "dono"],
       automation_status: ["sent", "scheduled"],
       plan_level: ["bronze", "silver", "gold"],
       trigger_type: ["D+1", "D+15"],

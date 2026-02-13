@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Winery } from "@/hooks/useWinery";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, TrendingUp, Send, Clock, CheckCircle, Timer } from "lucide-react";
+import { BarChart3, TrendingUp, Send, Clock, CheckCircle, Timer, Play, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function AdminReportsPage() {
   const { winery } = useOutletContext<{ winery: Winery }>();
+  const [processing, setProcessing] = useState(false);
+  const qc = useQueryClient();
 
   const { data: automations } = useQuery({
     queryKey: ["automations", winery.id],
@@ -30,10 +34,38 @@ export default function AdminReportsPage() {
     { label: "Comissões Geradas", value: `R$ ${totalCommission.toFixed(2)}`, icon: TrendingUp, color: "text-primary" },
   ];
 
+  const runAutomations = async () => {
+    setProcessing(true);
+    try {
+      const res = await supabase.functions.invoke("process-automations", {
+        body: { winery_id: winery.id },
+      });
+      if (res.error) throw res.error;
+      toast.success(res.data.message);
+      qc.invalidateQueries({ queryKey: ["automations"] });
+    } catch {
+      toast.error("Erro ao processar automações");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-foreground mb-2">Relatórios</h1>
-      <p className="text-sm text-muted-foreground mb-6">Pós-venda e automações</p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Relatórios</h1>
+          <p className="text-sm text-muted-foreground">Pós-venda e automações</p>
+        </div>
+        <button
+          onClick={runAutomations}
+          disabled={processing}
+          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+        >
+          {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+          Processar D+1 / D+15
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         {stats.map((stat) => (
@@ -47,7 +79,6 @@ export default function AdminReportsPage() {
         ))}
       </div>
 
-      {/* Automations list */}
       {automations && automations.length > 0 ? (
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="px-4 py-3 border-b border-border bg-secondary/50">
@@ -95,7 +126,7 @@ export default function AdminReportsPage() {
       ) : (
         <div className="bg-card rounded-xl border border-border p-8 text-center">
           <BarChart3 className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
-          <p className="text-sm text-muted-foreground">Dados de automação e comissões aparecerão aqui.</p>
+          <p className="text-sm text-muted-foreground">Clique em "Processar D+1 / D+15" para simular envios automáticos.</p>
         </div>
       )}
     </div>
