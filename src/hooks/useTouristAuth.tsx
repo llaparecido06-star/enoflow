@@ -1,8 +1,14 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
 
-type Lead = Tables<"users_leads">;
+interface Lead {
+  id: string;
+  winery_id: string;
+  name: string;
+  whatsapp: string;
+  created_at: string;
+  preferences_summary: string | null;
+}
 
 interface TouristAuthContextType {
   lead: Lead | null;
@@ -35,29 +41,16 @@ export function TouristAuthProvider({ children, wineryId }: { children: ReactNod
   }, [wineryId]);
 
   const login = useCallback(async (name: string, whatsapp: string, wineryId: string) => {
-    // Check if lead already exists for this whatsapp + winery
-    const { data: existing } = await supabase
-      .from("users_leads")
-      .select("*")
-      .eq("winery_id", wineryId)
-      .eq("whatsapp", whatsapp)
-      .maybeSingle();
+    const res = await supabase.functions.invoke("tourist-login", {
+      body: { name, whatsapp, winery_id: wineryId },
+    });
 
-    if (existing) {
-      setLead(existing);
-      localStorage.setItem(`lead_${wineryId}`, JSON.stringify(existing));
-      return;
-    }
+    if (res.error) throw res.error;
+    if (res.data?.error) throw new Error(res.data.error);
 
-    const { data, error } = await supabase
-      .from("users_leads")
-      .insert({ name, whatsapp, winery_id: wineryId })
-      .select()
-      .single();
-
-    if (error) throw error;
-    setLead(data);
-    localStorage.setItem(`lead_${wineryId}`, JSON.stringify(data));
+    const lead = res.data.lead as Lead;
+    setLead(lead);
+    localStorage.setItem(`lead_${wineryId}`, JSON.stringify(lead));
   }, []);
 
   const logout = useCallback(() => {

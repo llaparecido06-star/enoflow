@@ -89,6 +89,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "automations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_leads_public"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "automations_winery_id_fkey"
             columns: ["winery_id"]
             isOneToOne: false
@@ -131,6 +138,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ratings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_leads_public"
             referencedColumns: ["id"]
           },
           {
@@ -255,6 +269,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vouchers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_leads_public"
             referencedColumns: ["id"]
           },
           {
@@ -391,6 +412,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "admin_users_winery_id_fkey"
+            columns: ["winery_id"]
+            isOneToOne: false
+            referencedRelation: "wineries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users_leads_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          name: string | null
+          preferences_summary: string | null
+          winery_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
+          preferences_summary?: string | null
+          winery_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          name?: string | null
+          preferences_summary?: string | null
+          winery_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_leads_winery_id_fkey"
             columns: ["winery_id"]
             isOneToOne: false
             referencedRelation: "wineries"
