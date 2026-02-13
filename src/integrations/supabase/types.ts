@@ -514,9 +514,26 @@ export type Database = {
           winery_id: string
         }[]
       }
+      master_login: {
+        Args: { p_email: string; p_password: string }
+        Returns: {
+          email: string
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["admin_role"]
+          winery_id: string
+        }[]
+      }
     }
     Enums: {
-      admin_role: "funcionario" | "gerente" | "dono"
+      admin_role:
+        | "funcionario"
+        | "gerente"
+        | "dono"
+        | "master"
+        | "owner"
+        | "manager"
+        | "staff"
       automation_status: "sent" | "scheduled"
       plan_level: "bronze" | "silver" | "gold"
       trigger_type: "D+1" | "D+15"
@@ -647,7 +664,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      admin_role: ["funcionario", "gerente", "dono"],
+      admin_role: [
+        "funcionario",
+        "gerente",
+        "dono",
+        "master",
+        "owner",
+        "manager",
+        "staff",
+      ],
       automation_status: ["sent", "scheduled"],
       plan_level: ["bronze", "silver", "gold"],
       trigger_type: ["D+1", "D+15"],
