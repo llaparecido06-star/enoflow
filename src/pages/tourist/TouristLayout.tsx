@@ -6,11 +6,6 @@ import BottomNav from "@/components/tourist/BottomNav";
 import WhatsAppLogin from "@/components/tourist/WhatsAppLogin";
 import { Loader2, LogOut } from "lucide-react";
 
-function TouristContent({ slug }: { slug: string }) {
-  const { winery } = useTouristAuth() as any; // we pass winery via outlet
-  return null; // placeholder
-}
-
 function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const { isAuthenticated, lead, login, logout } = useTouristAuth();
 
