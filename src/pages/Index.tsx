@@ -67,6 +67,23 @@ const Index = () => {
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
         </button>
+
+        <button
+          onClick={() => navigate("/master")}
+          className="w-full flex items-center justify-between bg-card border border-border rounded-xl p-4 hover:bg-secondary/50 transition-colors group animate-fade-in"
+          style={{ animationDelay: "0.2s" }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
+              <Grape className="w-5 h-5 text-accent-foreground" />
+            </div>
+            <div className="text-left">
+              <p className="text-sm font-display font-semibold text-foreground">Master Admin</p>
+              <p className="text-[11px] text-muted-foreground">Gestão da plataforma</p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+        </button>
       </div>
     </div>
   );
