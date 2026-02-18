@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { Building2, Users, Wine, Receipt, TrendingUp, DollarSign, BarChart3, Loader2, Sparkles } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -41,9 +41,7 @@ export default function MasterDashboardPage() {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const res = await supabase.functions.invoke("master-dashboard", {
-          body: { admin_id: admin.id },
-        });
+        const res = await invokeAuth("master-dashboard", {});
         if (res.error) throw res.error;
         if (res.data?.error) throw new Error(res.data.error);
         setMetrics(res.data.metrics);

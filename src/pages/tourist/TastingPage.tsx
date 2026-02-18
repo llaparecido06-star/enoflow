@@ -9,7 +9,7 @@ import { calculatePersona } from "@/components/tourist/CelebrationModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Package, ChevronLeft, ChevronRight, Wine as WineIcon } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import type { Tables } from "@/integrations/supabase/types";
 
 interface RatingEntry { wineId: string; acidity: number; body: number; sweetness: number; }
@@ -54,9 +54,7 @@ export default function TastingPage() {
     if (!lead?.id || localRatings.length > 0) return;
     (async () => {
       try {
-        const res = await supabase.functions.invoke("tourist-actions", {
-          body: { action: "get_ratings", user_id: lead.id },
-        });
+        const res = await invokeAuth("tourist-actions", { action: "get_ratings" });
         if (res.data?.ratings && res.data.ratings.length > 0) {
           const serverRatings: RatingEntry[] = res.data.ratings.map((r: any) => ({
             wineId: r.wine_id,
@@ -91,9 +89,7 @@ export default function TastingPage() {
   const handleRatingSubmit = async (wine: Wine, ratings: { acidity: number; body: number; sweetness: number }) => {
     if (!lead) return;
     try {
-      const { data, error } = await supabase.functions.invoke("tourist-actions", {
-        body: { action: "upsert_rating", user_id: lead.id, wine_id: wine.id, stars_acidity: ratings.acidity, stars_body: ratings.body, stars_sweetness: ratings.sweetness },
-      });
+      const { data, error } = await invokeAuth("tourist-actions", { action: "upsert_rating", wine_id: wine.id, stars_acidity: ratings.acidity, stars_body: ratings.body, stars_sweetness: ratings.sweetness });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success("Avaliação enviada com sucesso!");
@@ -121,9 +117,7 @@ export default function TastingPage() {
 
     // Save persona to backend
     try {
-      await supabase.functions.invoke("tourist-actions", {
-        body: { action: "save_persona", user_id: lead.id, persona_key: persona.key, persona_label: persona.label },
-      });
+      await invokeAuth("tourist-actions", { action: "save_persona", persona_key: persona.key, persona_label: persona.label });
     } catch {}
 
     // Navigate to profile/journey page with persona data
