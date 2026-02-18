@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validatePackageData, isUUID } from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -69,20 +70,25 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "create": {
-        if (!package_data?.name) return json({ error: "name required" }, 400);
+        if (!package_data || typeof package_data !== "object") return json({ error: "package_data required" }, 400);
+        const validated = validatePackageData(package_data);
+        if (validated.error) return json({ error: validated.error }, 400);
         const { data, error } = await supabase
           .from("tasting_packages")
-          .insert({ ...package_data, winery_id })
+          .insert({ ...validated.data, winery_id })
           .select()
           .single();
         if (error) throw error;
         return json({ success: true, data });
       }
       case "update": {
-        if (!package_id) return json({ error: "package_id required" }, 400);
+        if (!isUUID(package_id)) return json({ error: "Valid package_id required" }, 400);
+        if (!package_data || typeof package_data !== "object") return json({ error: "package_data required" }, 400);
+        const validatedUpdate = validatePackageData(package_data);
+        if (validatedUpdate.error) return json({ error: validatedUpdate.error }, 400);
         const { data, error } = await supabase
           .from("tasting_packages")
-          .update(package_data)
+          .update(validatedUpdate.data)
           .eq("id", package_id)
           .eq("winery_id", winery_id)
           .select()
@@ -91,7 +97,7 @@ Deno.serve(async (req) => {
         return json({ success: true, data });
       }
       case "delete": {
-        if (!package_id) return json({ error: "package_id required" }, 400);
+        if (!isUUID(package_id)) return json({ error: "Valid package_id required" }, 400);
         const { error } = await supabase
           .from("tasting_packages")
           .delete()

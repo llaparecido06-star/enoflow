@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isUUID, str, num, optStr, optNum, bool, intRange } from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -264,8 +265,11 @@ Deno.serve(async (req) => {
     // ─── ACTION: bulk_import ─────────────────────────────
     if (action === "bulk_import") {
       const { winery_id, import_type, items } = body;
-      if (!winery_id || !import_type || !items || !Array.isArray(items)) {
+      if (!isUUID(winery_id) || !import_type || !items || !Array.isArray(items)) {
         return json({ error: "winery_id, import_type, items[] required" }, 400);
+      }
+      if (items.length > 500) {
+        return json({ error: "Maximum 500 items per import" }, 400);
       }
       const { data: winery } = await supabase.from("wineries").select("id").eq("id", winery_id).single();
       if (!winery) return json({ error: "Vinícola não encontrada" }, 404);
@@ -274,29 +278,34 @@ Deno.serve(async (req) => {
 
       if (import_type === "wines") {
         const rows = items.map((item: Record<string, unknown>) => ({
-          winery_id, name: String(item.name || "").slice(0, 200), type: String(item.type || "Tinto"),
-          grape: item.grape ? String(item.grape).slice(0, 100) : null,
-          year: item.year ? Number(item.year) : null, region: item.region ? String(item.region).slice(0, 100) : null,
-          price_bottle: Number(item.price_bottle || item.price || 0),
-          price_glass: item.price_glass ? Number(item.price_glass) : null,
-          description: item.description ? String(item.description).slice(0, 500) : null,
-          alcohol_content: item.alcohol_content ? String(item.alcohol_content) : null,
-          on_tasting: Boolean(item.on_tasting), on_restaurant: Boolean(item.on_restaurant), on_shop: item.on_shop !== false,
+          winery_id, name: str(item.name, 200), type: str(item.type || "Tinto", 50),
+          grape: optStr(item.grape, 100),
+          year: item.year != null ? intRange(item.year, 1900, 2100, new Date().getFullYear()) : null,
+          region: optStr(item.region, 100),
+          price_bottle: num(item.price_bottle || item.price, 0, 999999),
+          price_glass: optNum(item.price_glass, 0, 999999),
+          description: optStr(item.description, 500),
+          alcohol_content: optStr(item.alcohol_content, 20),
+          sensory_acidity: intRange(item.sensory_acidity, 1, 5, 3),
+          sensory_body: intRange(item.sensory_body, 1, 5, 3),
+          sensory_sweetness: intRange(item.sensory_sweetness, 1, 5, 3),
+          on_tasting: bool(item.on_tasting), on_restaurant: bool(item.on_restaurant), on_shop: bool(item.on_shop, true),
         })).filter(r => r.name);
         if (rows.length > 0) { const { error } = await supabase.from("wines").insert(rows); if (error) throw error; insertedCount = rows.length; }
       } else if (import_type === "menu") {
         const rows = items.map((item: Record<string, unknown>) => ({
-          winery_id, name: String(item.name || "").slice(0, 200), category: String(item.category || "Outros"),
-          price: Number(item.price || 0), description: item.description ? String(item.description).slice(0, 500) : null,
+          winery_id, name: str(item.name, 200), category: str(item.category || "Outros", 100),
+          price: num(item.price, 0, 999999), description: optStr(item.description, 500),
         })).filter(r => r.name);
         if (rows.length > 0) { const { error } = await supabase.from("menu_items").insert(rows); if (error) throw error; insertedCount = rows.length; }
       } else if (import_type === "packages") {
-        for (const item of items) {
+        for (const item of items.slice(0, 500)) {
           if (!item.name) continue;
           const { error } = await supabase.from("tasting_packages").insert({
-            winery_id, name: String(item.name).slice(0, 200),
-            description: item.description ? String(item.description).slice(0, 500) : null,
-            price: Number(item.price || 0), wine_ids: Array.isArray(item.wine_ids) ? item.wine_ids : [],
+            winery_id, name: str(item.name, 200),
+            description: optStr(item.description, 500),
+            price: num(item.price, 0, 999999),
+            wine_ids: Array.isArray(item.wine_ids) ? item.wine_ids.slice(0, 50).filter((id: unknown) => isUUID(id)) : [],
           });
           if (!error) insertedCount++;
         }

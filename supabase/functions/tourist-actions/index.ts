@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateVoucherItems, isUUID, str } from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,7 +68,7 @@ Deno.serve(async (req) => {
     // ─── ACTION: upsert_rating ───────────────────────────
     if (action === "upsert_rating") {
       const { wine_id, stars_acidity, stars_body, stars_sweetness } = body;
-      if (!wine_id) return json({ error: "wine_id required" }, 400);
+      if (!isUUID(wine_id)) return json({ error: "Valid wine_id required" }, 400);
 
       const validStar = (v: unknown) => typeof v === "number" && v >= 1 && v <= 5;
       if (!validStar(stars_acidity) || !validStar(stars_body) || !validStar(stars_sweetness)) {
@@ -128,11 +129,16 @@ Deno.serve(async (req) => {
         return json({ error: "Invalid code" }, 400);
       }
 
+      const { valid, sanitized } = validateVoucherItems(items);
+      if (!valid) {
+        return json({ error: "Invalid items format" }, 400);
+      }
+
       const { data, error } = await supabase.from("vouchers").insert({
         winery_id,
         user_id,
-        code: String(code).slice(0, 20),
-        items,
+        code: str(code, 20),
+        items: sanitized,
         total,
       }).select().single();
 
