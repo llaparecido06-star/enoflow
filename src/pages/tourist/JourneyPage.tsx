@@ -4,7 +4,7 @@ import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useTouristAuth } from "@/hooks/useTouristAuth";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useCart } from "@/hooks/useCart";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { calculatePersona, type WinePersona } from "@/components/tourist/CelebrationModal";
 import Confetti from "@/components/tourist/Confetti";
 import { motion } from "framer-motion";
@@ -59,9 +59,7 @@ export default function JourneyPage() {
     if (!lead?.id) { setLoadingRatings(false); return; }
     (async () => {
       try {
-        const res = await supabase.functions.invoke("tourist-actions", {
-          body: { action: "get_ratings", user_id: lead.id },
-        });
+        const res = await invokeAuth("tourist-actions", { action: "get_ratings" });
         if (res.data?.ratings) setRatings(res.data.ratings);
       } catch { }
       setLoadingRatings(false);

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import type { TastingPackage, Wine } from "@/hooks/useWinery";
@@ -46,14 +46,10 @@ export default function PackageFormModal({ wineryId, adminId, pkg, wines, onClos
         wine_ids: Array.from(form.wine_ids),
       };
 
-      const { data, error } = await supabase.functions.invoke("admin-packages", {
-        body: {
-          action: isEdit ? "update" : "create",
-          admin_id: adminId,
-          winery_id: wineryId,
-          package_id: isEdit ? pkg!.id : undefined,
-          package_data,
-        },
+      const { data, error } = await invokeAuth("admin-packages", {
+        action: isEdit ? "update" : "create",
+        package_id: isEdit ? pkg!.id : undefined,
+        package_data,
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

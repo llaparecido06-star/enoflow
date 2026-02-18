@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { setSessionToken, clearSessionToken } from "@/lib/auth-api";
 
 interface Lead {
   id: string;
@@ -41,12 +42,16 @@ export function TouristAuthProvider({ children, wineryId }: { children: ReactNod
   }, [wineryId]);
 
   const login = useCallback(async (name: string, whatsapp: string, wineryId: string) => {
-    const res = await supabase.functions.invoke("tourist-login", {
-      body: { name, whatsapp, winery_id: wineryId },
+    const res = await supabase.functions.invoke("session-auth", {
+      body: { type: "tourist", name, whatsapp, winery_id: wineryId },
     });
 
     if (res.error) throw res.error;
     if (res.data?.error) throw new Error(res.data.error);
+    if (!res.data?.lead || !res.data?.token) throw new Error("Erro ao fazer login");
+
+    // Store JWT token for authenticated tourist API calls
+    setSessionToken(res.data.token);
 
     const lead = res.data.lead as Lead;
     setLead(lead);
@@ -56,6 +61,7 @@ export function TouristAuthProvider({ children, wineryId }: { children: ReactNod
   const logout = useCallback(() => {
     setLead(null);
     localStorage.removeItem(`lead_${wineryId}`);
+    clearSessionToken();
   }, [wineryId]);
 
   return (
