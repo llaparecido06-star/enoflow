@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { useOutletContext, useLocation } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useTouristAuth } from "@/hooks/useTouristAuth";
 import { useCart } from "@/hooks/useCart";
@@ -246,6 +246,7 @@ export default function ShopPage() {
   const { data: wines } = useWines(winery.id);
   const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart();
   const { favorites, isFavorite, toggleFavorite } = useFavorites(lead?.id);
+  const location = useLocation();
   const [voucher, setVoucher] = useState<{ code: string } | null>(null);
   const [showCart, setShowCart] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -256,6 +257,22 @@ export default function ShopPage() {
   const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [detailWine, setDetailWine] = useState<Wine | null>(null);
+  const [discountApplied, setDiscountApplied] = useState(false);
+
+  // Handle wine added from profile recommendation
+  useEffect(() => {
+    const navState = location.state as { addToCart?: Wine; applyDiscount?: boolean } | null;
+    if (navState?.addToCart) {
+      addItem(navState.addToCart);
+      if (navState.applyDiscount) setDiscountApplied(true);
+      setShowCart(true);
+      // Clear nav state
+      window.history.replaceState({}, "");
+    }
+  }, [location.state]);
+
+  const discountMultiplier = discountApplied ? 0.9 : 1;
+  const discountedTotal = total * discountMultiplier;
 
   const shopWines = wines?.filter((w) => w.on_shop) ?? [];
 
@@ -300,8 +317,8 @@ export default function ShopPage() {
           user_id: lead.id,
           winery_id: winery.id,
           code,
-          items: items.map((i) => ({ wine_id: i.wine.id, name: i.wine.name, qty: i.quantity, price: i.wine.price_bottle })),
-          total,
+          items: items.map((i) => ({ wine_id: i.wine.id, name: i.wine.name, qty: i.quantity, price: i.wine.price_bottle * discountMultiplier })),
+          total: discountedTotal,
         },
       });
       if (error) throw error;
@@ -336,7 +353,7 @@ export default function ShopPage() {
             <ShoppingBag className="w-4 h-4" />
             <span className="text-sm font-medium">{items.length} {items.length === 1 ? "item" : "itens"}</span>
           </div>
-          <span className="font-display font-bold">R$ {total.toFixed(2)}</span>
+          <span className="font-display font-bold">R$ {discountedTotal.toFixed(2)}{discountApplied && " (-10%)"}</span>
         </motion.button>
       )}
 
@@ -375,7 +392,11 @@ export default function ShopPage() {
                 </div>
               ))}
               <div className="pt-3 border-t border-border flex items-center justify-between">
-                <span className="font-display font-bold text-lg text-gold">R$ {total.toFixed(2)}</span>
+                <div>
+                  {discountApplied && <p className="text-[10px] text-muted-foreground line-through">R$ {total.toFixed(2)}</p>}
+                  <span className="font-display font-bold text-lg text-gold">R$ {discountedTotal.toFixed(2)}</span>
+                  {discountApplied && <span className="text-[10px] text-green-500 ml-1 font-medium">-10%</span>}
+                </div>
                 <button onClick={generateVoucher} disabled={generating}
                   className="bg-gold text-gold-foreground px-4 py-2 rounded-xl text-sm font-medium hover:bg-gold/90 transition-colors disabled:opacity-50">
                   {generating ? "Gerando..." : "Gerar Voucher"}
