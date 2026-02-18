@@ -2,18 +2,73 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
 };
+
+async function verifySession(req: Request): Promise<{ sub: string; type: string } | null> {
+  try {
+    const token = req.headers.get("x-session-token");
+    if (!token) return null;
+    const [hB64, pB64, sB64] = token.split(".");
+    if (!hB64 || !pB64 || !sB64) return null;
+    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+    const sig = Uint8Array.from(atob(sB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+    const valid = await crypto.subtle.verify("HMAC", key, sig, new TextEncoder().encode(`${hB64}.${pB64}`));
+    if (!valid) return null;
+    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(pB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0))));
+    if (payload.exp && payload.exp < Date.now() / 1000) return null;
+    return payload;
+  } catch { return null; }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { dish_name, dish_description, wines } = await req.json();
+    const session = await verifySession(req);
+    if (!session) {
+      return new Response(JSON.stringify({ error: "Não autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body = await req.json();
+    const { dish_name, dish_description, wines, prompt, mode } = body;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    // Build wine list for context
+    // Extract mode (used by MasterImportPage)
+    if (mode === "extract" && prompt) {
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            { role: "user", content: prompt },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error("AI error:", response.status, errText);
+        throw new Error("AI gateway error");
+      }
+
+      const aiData = await response.json();
+      const content = aiData.choices?.[0]?.message?.content ?? "";
+      return new Response(JSON.stringify({ suggestion: content }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Sommelier suggestion mode
     const wineList = wines.map((w: any) =>
       `- ${w.name} (${w.type}): Acidez ${w.sensory_acidity}/5, Corpo ${w.sensory_body}/5, Doçura ${w.sensory_sweetness}/5. R$ ${w.price_bottle} garrafa${w.price_glass ? `, R$ ${w.price_glass} taça` : ''}`
     ).join("\n");
@@ -75,7 +130,6 @@ ${wineList}`;
     const aiData = await response.json();
     const content = aiData.choices?.[0]?.message?.content ?? "";
 
-    // Parse JSON from response (handle markdown code blocks)
     let jsonStr = content;
     const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (codeBlockMatch) jsonStr = codeBlockMatch[1];

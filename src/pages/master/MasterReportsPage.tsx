@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { Users, Receipt, TrendingUp, BarChart3, Star, Loader2, Filter } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,12 +39,9 @@ export default function MasterReportsPage() {
   const fetchReports = async (wineryId?: string) => {
     setLoading(true);
     try {
-      const res = await supabase.functions.invoke("master-dashboard", {
-        body: {
-          admin_id: admin.id,
+      const res = await invokeAuth("master-dashboard", {
           action: "reports",
           ...(wineryId && wineryId !== "all" ? { winery_id: wineryId } : {}),
-        },
       });
       if (res.error) throw res.error;
       if (res.data?.error) throw new Error(res.data.error);

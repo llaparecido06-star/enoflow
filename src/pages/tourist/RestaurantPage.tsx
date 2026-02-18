@@ -5,7 +5,7 @@ import { useMenuItems, type MenuItem } from "@/hooks/useMenuItems";
 import { motion, AnimatePresence } from "framer-motion";
 import { UtensilsCrossed, Wine as WineIcon, Sparkles, Search, Loader2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 
 interface SommelierRecommendation {
   wine_id: string;
@@ -178,8 +178,7 @@ export default function RestaurantPage() {
     setAiLoading(true);
     setRecommendations([]);
     try {
-      const { data, error } = await supabase.functions.invoke("sommelier-suggest", {
-        body: {
+      const { data, error } = await invokeAuth("sommelier-suggest", {
           dish_name: item.name,
           dish_description: item.description,
           wines: allWines.map((w) => ({
@@ -192,7 +191,6 @@ export default function RestaurantPage() {
             price_bottle: w.price_bottle,
             price_glass: w.price_glass,
           })),
-        },
       });
       if (error) throw error;
       setRecommendations(data?.recommendations ?? []);

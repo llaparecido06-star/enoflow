@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { Upload, FileSpreadsheet, FileText, Sparkles, Loader2, Check, Wine, UtensilsCrossed, Package } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -36,9 +36,7 @@ export default function MasterImportPage() {
 
   useEffect(() => {
     const fetch = async () => {
-      const res = await supabase.functions.invoke("master-dashboard", {
-        body: { admin_id: admin.id, action: "list_admins" },
-      });
+      const res = await invokeAuth("master-dashboard", { action: "list_admins" });
       setWineries(res.data?.wineries ?? []);
       if (res.data?.wineries?.length > 0) setWineryId(res.data.wineries[0].id);
       setLoading(false);
@@ -97,9 +95,7 @@ export default function MasterImportPage() {
 
       const prompt = `${typePrompts[importType]}\n\nConteúdo:\n${rawText.slice(0, 8000)}`;
 
-      const res = await supabase.functions.invoke("sommelier-suggest", {
-        body: { prompt, mode: "extract" },
-      });
+      const res = await invokeAuth("sommelier-suggest", { prompt, mode: "extract" });
 
       if (res.error) throw res.error;
 
@@ -126,14 +122,11 @@ export default function MasterImportPage() {
     setProcessing(true);
     setResult(null);
     try {
-      const res = await supabase.functions.invoke("master-dashboard", {
-        body: {
-          admin_id: admin.id,
+      const res = await invokeAuth("master-dashboard", {
           action: "bulk_import",
           winery_id: wineryId,
           import_type: importType,
           items: parsedItems,
-        },
       });
       if (res.data?.error) throw new Error(res.data.error);
       setResult({ success: true, count: res.data.inserted ?? 0 });

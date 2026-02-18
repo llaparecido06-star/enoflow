@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { Users, Plus, Pencil, Trash2, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -54,9 +54,7 @@ export default function MasterAdminsPage() {
 
   const fetchAdmins = async () => {
     try {
-      const res = await supabase.functions.invoke("master-dashboard", {
-        body: { admin_id: admin.id, action: "list_admins" },
-      });
+      const res = await invokeAuth("master-dashboard", { action: "list_admins" });
       if (res.error) throw res.error;
       if (res.data?.error) throw new Error(res.data.error);
       setAdmins(res.data.admins ?? []);
@@ -86,24 +84,19 @@ export default function MasterAdminsPage() {
     setSaving(true);
     try {
       if (editTarget) {
-        const res = await supabase.functions.invoke("master-dashboard", {
-          body: {
-            admin_id: admin.id,
+        const res = await invokeAuth("master-dashboard", {
             action: "update_admin",
             target_id: editTarget.id,
             name: form.name,
             email: form.email,
             password: form.password || undefined,
             role: form.role,
-          },
         });
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Admin atualizado!");
       } else {
         if (!form.password) { toast.error("Senha obrigatória"); setSaving(false); return; }
-        const res = await supabase.functions.invoke("master-dashboard", {
-          body: { admin_id: admin.id, action: "create_admin", ...form },
-        });
+        const res = await invokeAuth("master-dashboard", { action: "create_admin", ...form });
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Admin criado!");
       }
@@ -120,9 +113,7 @@ export default function MasterAdminsPage() {
     if (!deleteTarget) return;
     setSaving(true);
     try {
-      const res = await supabase.functions.invoke("master-dashboard", {
-        body: { admin_id: admin.id, action: "delete_admin", target_id: deleteTarget.id },
-      });
+      const res = await invokeAuth("master-dashboard", { action: "delete_admin", target_id: deleteTarget.id });
       if (res.data?.error) throw new Error(res.data.error);
       toast.success("Admin removido!");
       setDeleteTarget(null);

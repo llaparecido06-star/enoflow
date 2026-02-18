@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { Building2, Users, Wine, Receipt, Loader2, ExternalLink, Plus, Pencil, Trash2, Image } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -45,9 +45,7 @@ export default function MasterWineriesPage() {
 
   const fetchData = async () => {
     try {
-      const res = await supabase.functions.invoke("master-dashboard", {
-        body: { admin_id: admin.id },
-      });
+      const res = await invokeAuth("master-dashboard", {});
       if (res.error) throw res.error;
       if (res.data?.error) throw new Error(res.data.error);
       setWineries(res.data.wineries ?? []);
@@ -77,9 +75,7 @@ export default function MasterWineriesPage() {
     setSaving(true);
     try {
       if (editTarget) {
-        const res = await supabase.functions.invoke("master-dashboard", {
-          body: {
-            admin_id: admin.id,
+        const res = await invokeAuth("master-dashboard", {
             action: "update_winery",
             winery_id: editTarget.id,
             name: form.name,
@@ -87,14 +83,11 @@ export default function MasterWineriesPage() {
             primary_color: form.primary_color,
             plan_level: form.plan_level,
             logo_url: form.logo_url || null,
-          },
         });
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinícola atualizada!");
       } else {
-        const res = await supabase.functions.invoke("master-dashboard", {
-          body: { admin_id: admin.id, action: "create_winery", ...form, logo_url: form.logo_url || null },
-        });
+        const res = await invokeAuth("master-dashboard", { action: "create_winery", ...form, logo_url: form.logo_url || null });
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinícola criada!");
       }
@@ -111,9 +104,7 @@ export default function MasterWineriesPage() {
     if (!deleteTarget) return;
     setSaving(true);
     try {
-      const res = await supabase.functions.invoke("master-dashboard", {
-        body: { admin_id: admin.id, action: "delete_winery", winery_id: deleteTarget.id },
-      });
+      const res = await invokeAuth("master-dashboard", { action: "delete_winery", winery_id: deleteTarget.id });
       if (res.data?.error) throw new Error(res.data.error);
       toast.success("Vinícola removida!");
       setDeleteTarget(null);
@@ -133,9 +124,7 @@ export default function MasterWineriesPage() {
     formData.append("file", file);
 
     try {
-      const { data, error } = await supabase.functions.invoke("upload-logo", {
-        body: formData,
-      });
+      const { data, error } = await invokeAuth("upload-logo", formData);
       if (error || !data?.url) {
         toast.error(data?.error || "Erro ao enviar logo");
         return;
@@ -150,9 +139,7 @@ export default function MasterWineriesPage() {
   const updatePlan = async (wineryId: string, plan: string) => {
     setUpdatingId(wineryId);
     try {
-      const res = await supabase.functions.invoke("master-dashboard", {
-        body: { admin_id: admin.id, action: "update_plan", winery_id: wineryId, plan_level: plan },
-      });
+      const res = await invokeAuth("master-dashboard", { action: "update_plan", winery_id: wineryId, plan_level: plan });
       if (res.error) throw res.error;
       toast.success("Plano atualizado!");
       setWineries(prev => prev.map(w => w.id === wineryId ? { ...w, plan_level: plan } : w));
