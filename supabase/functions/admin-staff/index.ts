@@ -101,12 +101,16 @@ Deno.serve(async (req) => {
         return json({ error: "Email já cadastrado nesta vinícola" }, 400);
       }
 
+      // Hash password with bcrypt via DB function
+      const { data: hashResult } = await supabase.rpc("hash_password", { p_password: password.slice(0, 100) });
+      if (!hashResult) return json({ error: "Erro ao processar senha" }, 500);
+
       const { data: newStaff, error } = await supabase
         .from("admin_users")
         .insert({
           name: name.trim().slice(0, 100),
           email: email.trim().toLowerCase().slice(0, 255),
-          password_hash: password.slice(0, 100),
+          password_hash: hashResult,
           role,
           winery_id,
         })
@@ -132,7 +136,10 @@ Deno.serve(async (req) => {
       const updates: Record<string, string> = {};
       if (name && typeof name === "string") updates.name = name.trim().slice(0, 100);
       if (email && typeof email === "string") updates.email = email.trim().toLowerCase().slice(0, 255);
-      if (password && typeof password === "string" && password.length >= 6) updates.password_hash = password.slice(0, 100);
+      if (password && typeof password === "string" && password.length >= 6) {
+        const { data: hashResult } = await supabase.rpc("hash_password", { p_password: password.slice(0, 100) });
+        if (hashResult) updates.password_hash = hashResult;
+      }
       if (role && ["staff", "manager"].includes(role)) updates.role = role;
 
       if (Object.keys(updates).length === 0) return json({ error: "Nada para atualizar" }, 400);
