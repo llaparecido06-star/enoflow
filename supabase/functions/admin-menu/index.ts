@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateMenuItemData, isUUID } from "../_shared/validation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -74,9 +75,16 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "create": {
+        if (!item_data || typeof item_data !== "object") {
+          return new Response(JSON.stringify({ error: "item_data required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const validated = validateMenuItemData(item_data);
+        if (validated.error) {
+          return new Response(JSON.stringify({ error: validated.error }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
         const { data, error } = await supabase
           .from("menu_items")
-          .insert({ ...item_data, winery_id })
+          .insert({ ...validated.data, winery_id })
           .select()
           .single();
         if (error) throw error;
@@ -84,10 +92,19 @@ Deno.serve(async (req) => {
         break;
       }
       case "update": {
-        if (!item_id) throw new Error("item_id required");
+        if (!isUUID(item_id)) {
+          return new Response(JSON.stringify({ error: "Valid item_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        if (!item_data || typeof item_data !== "object") {
+          return new Response(JSON.stringify({ error: "item_data required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        const validatedUpdate = validateMenuItemData(item_data);
+        if (validatedUpdate.error) {
+          return new Response(JSON.stringify({ error: validatedUpdate.error }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
         const { data, error } = await supabase
           .from("menu_items")
-          .update(item_data)
+          .update(validatedUpdate.data)
           .eq("id", item_id)
           .eq("winery_id", winery_id)
           .select()
@@ -97,7 +114,9 @@ Deno.serve(async (req) => {
         break;
       }
       case "delete": {
-        if (!item_id) throw new Error("item_id required");
+        if (!isUUID(item_id)) {
+          return new Response(JSON.stringify({ error: "Valid item_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
         const { error } = await supabase
           .from("menu_items")
           .delete()
