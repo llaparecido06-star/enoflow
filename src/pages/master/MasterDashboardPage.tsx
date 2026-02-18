@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Users, Wine, Receipt, TrendingUp, DollarSign, BarChart3, Loader2 } from "lucide-react";
+import { Building2, Users, Wine, Receipt, TrendingUp, DollarSign, BarChart3, Loader2, Sparkles } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 interface Metrics {
@@ -16,10 +16,26 @@ interface Metrics {
   total_admins: number;
 }
 
+interface PersonaStats {
+  sweet_tooth: number;
+  bold_intense: number;
+  fresh_crisp: number;
+  balanced_explorer: number;
+}
+
+const personaLabels: Record<string, { label: string; emoji: string; color: string }> = {
+  sweet_tooth: { label: "Amantes de Doçura", emoji: "🍬", color: "text-pink-400" },
+  bold_intense: { label: "Encorpados", emoji: "🦁", color: "text-red-400" },
+  fresh_crisp: { label: "Frescos & Leves", emoji: "🍋", color: "text-green-400" },
+  balanced_explorer: { label: "Equilibrados", emoji: "⚖️", color: "text-blue-400" },
+};
+
 export default function MasterDashboardPage() {
   const { admin } = useOutletContext<{ admin: MasterAdmin }>();
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [leadsChart, setLeadsChart] = useState<{ date: string; count: number }[]>([]);
+  const [personaStats, setPersonaStats] = useState<PersonaStats | null>(null);
+  const [personaTotal, setPersonaTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +48,8 @@ export default function MasterDashboardPage() {
         if (res.data?.error) throw new Error(res.data.error);
         setMetrics(res.data.metrics);
         setLeadsChart(res.data.leads_chart ?? []);
+        setPersonaStats(res.data.persona_stats ?? null);
+        setPersonaTotal(res.data.persona_total ?? 0);
       } catch {
         console.error("Erro ao carregar dashboard");
       } finally {
@@ -45,6 +63,7 @@ export default function MasterDashboardPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
+        <span className="ml-3 text-sm text-muted-foreground italic">Consultando nosso Sommelier Digital...</span>
       </div>
     );
   }
@@ -68,6 +87,32 @@ export default function MasterDashboardPage() {
         <h1 className="font-display text-2xl font-bold text-foreground">Dashboard Master</h1>
         <p className="text-sm text-muted-foreground">Visão global da plataforma SmartSommelier</p>
       </div>
+
+      {/* Persona Intelligence Card */}
+      {personaStats && personaTotal > 0 && (
+        <div className="bg-gradient-to-r from-wine/10 to-gold/10 rounded-xl border border-gold/20 p-4 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-4 h-4 text-gold" />
+            <h3 className="font-display text-sm font-semibold text-foreground">Perfil do Público Hoje</h3>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(personaStats).filter(([, v]) => v > 0).map(([key, count]) => {
+              const info = personaLabels[key];
+              const pct = Math.round((count / personaTotal) * 100);
+              return (
+                <div key={key} className="flex items-center gap-2 bg-card/50 rounded-lg p-2.5">
+                  <span className="text-lg">{info.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] text-muted-foreground truncate">{info.label}</p>
+                    <p className="font-display text-sm font-bold text-foreground">{pct}%</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2">Baseado em {personaTotal} degustações de hoje</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
         {stats.map((stat) => (

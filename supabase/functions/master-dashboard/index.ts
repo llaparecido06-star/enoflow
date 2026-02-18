@@ -326,13 +326,14 @@ Deno.serve(async (req) => {
     }
 
     // ─── DEFAULT: dashboard metrics ──────────────────────
-    const [wineriesRes, leadsRes, winesRes, vouchersRes, automationsRes, adminsRes] = await Promise.all([
+    const [wineriesRes, leadsRes, winesRes, vouchersRes, automationsRes, adminsRes, ratingsRes] = await Promise.all([
       supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at"),
-      supabase.from("users_leads").select("id, winery_id, created_at"),
+      supabase.from("users_leads").select("id, winery_id, created_at, preferences_summary"),
       supabase.from("wines").select("id, winery_id"),
       supabase.from("vouchers").select("id, winery_id, total, redeemed, created_at"),
       supabase.from("automations").select("id, winery_id, commission_value, status"),
       supabase.from("admin_users").select("id, winery_id, role"),
+      supabase.from("ratings").select("id, user_id, stars_acidity, stars_body, stars_sweetness, created_at"),
     ]);
 
     const wineries = wineriesRes.data ?? [];
@@ -341,6 +342,7 @@ Deno.serve(async (req) => {
     const vouchers = vouchersRes.data ?? [];
     const automations = automationsRes.data ?? [];
     const admins = adminsRes.data ?? [];
+    const allRatings = ratingsRes.data ?? [];
 
     const totalVoucherValue = vouchers.reduce((s, v) => s + Number(v.total || 0), 0);
     const redeemedVoucherValue = vouchers.filter(v => v.redeemed).reduce((s, v) => s + Number(v.total || 0), 0);
@@ -370,6 +372,30 @@ Deno.serve(async (req) => {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, count]) => ({ date, count }));
 
+    // ─── Persona stats (today's ratings) ──────────────────
+    const todayStr = now.toISOString().slice(0, 10);
+    const todayRatings = allRatings.filter(r => r.created_at?.slice(0, 10) === todayStr);
+    
+    // Group by user and calculate persona
+    const userRatings: Record<string, { acidity: number[]; body: number[]; sweetness: number[] }> = {};
+    todayRatings.forEach(r => {
+      if (!userRatings[r.user_id]) userRatings[r.user_id] = { acidity: [], body: [], sweetness: [] };
+      userRatings[r.user_id].acidity.push(r.stars_acidity);
+      userRatings[r.user_id].body.push(r.stars_body);
+      userRatings[r.user_id].sweetness.push(r.stars_sweetness);
+    });
+
+    const personaCounts: Record<string, number> = { sweet_tooth: 0, bold_intense: 0, fresh_crisp: 0, balanced_explorer: 0 };
+    Object.values(userRatings).forEach(ur => {
+      const avgA = ur.acidity.reduce((s, v) => s + v, 0) / ur.acidity.length;
+      const avgB = ur.body.reduce((s, v) => s + v, 0) / ur.body.length;
+      const avgS = ur.sweetness.reduce((s, v) => s + v, 0) / ur.sweetness.length;
+      if (avgS > 4) personaCounts.sweet_tooth++;
+      else if (avgB > 4) personaCounts.bold_intense++;
+      else if (avgA > 4) personaCounts.fresh_crisp++;
+      else personaCounts.balanced_explorer++;
+    });
+
     return json({
       success: true,
       metrics: {
@@ -384,6 +410,8 @@ Deno.serve(async (req) => {
       },
       wineries: wineryMetrics,
       leads_chart: leadsChart,
+      persona_stats: personaCounts,
+      persona_total: Object.values(personaCounts).reduce((s, v) => s + v, 0),
     });
   } catch (error) {
     return json({ error: error.message }, 500);

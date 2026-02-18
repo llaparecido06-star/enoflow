@@ -45,13 +45,11 @@ Deno.serve(async (req) => {
       const { wine_id, stars_acidity, stars_body, stars_sweetness } = body;
       if (!wine_id) return json({ error: "wine_id required" }, 400);
 
-      // Validate star values (1-5)
       const validStar = (v: unknown) => typeof v === "number" && v >= 1 && v <= 5;
       if (!validStar(stars_acidity) || !validStar(stars_body) || !validStar(stars_sweetness)) {
         return json({ error: "Star values must be between 1 and 5" }, 400);
       }
 
-      // Verify wine exists
       const { data: wine } = await supabase.from("wines").select("id").eq("id", wine_id).single();
       if (!wine) return json({ error: "Wine not found" }, 404);
 
@@ -67,6 +65,30 @@ Deno.serve(async (req) => {
       return json({ success: true, rating: data });
     }
 
+    // ─── ACTION: save_persona ────────────────────────────
+    if (action === "save_persona") {
+      const { persona_key, persona_label } = body;
+      if (!persona_key || !persona_label) return json({ error: "persona_key and persona_label required" }, 400);
+
+      const summary = `Wine Persona: ${String(persona_label).slice(0, 50)} (${String(persona_key).slice(0, 30)})`;
+      const { error } = await supabase
+        .from("users_leads")
+        .update({ preferences_summary: summary })
+        .eq("id", user_id);
+      if (error) throw error;
+      return json({ success: true });
+    }
+
+    // ─── ACTION: get_ratings ─────────────────────────────
+    if (action === "get_ratings") {
+      const { data, error } = await supabase
+        .from("ratings")
+        .select("wine_id, stars_acidity, stars_body, stars_sweetness")
+        .eq("user_id", user_id);
+      if (error) throw error;
+      return json({ success: true, ratings: data ?? [] });
+    }
+
     // ─── ACTION: create_voucher ──────────────────────────
     if (action === "create_voucher") {
       const { winery_id, code, items, total } = body;
@@ -74,17 +96,14 @@ Deno.serve(async (req) => {
         return json({ error: "winery_id, code, items, total required" }, 400);
       }
 
-      // Verify user belongs to winery
       if (user.winery_id !== winery_id) {
         return json({ error: "User does not belong to this winery" }, 403);
       }
 
-      // Validate total is a positive number
       if (typeof total !== "number" || total < 0) {
         return json({ error: "Invalid total" }, 400);
       }
 
-      // Validate code format
       if (typeof code !== "string" || code.length > 20) {
         return json({ error: "Invalid code" }, 400);
       }
