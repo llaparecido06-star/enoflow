@@ -31,7 +31,7 @@ interface CelebrationModalProps {
   onGoToShop: () => void;
 }
 
-function Confetti() {
+function ConfettiEffect() {
   const particles = useMemo(() =>
     Array.from({ length: 50 }).map((_, i) => ({
       id: i,
@@ -74,7 +74,7 @@ export default function CelebrationModal({ persona, recommendations, onClose, on
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md"
     >
-      {showConfetti && <Confetti />}
+      {showConfetti && <ConfettiEffect />}
 
       <motion.div
         initial={{ scale: 0.8, y: 40, opacity: 0 }}

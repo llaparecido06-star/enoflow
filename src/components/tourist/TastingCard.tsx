@@ -9,6 +9,10 @@ interface TastingCardProps {
   onRate: (ratings: { acidity: number; body: number; sweetness: number }) => void;
   isFavorite: boolean;
   onToggleFavorite: () => void;
+  initialRatings?: { acidity: number; body: number; sweetness: number };
+  isLast?: boolean;
+  allRated?: boolean;
+  onFinish?: () => void;
 }
 
 type TabId = "sobre" | "ficha" | "harmonizacao";
@@ -48,13 +52,13 @@ function SensoryStars({ label, value }: { label: string; value: number }) {
   );
 }
 
-export default function TastingCard({ wine, isActive, onRate, isFavorite, onToggleFavorite }: TastingCardProps) {
+export default function TastingCard({ wine, isActive, onRate, isFavorite, onToggleFavorite, initialRatings, isLast, allRated, onFinish }: TastingCardProps) {
   const [activeTab, setActiveTab] = useState<TabId>("sobre");
-  const [acidity, setAcidity] = useState(3);
-  const [body, setBody] = useState(3);
-  const [sweetness, setSweetness] = useState(3);
+  const [acidity, setAcidity] = useState(initialRatings?.acidity ?? 3);
+  const [body, setBody] = useState(initialRatings?.body ?? 3);
+  const [sweetness, setSweetness] = useState(initialRatings?.sweetness ?? 3);
   const [showRating, setShowRating] = useState(false);
-  const [rated, setRated] = useState(false);
+  const [rated, setRated] = useState(!!initialRatings);
 
   const handleSubmit = () => {
     onRate({ acidity, body, sweetness });
@@ -102,6 +106,13 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               {wine.type}
             </span>
           </div>
+          {rated && (
+            <div className="absolute top-4 right-14">
+              <span className="text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-gold/20 backdrop-blur-md text-gold border border-gold/30">
+                ✓ Avaliado
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Header with title + favorite */}
@@ -152,8 +163,6 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
                     "{wine.description}"
                   </blockquote>
                 )}
-
-                {/* Perfil Sensorial - Stars */}
                 <div className="bg-muted/30 rounded-xl p-4 mb-4">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs font-semibold text-foreground">✨ Perfil Sensorial</span>
@@ -164,8 +173,6 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
                     <SensoryStars label="Doçura" value={wine.sensory_sweetness} />
                   </div>
                 </div>
-
-                {/* Price */}
                 <div className="flex items-baseline justify-between">
                   <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Valor</span>
                   <span className="font-display text-xl font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(2)}</span>
@@ -194,7 +201,6 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
                   ))}
                 </div>
 
-                {/* Aromatic notes */}
                 {wine.aromatic_notes && wine.aromatic_notes.length > 0 && (
                   <div className="bg-muted/30 rounded-xl p-4">
                     <span className="text-xs font-semibold text-foreground block mb-2">Notas Aromáticas</span>
@@ -208,7 +214,6 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
                   </div>
                 )}
 
-                {/* Price */}
                 <div className="flex items-baseline justify-between mt-4 pt-3 border-t border-border/30">
                   <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Valor</span>
                   <span className="font-display text-xl font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(2)}</span>
@@ -244,6 +249,9 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
             ) : rated ? (
               <div className="text-center py-2">
                 <p className="text-sm text-gold font-medium">✓ Avaliação enviada</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Acidez: {acidity} · Corpo: {body} · Doçura: {sweetness}
+                </p>
               </div>
             ) : (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
@@ -261,6 +269,19 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               </motion.div>
             )}
           </div>
+
+          {/* Finish button on last card when all are rated */}
+          {isLast && allRated && rated && onFinish && (
+            <motion.button
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              onClick={onFinish}
+              className="w-full mt-4 py-4 rounded-xl bg-gold text-gold-foreground font-display text-base font-bold hover:bg-gold/90 transition-colors animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] flex items-center justify-center gap-2"
+            >
+              <Star className="w-5 h-5" />
+              Finalizar & Descobrir meu Perfil
+            </motion.button>
+          )}
         </div>
       </div>
     </motion.div>

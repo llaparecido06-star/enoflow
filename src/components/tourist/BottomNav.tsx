@@ -10,7 +10,7 @@ const tabs = [
   { id: "tasting", label: "Degustação", icon: Wine, path: "" },
   { id: "restaurant", label: "Restaurante", icon: UtensilsCrossed, path: "/restaurant" },
   { id: "shop", label: "Loja", icon: ShoppingBag, path: "/shop" },
-  { id: "journey", label: "Jornada", icon: Trophy, path: "/journey" },
+  { id: "journey", label: "Meu Perfil", icon: Trophy, path: "/journey" },
 ];
 
 export default function BottomNav({ slug }: BottomNavProps) {
