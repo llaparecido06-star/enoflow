@@ -6,7 +6,7 @@ import type { AdminUser } from "@/hooks/useAdminAuth";
 import { UtensilsCrossed, Plus, Pencil, Trash2, Wine } from "lucide-react";
 import MenuItemFormModal from "@/components/admin/MenuItemFormModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -23,9 +23,7 @@ export default function AdminMenuPage() {
     if (!deleteItem) return;
     setDeleting(true);
     try {
-      const res = await supabase.functions.invoke("admin-menu", {
-        body: { action: "delete", admin_id: admin.id, winery_id: winery.id, item_id: deleteItem.id },
-      });
+      const res = await invokeAuth("admin-menu", { action: "delete", item_id: deleteItem.id });
       if (res.error) throw res.error;
       if (res.data?.error) throw new Error(res.data.error);
       toast.success("Item excluído!");

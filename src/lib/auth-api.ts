@@ -18,8 +18,13 @@ export function clearSessionToken() {
  * Invoke a Supabase edge function with the session token attached.
  * The token is sent as `x-session-token` header so the server can
  * verify identity cryptographically instead of trusting body params.
+ * 
+ * Supports both JSON body (Record) and FormData for file uploads.
  */
-export async function invokeAuth(functionName: string, body: Record<string, unknown> = {}) {
+export async function invokeAuth(
+  functionName: string,
+  body: Record<string, unknown> | FormData = {}
+) {
   const token = getSessionToken();
   return supabase.functions.invoke(functionName, {
     body,

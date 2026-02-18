@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { setSessionToken, clearSessionToken } from "@/lib/auth-api";
 
 export type AdminRole = "staff" | "manager" | "owner" | "master";
 
@@ -31,19 +33,19 @@ export function useAdminAuth(wineryId: string) {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data, error } = await supabase
-        .rpc("admin_login", {
-          p_email: email,
-          p_password: password,
-          p_winery_id: wineryId,
-        });
+      const { data, error } = await supabase.functions.invoke("session-auth", {
+        body: { type: "admin", email, password, winery_id: wineryId },
+      });
 
-      const result = Array.isArray(data) ? data[0] : data;
+      if (error) throw new Error("Credenciais inválidas");
+      if (data?.error) throw new Error(data.error);
+      if (!data?.user || !data?.token) throw new Error("Credenciais inválidas");
 
-      if (error || !result) throw new Error("Credenciais inválidas");
+      // Store JWT token for authenticated API calls
+      setSessionToken(data.token);
 
-      const user = result as unknown as AdminUser;
+      const user = data.user as AdminUser;
+      // Store minimal display info in localStorage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
       setAdmin(user);
       return user;
@@ -53,6 +55,7 @@ export function useAdminAuth(wineryId: string) {
 
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
+    clearSessionToken();
     setAdmin(null);
   }, []);
 

@@ -5,14 +5,14 @@ import type { AdminUser } from "@/hooks/useAdminAuth";
 import { Wine as WineIcon, Plus, Pencil, Trash2 } from "lucide-react";
 import WineFormModal from "@/components/admin/WineFormModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function AdminWinesPage() {
   const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
   const { data: wines } = useWines(winery.id);
-  const [formWine, setFormWine] = useState<Wine | null | undefined>(undefined); // undefined = closed, null = new, Wine = edit
+  const [formWine, setFormWine] = useState<Wine | null | undefined>(undefined);
   const [deleteWine, setDeleteWine] = useState<Wine | null>(null);
   const [deleting, setDeleting] = useState(false);
   const qc = useQueryClient();
@@ -21,9 +21,7 @@ export default function AdminWinesPage() {
     if (!deleteWine) return;
     setDeleting(true);
     try {
-      const res = await supabase.functions.invoke("admin-wines", {
-        body: { action: "delete", admin_id: admin.id, winery_id: winery.id, wine_id: deleteWine.id },
-      });
+      const res = await invokeAuth("admin-wines", { action: "delete", wine_id: deleteWine.id });
       if (res.error) throw res.error;
       if (res.data?.error) throw new Error(res.data.error);
       toast.success("Vinho excluído!");

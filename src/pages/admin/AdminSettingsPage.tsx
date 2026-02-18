@@ -4,7 +4,7 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { Palette, QrCode, CheckCircle, XCircle, Camera } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 
 export default function AdminSettingsPage() {
@@ -19,13 +19,9 @@ export default function AdminSettingsPage() {
     if (!code.trim()) return;
     setValidating(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-vouchers", {
-        body: {
-          action: "validate",
-          admin_id: admin.id,
-          winery_id: winery.id,
-          voucher_code: code,
-        },
+      const { data, error } = await invokeAuth("admin-vouchers", {
+        action: "validate",
+        voucher_code: code,
       });
 
       if (error) throw error;

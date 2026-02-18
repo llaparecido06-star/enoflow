@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { setSessionToken, clearSessionToken } from "@/lib/auth-api";
 
 export type MasterAdminRole = "master";
 
@@ -30,16 +32,18 @@ export function useMasterAuth() {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const { supabase } = await import("@/integrations/supabase/client");
-    const { data, error } = await supabase.rpc("master_login", {
-      p_email: email,
-      p_password: password,
+    const { data, error } = await supabase.functions.invoke("session-auth", {
+      body: { type: "master", email, password },
     });
 
-    const result = Array.isArray(data) ? data[0] : data;
-    if (error || !result) throw new Error("Credenciais inválidas ou sem permissão Master");
+    if (error) throw new Error("Credenciais inválidas ou sem permissão Master");
+    if (data?.error) throw new Error(data.error);
+    if (!data?.user || !data?.token) throw new Error("Credenciais inválidas ou sem permissão Master");
 
-    const user = result as unknown as MasterAdmin;
+    // Store JWT token for authenticated API calls
+    setSessionToken(data.token);
+
+    const user = data.user as unknown as MasterAdmin;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     setAdmin(user);
     return user;
@@ -47,6 +51,7 @@ export function useMasterAuth() {
 
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
+    clearSessionToken();
     setAdmin(null);
   }, []);
 

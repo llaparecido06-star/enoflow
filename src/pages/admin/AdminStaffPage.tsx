@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { Users, Plus, Pencil, Trash2, X, Loader2, Shield, ShieldCheck, ShieldAlert } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 
@@ -42,9 +42,7 @@ export default function AdminStaffPage() {
   const fetchStaff = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-staff", {
-        body: { action: "list", admin_id: admin.id, winery_id: winery.id },
-      });
+      const { data, error } = await invokeAuth("admin-staff", { action: "list" });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setStaff(data.staff ?? []);
@@ -83,32 +81,24 @@ export default function AdminStaffPage() {
 
     try {
       if (editStaff) {
-        const { data, error } = await supabase.functions.invoke("admin-staff", {
-          body: {
-            action: "update",
-            admin_id: admin.id,
-            winery_id: winery.id,
-            target_id: editStaff.id,
-            name: form.name.trim(),
-            email: form.email.trim(),
-            password: form.password || undefined,
-            role: form.role,
-          },
+        const { data, error } = await invokeAuth("admin-staff", {
+          action: "update",
+          target_id: editStaff.id,
+          name: form.name.trim(),
+          email: form.email.trim(),
+          password: form.password || undefined,
+          role: form.role,
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         toast.success("Funcionário atualizado!");
       } else {
-        const { data, error } = await supabase.functions.invoke("admin-staff", {
-          body: {
-            action: "create",
-            admin_id: admin.id,
-            winery_id: winery.id,
-            name: form.name.trim(),
-            email: form.email.trim(),
-            password: form.password,
-            role: form.role,
-          },
+        const { data, error } = await invokeAuth("admin-staff", {
+          action: "create",
+          name: form.name.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          role: form.role,
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
@@ -125,13 +115,9 @@ export default function AdminStaffPage() {
     if (!deleteStaff) return;
     setDeleting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-staff", {
-        body: {
-          action: "delete",
-          admin_id: admin.id,
-          winery_id: winery.id,
-          target_id: deleteStaff.id,
-        },
+      const { data, error } = await invokeAuth("admin-staff", {
+        action: "delete",
+        target_id: deleteStaff.id,
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -229,43 +215,26 @@ export default function AdminStaffPage() {
             <div className="p-4 space-y-4">
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">Nome *</label>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  maxLength={100}
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
+                <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} maxLength={100}
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">E-mail *</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  maxLength={255}
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
+                <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} maxLength={255}
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">
                   Senha {editStaff ? "(deixe vazio para manter)" : "*"}
                 </label>
-                <input
-                  type="password"
-                  value={form.password}
-                  onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                  maxLength={100}
+                <input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} maxLength={100}
                   placeholder={editStaff ? "••••••" : ""}
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">Nível de Acesso *</label>
-                <select
-                  value={form.role}
-                  onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
+                <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20">
                   <option value="staff">Funcionário — Apenas vouchers</option>
                   <option value="manager">Gerente — Vinhos, pacotes e cardápio</option>
                 </select>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { Users, Download, Phone, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
@@ -22,9 +22,7 @@ export default function AdminLeadsPage() {
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        const res = await supabase.functions.invoke("admin-leads", {
-          body: { admin_id: admin.id, winery_id: winery.id },
-        });
+        const res = await invokeAuth("admin-leads", {});
         if (res.error) throw res.error;
         if (res.data?.error) throw new Error(res.data.error);
         setLeads(res.data.leads ?? []);

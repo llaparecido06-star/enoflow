@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Star } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Wine } from "@/hooks/useWinery";
@@ -95,16 +95,12 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
       };
 
       if (isEdit) {
-        const res = await supabase.functions.invoke("admin-wines", {
-          body: { action: "update", admin_id: adminId, winery_id: wineryId, wine_id: wine!.id, wine_data: payload },
-        });
+        const res = await invokeAuth("admin-wines", { action: "update", wine_id: wine!.id, wine_data: payload });
         if (res.error) throw res.error;
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinho atualizado!");
       } else {
-        const res = await supabase.functions.invoke("admin-wines", {
-          body: { action: "create", admin_id: adminId, winery_id: wineryId, wine_data: payload },
-        });
+        const res = await invokeAuth("admin-wines", { action: "create", wine_data: payload });
         if (res.error) throw res.error;
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinho criado!");

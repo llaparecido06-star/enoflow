@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import type { MenuItem } from "@/hooks/useMenuItems";
@@ -46,10 +46,10 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, onCl
       };
 
       const body = isEdit
-        ? { action: "update", admin_id: adminId, winery_id: wineryId, item_id: item!.id, item_data: payload }
-        : { action: "create", admin_id: adminId, winery_id: wineryId, item_data: payload };
+        ? { action: "update", item_id: item!.id, item_data: payload }
+        : { action: "create", item_data: payload };
 
-      const res = await supabase.functions.invoke("admin-menu", { body });
+      const res = await invokeAuth("admin-menu", body);
       if (res.error) throw res.error;
       if (res.data?.error) throw new Error(res.data.error);
       toast.success(isEdit ? "Item atualizado!" : "Item criado!");

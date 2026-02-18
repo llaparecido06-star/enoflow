@@ -5,7 +5,7 @@ import type { AdminUser } from "@/hooks/useAdminAuth";
 import { Package, Plus, Pencil, Trash2 } from "lucide-react";
 import PackageFormModal from "@/components/admin/PackageFormModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -22,13 +22,9 @@ export default function AdminPackagesPage() {
     if (!deletePkg) return;
     setDeleting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-packages", {
-        body: {
-          action: "delete",
-          admin_id: admin.id,
-          winery_id: winery.id,
-          package_id: deletePkg.id,
-        },
+      const { data, error } = await invokeAuth("admin-packages", {
+        action: "delete",
+        package_id: deletePkg.id,
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

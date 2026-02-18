@@ -11,7 +11,7 @@ import {
   Grape, MapPin, Thermometer, Clock, User, FlaskConical, ChevronRight
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 
 const wineTypes = ["Todos", "Tinto", "Branco", "Rosé", "Espumante"];
 const priceRanges = [
@@ -311,15 +311,11 @@ export default function ShopPage() {
     const num = Math.floor(Math.random() * 100);
     const code = `#${slug}-${String(num).padStart(2, "0")}`;
     try {
-      const { data, error } = await supabase.functions.invoke("tourist-actions", {
-        body: {
-          action: "create_voucher",
-          user_id: lead.id,
-          winery_id: winery.id,
-          code,
-          items: items.map((i) => ({ wine_id: i.wine.id, name: i.wine.name, qty: i.quantity, price: i.wine.price_bottle * discountMultiplier })),
-          total: discountedTotal,
-        },
+      const { data, error } = await invokeAuth("tourist-actions", {
+        action: "create_voucher",
+        code,
+        items: items.map((i) => ({ wine_id: i.wine.id, name: i.wine.name, qty: i.quantity, price: i.wine.price_bottle * discountMultiplier })),
+        total: discountedTotal,
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

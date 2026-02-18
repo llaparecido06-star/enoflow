@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeAuth } from "@/lib/auth-api";
 import { BarChart3, TrendingUp, Send, Clock, CheckCircle, Timer, Play, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,9 +15,7 @@ export default function AdminReportsPage() {
   const { data: automations } = useQuery({
     queryKey: ["automations", winery.id],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke("admin-reports", {
-        body: { admin_id: admin.id, winery_id: winery.id },
-      });
+      const { data, error } = await invokeAuth("admin-reports", {});
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       return data.automations ?? [];
@@ -37,9 +35,7 @@ export default function AdminReportsPage() {
   const runAutomations = async () => {
     setProcessing(true);
     try {
-      const res = await supabase.functions.invoke("process-automations", {
-        body: { winery_id: winery.id },
-      });
+      const res = await invokeAuth("process-automations", { winery_id: winery.id });
       if (res.error) throw res.error;
       toast.success(res.data.message);
       qc.invalidateQueries({ queryKey: ["automations"] });
