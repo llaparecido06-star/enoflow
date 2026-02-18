@@ -538,6 +538,7 @@ export type Database = {
           winery_id: string
         }[]
       }
+      hash_password: { Args: { p_password: string }; Returns: string }
       master_login: {
         Args: { p_email: string; p_password: string }
         Returns: {
