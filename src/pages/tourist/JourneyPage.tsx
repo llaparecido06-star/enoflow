@@ -39,11 +39,10 @@ export default function JourneyPage() {
     if (!lead?.id) { setLoadingRatings(false); return; }
     (async () => {
       try {
-        const { data } = await supabase
-          .from("ratings")
-          .select("wine_id, stars_acidity, stars_body, stars_sweetness")
-          .eq("user_id", lead.id);
-        setRatings(data ?? []);
+        const res = await supabase.functions.invoke("tourist-actions", {
+          body: { action: "get_ratings", user_id: lead.id },
+        });
+        if (res.data?.ratings) setRatings(res.data.ratings);
       } catch { }
       setLoadingRatings(false);
     })();
@@ -90,6 +89,7 @@ export default function JourneyPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-gold" />
+        <span className="ml-3 text-sm text-muted-foreground italic">Consultando nosso Sommelier Digital...</span>
       </div>
     );
   }

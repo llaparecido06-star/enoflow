@@ -1,14 +1,18 @@
-import { useState, useRef } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useState, useRef, useMemo, useCallback } from "react";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import { useWines, useTastingPackages, type Winery, type Wine } from "@/hooks/useWinery";
 import { useTouristAuth } from "@/hooks/useTouristAuth";
 import { useFavorites } from "@/hooks/useFavorites";
 import TastingCard from "@/components/tourist/TastingCard";
-import { motion } from "framer-motion";
-import { Sparkles, Package, ChevronLeft, ChevronRight } from "lucide-react";
+import TastingWelcome from "@/components/tourist/TastingWelcome";
+import CelebrationModal, { calculatePersona, type WinePersona } from "@/components/tourist/CelebrationModal";
+import { motion, AnimatePresence } from "framer-motion";
+import { Sparkles, Package, ChevronLeft, ChevronRight, Wine as WineIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+
+interface RatingEntry { wineId: string; acidity: number; body: number; sweetness: number; }
 
 export default function TastingPage() {
   const { winery } = useOutletContext<{ winery: Winery; lead: Tables<"users_leads"> }>();
@@ -16,10 +20,21 @@ export default function TastingPage() {
   const { data: wines } = useWines(winery.id);
   const { data: packages } = useTastingPackages(winery.id);
   const { isFavorite, toggleFavorite } = useFavorites(lead?.id);
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const tastingWines = wines?.filter((w) => w.on_tasting) ?? [];
+  // Immersive flow states
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [localRatings, setLocalRatings] = useState<RatingEntry[]>([]);
+  const [celebration, setCelebration] = useState<{ persona: WinePersona; recommendations: Wine[] } | null>(null);
+
+  const tastingWines = useMemo(() => wines?.filter((w) => w.on_tasting) ?? [], [wines]);
+  const shopWines = useMemo(() => wines?.filter((w) => w.on_shop && !w.on_tasting) ?? [], [wines]);
+
+  const handleStartTasting = useCallback(() => {
+    setShowWelcome(false);
+  }, []);
 
   const handleRatingSubmit = async (wine: Wine, ratings: { acidity: number; body: number; sweetness: number }) => {
     if (!lead) return;
@@ -37,9 +52,63 @@ export default function TastingPage() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success("Avaliação enviada com sucesso!");
+
+      // Track local ratings for persona calculation
+      const updated = [...localRatings.filter(r => r.wineId !== wine.id), { wineId: wine.id, ...ratings }];
+      setLocalRatings(updated);
+
+      // Check if all tasting wines have been rated → trigger celebration
+      if (updated.length >= tastingWines.length && tastingWines.length > 0) {
+        triggerCelebration(updated);
+      }
     } catch {
       toast.error("Erro ao enviar avaliação");
     }
+  };
+
+  const triggerCelebration = async (ratings: RatingEntry[]) => {
+    const avgAcidity = ratings.reduce((s, r) => s + r.acidity, 0) / ratings.length;
+    const avgBody = ratings.reduce((s, r) => s + r.body, 0) / ratings.length;
+    const avgSweetness = ratings.reduce((s, r) => s + r.sweetness, 0) / ratings.length;
+
+    const persona = calculatePersona(avgAcidity, avgBody, avgSweetness);
+
+    // Find compatible wines from shop
+    const recs = shopWines
+      .map(w => ({
+        wine: w,
+        score: Math.abs(w.sensory_acidity - avgAcidity) + Math.abs(w.sensory_body - avgBody) + Math.abs(w.sensory_sweetness - avgSweetness),
+      }))
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 3)
+      .map(r => r.wine);
+
+    setCelebration({ persona, recommendations: recs });
+
+    // Save persona to backend
+    if (lead) {
+      try {
+        await supabase.functions.invoke("tourist-actions", {
+          body: {
+            action: "save_persona",
+            user_id: lead.id,
+            persona_key: persona.key,
+            persona_label: persona.label,
+          },
+        });
+      } catch { /* non-blocking */ }
+    }
+  };
+
+  const handleAddToCart = (_wine: Wine) => {
+    toast.success(`${_wine.name} adicionado ao carrinho!`);
+    // Navigate to shop after brief delay
+  };
+
+  const handleGoToShop = () => {
+    setCelebration(null);
+    const slug = winery.slug;
+    navigate(`/app/${slug}/shop`);
   };
 
   const handleToggleFavorite = (wineId: string) => {
@@ -55,8 +124,36 @@ export default function TastingPage() {
     scrollRef.current?.children[clamped]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   };
 
+  // Welcome screen when no wines rated yet
+  if (showWelcome && tastingWines.length > 0 && localRatings.length === 0) {
+    return (
+      <AnimatePresence>
+        <TastingWelcome
+          wineryName={winery.name}
+          wineryLogo={winery.logo_url}
+          wineCount={tastingWines.length}
+          onStart={handleStartTasting}
+        />
+      </AnimatePresence>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Celebration Modal */}
+      <AnimatePresence>
+        {celebration && (
+          <CelebrationModal
+            persona={celebration.persona}
+            recommendations={celebration.recommendations}
+            onClose={() => setCelebration(null)}
+            onAddToCart={handleAddToCart}
+            onGoToShop={handleGoToShop}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Packages */}
       {packages && packages.length > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-3">
@@ -85,6 +182,7 @@ export default function TastingPage() {
         </section>
       )}
 
+      {/* Tasting wines section */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -105,6 +203,30 @@ export default function TastingPage() {
             </div>
           )}
         </div>
+
+        {/* Progress bar */}
+        {tastingWines.length > 0 && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] text-muted-foreground">
+                {localRatings.length}/{tastingWines.length} avaliados
+              </span>
+              {localRatings.length > 0 && localRatings.length < tastingWines.length && (
+                <span className="text-[10px] text-gold font-medium">
+                  Faltam {tastingWines.length - localRatings.length}!
+                </span>
+              )}
+            </div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gold rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${(localRatings.length / Math.max(tastingWines.length, 1)) * 100}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+          </div>
+        )}
 
         <div
           ref={scrollRef}
@@ -143,9 +265,12 @@ export default function TastingPage() {
         )}
 
         {tastingWines.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-12">
-            Nenhum vinho disponível para degustação no momento.
-          </p>
+          <div className="text-center py-12">
+            <WineIcon className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground">
+              Nossa adega está sendo preparada para você. 🍷
+            </p>
+          </div>
         )}
       </section>
     </div>
