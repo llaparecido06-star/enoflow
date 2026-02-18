@@ -1,0 +1,201 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
+};
+
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+// ─── JWT Utilities ───────────────────────────────────────
+function b64url(data: Uint8Array): string {
+  return btoa(String.fromCharCode(...data))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+async function signJwt(
+  payload: Record<string, unknown>,
+  secret: string,
+  expiresInSeconds = 86400
+): Promise<string> {
+  const header = b64url(new TextEncoder().encode(JSON.stringify({ alg: "HS256", typ: "JWT" })));
+  const now = Math.floor(Date.now() / 1000);
+  const body = b64url(
+    new TextEncoder().encode(JSON.stringify({ ...payload, iat: now, exp: now + expiresInSeconds }))
+  );
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = b64url(
+    new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${header}.${body}`)))
+  );
+  return `${header}.${body}.${sig}`;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const body = await req.json();
+    const { type } = body;
+
+    // ─── ADMIN LOGIN ─────────────────────────────────────
+    if (type === "admin") {
+      const { email, password, winery_id } = body;
+      if (!email || !password || !winery_id) {
+        return json({ error: "email, password, winery_id required" }, 400);
+      }
+
+      if (typeof email !== "string" || email.length > 255) return json({ error: "Invalid email" }, 400);
+      if (typeof password !== "string" || password.length > 100) return json({ error: "Invalid password" }, 400);
+
+      const { data, error } = await supabase.rpc("admin_login", {
+        p_email: email,
+        p_password: password,
+        p_winery_id: winery_id,
+      });
+
+      const result = Array.isArray(data) ? data[0] : data;
+      if (error || !result) {
+        return json({ error: "Credenciais inválidas" }, 401);
+      }
+
+      const token = await signJwt(
+        {
+          sub: result.id,
+          winery_id: result.winery_id,
+          role: result.role,
+          type: "admin",
+          email: result.email,
+          name: result.name,
+        },
+        secret,
+        86400 // 24h
+      );
+
+      return json({
+        success: true,
+        user: {
+          id: result.id,
+          winery_id: result.winery_id,
+          email: result.email,
+          name: result.name,
+          role: result.role,
+        },
+        token,
+      });
+    }
+
+    // ─── MASTER LOGIN ────────────────────────────────────
+    if (type === "master") {
+      const { email, password } = body;
+      if (!email || !password) {
+        return json({ error: "email and password required" }, 400);
+      }
+
+      if (typeof email !== "string" || email.length > 255) return json({ error: "Invalid email" }, 400);
+      if (typeof password !== "string" || password.length > 100) return json({ error: "Invalid password" }, 400);
+
+      const { data, error } = await supabase.rpc("master_login", {
+        p_email: email,
+        p_password: password,
+      });
+
+      const result = Array.isArray(data) ? data[0] : data;
+      if (error || !result) {
+        return json({ error: "Credenciais inválidas ou sem permissão Master" }, 401);
+      }
+
+      const token = await signJwt(
+        {
+          sub: result.id,
+          winery_id: result.winery_id,
+          role: "master",
+          type: "master",
+          email: result.email,
+          name: result.name,
+        },
+        secret,
+        86400 // 24h
+      );
+
+      return json({
+        success: true,
+        user: {
+          id: result.id,
+          winery_id: result.winery_id,
+          email: result.email,
+          name: result.name,
+          role: result.role,
+        },
+        token,
+      });
+    }
+
+    // ─── TOURIST LOGIN ───────────────────────────────────
+    if (type === "tourist") {
+      const { name, whatsapp, winery_id } = body;
+      if (!whatsapp || !winery_id) {
+        return json({ error: "whatsapp and winery_id required" }, 400);
+      }
+
+      // Check if lead exists
+      const { data: existing } = await supabase
+        .from("users_leads")
+        .select("id, winery_id, name, whatsapp, created_at, preferences_summary")
+        .eq("winery_id", winery_id)
+        .eq("whatsapp", whatsapp)
+        .maybeSingle();
+
+      let lead = existing;
+
+      if (!existing) {
+        if (!name) {
+          return json({ error: "name required for new leads" }, 400);
+        }
+        const { data, error } = await supabase
+          .from("users_leads")
+          .insert({ name, whatsapp, winery_id })
+          .select("id, winery_id, name, whatsapp, created_at, preferences_summary")
+          .single();
+        if (error) throw error;
+        lead = data;
+      }
+
+      const token = await signJwt(
+        {
+          sub: lead!.id,
+          winery_id: lead!.winery_id,
+          type: "tourist",
+        },
+        secret,
+        604800 // 7 days
+      );
+
+      return json({ success: true, lead, token });
+    }
+
+    return json({ error: "Invalid type. Use: admin, master, or tourist" }, 400);
+  } catch (error) {
+    console.error("session-auth error:", error);
+    return json({ error: "An error occurred. Please try again." }, 500);
+  }
+});

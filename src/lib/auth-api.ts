@@ -1,0 +1,28 @@
+import { supabase } from "@/integrations/supabase/client";
+
+const TOKEN_KEY = "smartsommelier_session_token";
+
+export function getSessionToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setSessionToken(token: string) {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearSessionToken() {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+/**
+ * Invoke a Supabase edge function with the session token attached.
+ * The token is sent as `x-session-token` header so the server can
+ * verify identity cryptographically instead of trusting body params.
+ */
+export async function invokeAuth(functionName: string, body: Record<string, unknown> = {}) {
+  const token = getSessionToken();
+  return supabase.functions.invoke(functionName, {
+    body,
+    headers: token ? { "x-session-token": token } : {},
+  });
+}

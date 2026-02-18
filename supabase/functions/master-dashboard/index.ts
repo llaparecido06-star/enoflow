@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
 };
 
 const json = (data: unknown, status = 200) =>
@@ -11,23 +11,44 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+async function verifySession(req: Request): Promise<{ sub: string; role: string; winery_id: string; type: string } | null> {
+  try {
+    const token = req.headers.get("x-session-token");
+    if (!token) return null;
+    const [hB64, pB64, sB64] = token.split(".");
+    if (!hB64 || !pB64 || !sB64) return null;
+    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+    const sig = Uint8Array.from(atob(sB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+    const valid = await crypto.subtle.verify("HMAC", key, sig, new TextEncoder().encode(`${hB64}.${pB64}`));
+    if (!valid) return null;
+    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(pB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0))));
+    if (payload.exp && payload.exp < Date.now() / 1000) return null;
+    return payload;
+  } catch { return null; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const session = await verifySession(req);
+    if (!session || session.type !== "master") {
+      return json({ error: "Acesso restrito a Master Admin" }, 401);
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    const admin_id = session.sub;
     const body = await req.json();
-    const { admin_id, action } = body;
+    const { action } = body;
 
-    if (!admin_id) return json({ error: "admin_id required" }, 400);
-
-    // Verify master role
+    // Verify master role still valid
     const { data: admin, error: adminErr } = await supabase
       .from("admin_users")
       .select("id, role")
@@ -83,7 +104,6 @@ Deno.serve(async (req) => {
     if (action === "delete_winery") {
       const { winery_id } = body;
       if (!winery_id) return json({ error: "winery_id required" }, 400);
-      // Delete associated data first
       await supabase.from("automations").delete().eq("winery_id", winery_id);
       await supabase.from("vouchers").delete().eq("winery_id", winery_id);
       await supabase.from("ratings").delete().in("wine_id",
@@ -165,7 +185,7 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: reports ─────────────────────────────────
     if (action === "reports") {
-      const { winery_id } = body; // optional filter
+      const { winery_id } = body;
 
       const [leadsRes, vouchersRes, automationsRes, wineriesRes, ratingsRes] = await Promise.all([
         supabase.from("users_leads").select("id, winery_id, created_at"),
@@ -181,7 +201,6 @@ Deno.serve(async (req) => {
       let ratings = ratingsRes.data ?? [];
       const allWineries = wineriesRes.data ?? [];
 
-      // Get wine -> winery mapping for ratings
       const { data: wines } = await supabase.from("wines").select("id, winery_id");
       const wineWineryMap: Record<string, string> = {};
       (wines ?? []).forEach(w => { wineWineryMap[w.id] = w.winery_id; });
@@ -197,7 +216,6 @@ Deno.serve(async (req) => {
       const redeemedValue = vouchers.filter(v => v.redeemed).reduce((s, v) => s + Number(v.total || 0), 0);
       const totalCommissions = automations.reduce((s, a) => s + Number(a.commission_value || 0), 0);
 
-      // Leads per day (last 30 days)
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       const leadsPerDay: Record<string, number> = {};
@@ -208,11 +226,8 @@ Deno.serve(async (req) => {
           leadsPerDay[key] = (leadsPerDay[key] || 0) + 1;
         }
       });
-      const leadsChart = Object.entries(leadsPerDay)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, count]) => ({ date, count }));
+      const leadsChart = Object.entries(leadsPerDay).sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, count }));
 
-      // Vouchers per day (last 30 days)
       const vouchersPerDay: Record<string, number> = {};
       vouchers.forEach(v => {
         const d = new Date(v.created_at);
@@ -221,16 +236,10 @@ Deno.serve(async (req) => {
           vouchersPerDay[key] = (vouchersPerDay[key] || 0) + 1;
         }
       });
-      const vouchersChart = Object.entries(vouchersPerDay)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([date, count]) => ({ date, count }));
+      const vouchersChart = Object.entries(vouchersPerDay).sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, count }));
 
-      // Per winery breakdown
       const perWinery = allWineries.map(w => ({
-        id: w.id,
-        name: w.name,
-        slug: w.slug,
-        primary_color: w.primary_color,
+        id: w.id, name: w.name, slug: w.slug, primary_color: w.primary_color,
         leads: leads.filter(l => l.winery_id === w.id).length,
         vouchers: vouchers.filter(v => v.winery_id === w.id).length,
         voucher_value: vouchers.filter(v => v.winery_id === w.id).reduce((s, v) => s + Number(v.total || 0), 0),
@@ -241,19 +250,8 @@ Deno.serve(async (req) => {
 
       return json({
         success: true,
-        metrics: {
-          total_leads: leads.length,
-          total_vouchers: vouchers.length,
-          total_voucher_value: totalVoucherValue,
-          redeemed_value: redeemedValue,
-          total_automations: automations.length,
-          total_commissions: totalCommissions,
-          total_ratings: ratings.length,
-        },
-        leads_chart: leadsChart,
-        vouchers_chart: vouchersChart,
-        per_winery: perWinery,
-        wineries: allWineries,
+        metrics: { total_leads: leads.length, total_vouchers: vouchers.length, total_voucher_value: totalVoucherValue, redeemed_value: redeemedValue, total_automations: automations.length, total_commissions: totalCommissions, total_ratings: ratings.length },
+        leads_chart: leadsChart, vouchers_chart: vouchersChart, per_winery: perWinery, wineries: allWineries,
       });
     }
 
@@ -263,8 +261,6 @@ Deno.serve(async (req) => {
       if (!winery_id || !import_type || !items || !Array.isArray(items)) {
         return json({ error: "winery_id, import_type, items[] required" }, 400);
       }
-
-      // Verify winery exists
       const { data: winery } = await supabase.from("wineries").select("id").eq("id", winery_id).single();
       if (!winery) return json({ error: "Vinícola não encontrada" }, 404);
 
@@ -272,49 +268,29 @@ Deno.serve(async (req) => {
 
       if (import_type === "wines") {
         const rows = items.map((item: Record<string, unknown>) => ({
-          winery_id,
-          name: String(item.name || "").slice(0, 200),
-          type: String(item.type || "Tinto"),
+          winery_id, name: String(item.name || "").slice(0, 200), type: String(item.type || "Tinto"),
           grape: item.grape ? String(item.grape).slice(0, 100) : null,
-          year: item.year ? Number(item.year) : null,
-          region: item.region ? String(item.region).slice(0, 100) : null,
+          year: item.year ? Number(item.year) : null, region: item.region ? String(item.region).slice(0, 100) : null,
           price_bottle: Number(item.price_bottle || item.price || 0),
           price_glass: item.price_glass ? Number(item.price_glass) : null,
           description: item.description ? String(item.description).slice(0, 500) : null,
           alcohol_content: item.alcohol_content ? String(item.alcohol_content) : null,
-          on_tasting: Boolean(item.on_tasting),
-          on_restaurant: Boolean(item.on_restaurant),
-          on_shop: item.on_shop !== false,
+          on_tasting: Boolean(item.on_tasting), on_restaurant: Boolean(item.on_restaurant), on_shop: item.on_shop !== false,
         })).filter(r => r.name);
-
-        if (rows.length > 0) {
-          const { error } = await supabase.from("wines").insert(rows);
-          if (error) throw error;
-          insertedCount = rows.length;
-        }
+        if (rows.length > 0) { const { error } = await supabase.from("wines").insert(rows); if (error) throw error; insertedCount = rows.length; }
       } else if (import_type === "menu") {
         const rows = items.map((item: Record<string, unknown>) => ({
-          winery_id,
-          name: String(item.name || "").slice(0, 200),
-          category: String(item.category || "Outros"),
-          price: Number(item.price || 0),
-          description: item.description ? String(item.description).slice(0, 500) : null,
+          winery_id, name: String(item.name || "").slice(0, 200), category: String(item.category || "Outros"),
+          price: Number(item.price || 0), description: item.description ? String(item.description).slice(0, 500) : null,
         })).filter(r => r.name);
-
-        if (rows.length > 0) {
-          const { error } = await supabase.from("menu_items").insert(rows);
-          if (error) throw error;
-          insertedCount = rows.length;
-        }
+        if (rows.length > 0) { const { error } = await supabase.from("menu_items").insert(rows); if (error) throw error; insertedCount = rows.length; }
       } else if (import_type === "packages") {
         for (const item of items) {
           if (!item.name) continue;
           const { error } = await supabase.from("tasting_packages").insert({
-            winery_id,
-            name: String(item.name).slice(0, 200),
+            winery_id, name: String(item.name).slice(0, 200),
             description: item.description ? String(item.description).slice(0, 500) : null,
-            price: Number(item.price || 0),
-            wine_ids: Array.isArray(item.wine_ids) ? item.wine_ids : [],
+            price: Number(item.price || 0), wine_ids: Array.isArray(item.wine_ids) ? item.wine_ids : [],
           });
           if (!error) insertedCount++;
         }
@@ -362,21 +338,12 @@ Deno.serve(async (req) => {
     const leadsPerDay: Record<string, number> = {};
     leads.forEach(l => {
       const d = new Date(l.created_at);
-      if (d >= thirtyDaysAgo) {
-        const key = d.toISOString().slice(0, 10);
-        leadsPerDay[key] = (leadsPerDay[key] || 0) + 1;
-      }
+      if (d >= thirtyDaysAgo) { const key = d.toISOString().slice(0, 10); leadsPerDay[key] = (leadsPerDay[key] || 0) + 1; }
     });
+    const leadsChart = Object.entries(leadsPerDay).sort(([a], [b]) => a.localeCompare(b)).map(([date, count]) => ({ date, count }));
 
-    const leadsChart = Object.entries(leadsPerDay)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, count]) => ({ date, count }));
-
-    // ─── Persona stats (today's ratings) ──────────────────
     const todayStr = now.toISOString().slice(0, 10);
     const todayRatings = allRatings.filter(r => r.created_at?.slice(0, 10) === todayStr);
-    
-    // Group by user and calculate persona
     const userRatings: Record<string, { acidity: number[]; body: number[]; sweetness: number[] }> = {};
     todayRatings.forEach(r => {
       if (!userRatings[r.user_id]) userRatings[r.user_id] = { acidity: [], body: [], sweetness: [] };
@@ -399,21 +366,15 @@ Deno.serve(async (req) => {
     return json({
       success: true,
       metrics: {
-        total_wineries: wineries.length,
-        total_leads: leads.length,
-        total_wines: wines.length,
-        total_vouchers: vouchers.length,
-        total_voucher_value: totalVoucherValue,
-        redeemed_voucher_value: redeemedVoucherValue,
-        total_commissions: totalCommissions,
-        total_admins: admins.length,
+        total_wineries: wineries.length, total_leads: leads.length, total_wines: wines.length,
+        total_vouchers: vouchers.length, total_voucher_value: totalVoucherValue,
+        redeemed_voucher_value: redeemedVoucherValue, total_commissions: totalCommissions, total_admins: admins.length,
       },
-      wineries: wineryMetrics,
-      leads_chart: leadsChart,
-      persona_stats: personaCounts,
-      persona_total: Object.values(personaCounts).reduce((s, v) => s + v, 0),
+      wineries: wineryMetrics, leads_chart: leadsChart,
+      persona_stats: personaCounts, persona_total: Object.values(personaCounts).reduce((s, v) => s + v, 0),
     });
   } catch (error) {
-    return json({ error: error.message }, 500);
+    console.error("master-dashboard error:", error);
+    return json({ error: "An error occurred. Please try again." }, 500);
   }
 });
