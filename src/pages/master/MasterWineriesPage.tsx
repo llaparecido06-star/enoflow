@@ -128,13 +128,23 @@ export default function MasterWineriesPage() {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const ext = file.name.split('.').pop();
-    const path = `logos/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("wine-images").upload(path, file, { upsert: true });
-    if (error) { toast.error("Erro ao enviar logo"); return; }
-    const { data: urlData } = supabase.storage.from("wine-images").getPublicUrl(path);
-    setForm(f => ({ ...f, logo_url: urlData.publicUrl }));
-    toast.success("Logo enviado!");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("upload-logo", {
+        body: formData,
+      });
+      if (error || !data?.url) {
+        toast.error(data?.error || "Erro ao enviar logo");
+        return;
+      }
+      setForm(f => ({ ...f, logo_url: data.url }));
+      toast.success("Logo enviado!");
+    } catch {
+      toast.error("Erro ao enviar logo");
+    }
   };
 
   const updatePlan = async (wineryId: string, plan: string) => {
