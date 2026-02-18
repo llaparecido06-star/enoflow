@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
 };
 
 const json = (data: unknown, status = 200) =>
@@ -11,22 +11,46 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+async function verifySession(req: Request): Promise<{ sub: string; role: string; winery_id: string; type: string } | null> {
+  try {
+    const token = req.headers.get("x-session-token");
+    if (!token) return null;
+    const [hB64, pB64, sB64] = token.split(".");
+    if (!hB64 || !pB64 || !sB64) return null;
+    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+    const sig = Uint8Array.from(atob(sB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+    const valid = await crypto.subtle.verify("HMAC", key, sig, new TextEncoder().encode(`${hB64}.${pB64}`));
+    if (!valid) return null;
+    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(pB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0))));
+    if (payload.exp && payload.exp < Date.now() / 1000) return null;
+    return payload;
+  } catch { return null; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const session = await verifySession(req);
+    if (!session || session.type !== "tourist") {
+      return json({ error: "Não autorizado" }, 401);
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
     const body = await req.json();
-    const { action, user_id } = body;
+    const { action } = body;
+    const user_id = session.sub;
+    const winery_id = session.winery_id;
 
-    if (!user_id || !action) {
-      return json({ error: "action and user_id required" }, 400);
+    if (!action) {
+      return json({ error: "action required" }, 400);
     }
 
     // Verify user exists
@@ -91,13 +115,9 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: create_voucher ──────────────────────────
     if (action === "create_voucher") {
-      const { winery_id, code, items, total } = body;
-      if (!winery_id || !code || !items || total === undefined) {
-        return json({ error: "winery_id, code, items, total required" }, 400);
-      }
-
-      if (user.winery_id !== winery_id) {
-        return json({ error: "User does not belong to this winery" }, 403);
+      const { code, items, total } = body;
+      if (!code || !items || total === undefined) {
+        return json({ error: "code, items, total required" }, 400);
       }
 
       if (typeof total !== "number" || total < 0) {
@@ -122,6 +142,7 @@ Deno.serve(async (req) => {
 
     return json({ error: "Unknown action" }, 400);
   } catch (error) {
-    return json({ error: error.message }, 500);
+    console.error("tourist-actions error:", error);
+    return json({ error: "An error occurred. Please try again." }, 500);
   }
 });

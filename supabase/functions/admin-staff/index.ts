@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
 };
 
 const json = (data: unknown, status = 200) =>
@@ -11,23 +11,44 @@ const json = (data: unknown, status = 200) =>
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 
+async function verifySession(req: Request): Promise<{ sub: string; role: string; winery_id: string; type: string } | null> {
+  try {
+    const token = req.headers.get("x-session-token");
+    if (!token) return null;
+    const [hB64, pB64, sB64] = token.split(".");
+    if (!hB64 || !pB64 || !sB64) return null;
+    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+    const sig = Uint8Array.from(atob(sB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+    const valid = await crypto.subtle.verify("HMAC", key, sig, new TextEncoder().encode(`${hB64}.${pB64}`));
+    if (!valid) return null;
+    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(pB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0))));
+    if (payload.exp && payload.exp < Date.now() / 1000) return null;
+    return payload;
+  } catch { return null; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const session = await verifySession(req);
+    if (!session || (session.type !== "admin" && session.type !== "master")) {
+      return json({ error: "Não autorizado" }, 401);
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const body = await req.json();
-    const { action, admin_id, winery_id } = body;
+    const admin_id = session.sub;
+    const winery_id = session.winery_id;
 
-    if (!admin_id || !winery_id) {
-      return json({ error: "admin_id and winery_id required" }, 400);
-    }
+    const body = await req.json();
+    const { action, target_id, name, email, password, role } = body;
 
     // Verify admin is owner+ of this winery
     const { data: admin, error: adminErr } = await supabase
@@ -59,29 +80,17 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: create ──────────────────────────────────
     if (action === "create") {
-      const { name, email, password, role } = body;
       if (!name || !email || !password || !role) {
         return json({ error: "name, email, password, role required" }, 400);
       }
-
-      // Owner can only create staff and manager roles
       const allowedRoles = ["staff", "manager"];
       if (!allowedRoles.includes(role)) {
         return json({ error: "Owners podem criar apenas staff e manager" }, 400);
       }
+      if (typeof name !== "string" || name.trim().length === 0 || name.length > 100) return json({ error: "Nome inválido" }, 400);
+      if (typeof email !== "string" || !email.includes("@") || email.length > 255) return json({ error: "Email inválido" }, 400);
+      if (typeof password !== "string" || password.length < 6 || password.length > 100) return json({ error: "Senha deve ter entre 6 e 100 caracteres" }, 400);
 
-      // Validate inputs
-      if (typeof name !== "string" || name.trim().length === 0 || name.length > 100) {
-        return json({ error: "Nome inválido" }, 400);
-      }
-      if (typeof email !== "string" || !email.includes("@") || email.length > 255) {
-        return json({ error: "Email inválido" }, 400);
-      }
-      if (typeof password !== "string" || password.length < 6 || password.length > 100) {
-        return json({ error: "Senha deve ter entre 6 e 100 caracteres" }, 400);
-      }
-
-      // Check duplicate email
       const { data: existing } = await supabase
         .from("admin_users")
         .select("id")
@@ -110,22 +119,15 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: update ──────────────────────────────────
     if (action === "update") {
-      const { target_id, name, email, password, role } = body;
       if (!target_id) return json({ error: "target_id required" }, 400);
-
-      // Prevent editing owner or master
       const { data: target } = await supabase
         .from("admin_users")
         .select("role, winery_id")
         .eq("id", target_id)
         .single();
 
-      if (!target || target.winery_id !== winery_id) {
-        return json({ error: "Funcionário não encontrado" }, 404);
-      }
-      if (target.role === "owner" || target.role === "master") {
-        return json({ error: "Não é possível editar owner/master" }, 403);
-      }
+      if (!target || target.winery_id !== winery_id) return json({ error: "Funcionário não encontrado" }, 404);
+      if (target.role === "owner" || target.role === "master") return json({ error: "Não é possível editar owner/master" }, 403);
 
       const updates: Record<string, string> = {};
       if (name && typeof name === "string") updates.name = name.trim().slice(0, 100);
@@ -133,9 +135,7 @@ Deno.serve(async (req) => {
       if (password && typeof password === "string" && password.length >= 6) updates.password_hash = password.slice(0, 100);
       if (role && ["staff", "manager"].includes(role)) updates.role = role;
 
-      if (Object.keys(updates).length === 0) {
-        return json({ error: "Nada para atualizar" }, 400);
-      }
+      if (Object.keys(updates).length === 0) return json({ error: "Nada para atualizar" }, 400);
 
       const { error } = await supabase
         .from("admin_users")
@@ -149,21 +149,15 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: delete ──────────────────────────────────
     if (action === "delete") {
-      const { target_id } = body;
       if (!target_id) return json({ error: "target_id required" }, 400);
-
       const { data: target } = await supabase
         .from("admin_users")
         .select("role, winery_id")
         .eq("id", target_id)
         .single();
 
-      if (!target || target.winery_id !== winery_id) {
-        return json({ error: "Funcionário não encontrado" }, 404);
-      }
-      if (target.role === "owner" || target.role === "master") {
-        return json({ error: "Não é possível remover owner/master" }, 403);
-      }
+      if (!target || target.winery_id !== winery_id) return json({ error: "Funcionário não encontrado" }, 404);
+      if (target.role === "owner" || target.role === "master") return json({ error: "Não é possível remover owner/master" }, 403);
 
       const { error } = await supabase
         .from("admin_users")
@@ -177,6 +171,7 @@ Deno.serve(async (req) => {
 
     return json({ error: "Unknown action" }, 400);
   } catch (error) {
-    return json({ error: error.message }, 500);
+    console.error("admin-staff error:", error);
+    return json({ error: "An error occurred. Please try again." }, 500);
   }
 });
