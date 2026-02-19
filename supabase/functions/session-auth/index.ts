@@ -64,11 +64,12 @@ Deno.serve(async (req) => {
         return json({ error: "email, password, winery_id required" }, 400);
       }
 
-      if (typeof email !== "string" || email.length > 255) return json({ error: "Invalid email" }, 400);
-      if (typeof password !== "string" || password.length > 100) return json({ error: "Invalid password" }, 400);
+      if (typeof email !== "string" || email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Invalid email" }, 400);
+      if (typeof password !== "string" || password.length < 6 || password.length > 100) return json({ error: "Invalid password" }, 400);
 
+      const normalizedEmail = email.trim().toLowerCase();
       const { data, error } = await supabase.rpc("admin_login", {
-        p_email: email,
+        p_email: normalizedEmail,
         p_password: password,
         p_winery_id: winery_id,
       });
@@ -111,11 +112,12 @@ Deno.serve(async (req) => {
         return json({ error: "email and password required" }, 400);
       }
 
-      if (typeof email !== "string" || email.length > 255) return json({ error: "Invalid email" }, 400);
-      if (typeof password !== "string" || password.length > 100) return json({ error: "Invalid password" }, 400);
+      if (typeof email !== "string" || email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Invalid email" }, 400);
+      if (typeof password !== "string" || password.length < 6 || password.length > 100) return json({ error: "Invalid password" }, 400);
 
+      const normalizedEmail = email.trim().toLowerCase();
       const { data, error } = await supabase.rpc("master_login", {
-        p_email: email,
+        p_email: normalizedEmail,
         p_password: password,
       });
 
