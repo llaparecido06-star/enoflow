@@ -1,17 +1,19 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
-import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut, UtensilsCrossed, UserCog } from "lucide-react";
+import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket } from "lucide-react";
 import AdminLoginForm from "@/components/admin/AdminLoginForm";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const navItems = [
-  { id: "wines", label: "Vinhos", icon: Wine, path: "", minRole: "manager" as AdminRole },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "", minRole: "owner" as AdminRole },
+  { id: "wines", label: "Vinhos", icon: Wine, path: "/wines", minRole: "manager" as AdminRole },
   { id: "packages", label: "Pacotes", icon: Package, path: "/packages", minRole: "manager" as AdminRole },
   { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", minRole: "manager" as AdminRole },
   { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "owner" as AdminRole },
   { id: "reports", label: "Relatórios", icon: BarChart3, path: "/reports", minRole: "owner" as AdminRole },
   { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", minRole: "owner" as AdminRole },
+  { id: "training", label: "Treinamento", icon: Rocket, path: "/training", minRole: "manager" as AdminRole },
   { id: "settings", label: "Config.", icon: Settings, path: "/settings", minRole: "staff" as AdminRole },
 ];
 

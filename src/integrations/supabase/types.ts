@@ -233,27 +233,33 @@ export type Database = {
       }
       users_leads: {
         Row: {
+          accepted_terms: boolean
           auth_user_id: string | null
           created_at: string
           id: string
+          lgpd_consent_date: string | null
           name: string
           preferences_summary: string | null
           whatsapp: string
           winery_id: string
         }
         Insert: {
+          accepted_terms?: boolean
           auth_user_id?: string | null
           created_at?: string
           id?: string
+          lgpd_consent_date?: string | null
           name: string
           preferences_summary?: string | null
           whatsapp: string
           winery_id: string
         }
         Update: {
+          accepted_terms?: boolean
           auth_user_id?: string | null
           created_at?: string
           id?: string
+          lgpd_consent_date?: string | null
           name?: string
           preferences_summary?: string | null
           whatsapp?: string

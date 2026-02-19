@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
       // Check if lead exists
       const { data: existing } = await supabase
         .from("users_leads")
-        .select("id, winery_id, name, whatsapp, created_at, preferences_summary")
+        .select("id, winery_id, name, whatsapp, created_at, preferences_summary, accepted_terms, lgpd_consent_date")
         .eq("winery_id", winery_id)
         .eq("whatsapp", whatsapp)
         .maybeSingle();
@@ -173,11 +173,24 @@ Deno.serve(async (req) => {
         }
         const { data, error } = await supabase
           .from("users_leads")
-          .insert({ name, whatsapp, winery_id })
-          .select("id, winery_id, name, whatsapp, created_at, preferences_summary")
+          .insert({
+            name,
+            whatsapp,
+            winery_id,
+            accepted_terms: body.accepted_terms === true,
+            lgpd_consent_date: body.accepted_terms === true ? new Date().toISOString() : null,
+          })
+          .select("id, winery_id, name, whatsapp, created_at, preferences_summary, accepted_terms, lgpd_consent_date")
           .single();
         if (error) throw error;
         lead = data;
+      } else if (!existing.accepted_terms && body.accepted_terms === true) {
+        // Update LGPD consent on returning user
+        await supabase
+          .from("users_leads")
+          .update({ accepted_terms: true, lgpd_consent_date: new Date().toISOString() })
+          .eq("id", existing.id);
+        lead = { ...existing, accepted_terms: true, lgpd_consent_date: new Date().toISOString() };
       }
 
       const token = await signJwt(

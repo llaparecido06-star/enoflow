@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Phone, User, ArrowRight, Loader2 } from "lucide-react";
+import { Phone, User, ArrowRight, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 interface WhatsAppLoginProps {
   wineryName: string;
   wineryColor: string;
-  onLogin: (name: string, whatsapp: string) => Promise<void>;
+  onLogin: (name: string, whatsapp: string, acceptedTerms: boolean) => Promise<void>;
 }
 
 export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: WhatsAppLoginProps) {
@@ -13,6 +14,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: What
   const [whatsapp, setWhatsapp] = useState("");
   const [step, setStep] = useState<"name" | "phone">("name");
   const [loading, setLoading] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -35,9 +37,13 @@ export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: What
       toast.error("Digite um número de WhatsApp válido");
       return;
     }
+    if (!acceptedTerms) {
+      toast.error("Você precisa aceitar os Termos de Privacidade para continuar.");
+      return;
+    }
     setLoading(true);
     try {
-      await onLogin(name.trim(), digits);
+      await onLogin(name.trim(), digits, true);
       toast.success("Bem-vindo(a)! 🍷");
     } catch {
       toast.error("Erro ao entrar. Tente novamente.");
@@ -116,9 +122,21 @@ export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: What
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Entrar"}
               </button>
             </div>
-            <p className="text-[10px] text-muted-foreground text-center">
-              Simularemos um Magic Link enviado ao seu WhatsApp
-            </p>
+            <label className="flex items-start gap-2 cursor-pointer mt-1">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-border accent-primary"
+              />
+              <span className="text-[11px] text-muted-foreground leading-tight">
+                Li e aceito os{" "}
+                <Link to="/privacidade" target="_blank" className="underline text-primary inline-flex items-center gap-0.5">
+                  Termos de Privacidade <ExternalLink className="w-3 h-3 inline" />
+                </Link>{" "}
+                e concordo em receber ofertas via WhatsApp.
+              </span>
+            </label>
           </div>
         )}
       </div>

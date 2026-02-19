@@ -59,7 +59,104 @@ Deno.serve(async (req) => {
       return json({ error: "Não autorizado" }, 403);
     }
 
-    // Fetch automations with lead info
+    const body = await req.json().catch(() => ({}));
+
+    // ─── OWNER DASHBOARD ─────────────────────────────────
+    if (body.action === "owner_dashboard") {
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const monthStart = `${todayStr.slice(0, 7)}-01`;
+
+      // Leads today (with LGPD consent)
+      const { count: leadsToday } = await supabase
+        .from("users_leads")
+        .select("id", { count: "exact", head: true })
+        .eq("winery_id", winery_id)
+        .eq("accepted_terms", true)
+        .gte("created_at", todayStr);
+
+      // Leads this month
+      const { count: leadsMonth } = await supabase
+        .from("users_leads")
+        .select("id", { count: "exact", head: true })
+        .eq("winery_id", winery_id)
+        .eq("accepted_terms", true)
+        .gte("created_at", monthStart);
+
+      // Total leads who have at least 1 rating (participated in tasting)
+      const { data: allLeads } = await supabase
+        .from("users_leads")
+        .select("id")
+        .eq("winery_id", winery_id);
+
+      const leadIds = (allLeads ?? []).map((l) => l.id);
+
+      let tastingCount = 0;
+      if (leadIds.length > 0) {
+        const { data: ratingsData } = await supabase
+          .from("ratings")
+          .select("user_id")
+          .in("user_id", leadIds);
+        const uniqueRaters = new Set((ratingsData ?? []).map((r) => r.user_id));
+        tastingCount = uniqueRaters.size;
+      }
+
+      // Vouchers redeemed
+      const { data: redeemedVouchers } = await supabase
+        .from("vouchers")
+        .select("total")
+        .eq("winery_id", winery_id)
+        .eq("redeemed", true);
+
+      const totalRedeemed = (redeemedVouchers ?? []).reduce((s, v) => s + Number(v.total), 0);
+
+      // Conversion rate: users who did tasting AND have a redeemed voucher
+      const { data: allVouchers } = await supabase
+        .from("vouchers")
+        .select("user_id, redeemed")
+        .eq("winery_id", winery_id);
+
+      const voucherUsers = new Set((allVouchers ?? []).filter((v) => v.redeemed).map((v) => v.user_id));
+      const conversionRate = tastingCount > 0 ? (voucherUsers.size / tastingCount) * 100 : 0;
+
+      // Weekly chart: last 7 days
+      const weeklyChart: { date: string; leads: number; redeemed: number }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const ds = d.toISOString().slice(0, 10);
+        const nextD = new Date(d);
+        nextD.setDate(nextD.getDate() + 1);
+        const nds = nextD.toISOString().slice(0, 10);
+
+        const { count: lc } = await supabase
+          .from("users_leads")
+          .select("id", { count: "exact", head: true })
+          .eq("winery_id", winery_id)
+          .gte("created_at", ds)
+          .lt("created_at", nds);
+
+        const { count: vc } = await supabase
+          .from("vouchers")
+          .select("id", { count: "exact", head: true })
+          .eq("winery_id", winery_id)
+          .eq("redeemed", true)
+          .gte("created_at", ds)
+          .lt("created_at", nds);
+
+        weeklyChart.push({ date: ds, leads: lc ?? 0, redeemed: vc ?? 0 });
+      }
+
+      return json({
+        leads_today: leadsToday ?? 0,
+        leads_month: leadsMonth ?? 0,
+        conversion_rate: conversionRate,
+        influenced_revenue: totalRedeemed,
+        weekly_chart: weeklyChart,
+      });
+    }
+
+    // ─── DEFAULT: AUTOMATIONS ────────────────────────────
     const { data: automations, error } = await supabase
       .from("automations")
       .select("id, winery_id, user_id, trigger_type, status, commission_value, created_at")

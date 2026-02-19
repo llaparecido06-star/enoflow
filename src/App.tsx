@@ -18,12 +18,15 @@ import AdminLeadsPage from "./pages/admin/AdminLeadsPage";
 import AdminReportsPage from "./pages/admin/AdminReportsPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminStaffPage from "./pages/admin/AdminStaffPage";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminTrainingPage from "./pages/admin/AdminTrainingPage";
 import MasterLayout from "./pages/master/MasterLayout";
 import MasterDashboardPage from "./pages/master/MasterDashboardPage";
 import MasterWineriesPage from "./pages/master/MasterWineriesPage";
 import MasterAdminsPage from "./pages/master/MasterAdminsPage";
 import MasterReportsPage from "./pages/master/MasterReportsPage";
 import MasterImportPage from "./pages/master/MasterImportPage";
+import PrivacyPage from "./pages/PrivacyPage";
 
 const queryClient = new QueryClient();
 
@@ -58,14 +61,19 @@ const App = () => {
 
           {/* Admin routes */}
           <Route path="/admin/:slug" element={<AdminLayout />}>
-            <Route index element={<AdminWinesPage />} />
+            <Route index element={<AdminDashboardPage />} />
+            <Route path="wines" element={<AdminWinesPage />} />
             <Route path="packages" element={<AdminPackagesPage />} />
             <Route path="menu" element={<AdminMenuPage />} />
             <Route path="leads" element={<AdminLeadsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="staff" element={<AdminStaffPage />} />
+            <Route path="training" element={<AdminTrainingPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
           </Route>
+
+          {/* Privacy */}
+          <Route path="/privacidade" element={<PrivacyPage />} />
 
           {/* Master Admin routes */}
           <Route path="/master" element={<MasterLayout />}>
