@@ -14,7 +14,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: What
   const [whatsapp, setWhatsapp] = useState("");
   const [step, setStep] = useState<"name" | "phone">("name");
   const [loading, setLoading] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(true);
 
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
