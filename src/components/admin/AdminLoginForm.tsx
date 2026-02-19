@@ -80,9 +80,6 @@ export default function AdminLoginForm({ onLogin, wineryName }: Props) {
           </button>
         </form>
 
-        <p className="text-[10px] text-muted-foreground text-center mt-6">
-          Credenciais de teste: admin@goes.com / admin123
-        </p>
       </div>
     </div>
   );
