@@ -47,6 +47,15 @@ export default function AdminLayout() {
   }
 
   const visibleNav = navItems.filter((n) => hasPermission(n.minRole));
+
+  // Redirect staff/manager to vouchers if they land on the base path (dashboard they can't see)
+  const currentPath = location.pathname;
+  const isBasePath = currentPath === basePath || currentPath === basePath + "/";
+  if (isBasePath && !hasPermission("owner" as AdminRole) && visibleNav.length > 0) {
+    const defaultItem = visibleNav.find(n => n.id === "settings") ?? visibleNav[0];
+    navigate(basePath + defaultItem.path, { replace: true });
+  }
+
   const activeItem = visibleNav.find((n) => location.pathname === basePath + n.path)?.id ?? visibleNav[0]?.id;
 
   const roleLabel: Record<AdminRole, string> = {
