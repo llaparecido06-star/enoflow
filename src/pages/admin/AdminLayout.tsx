@@ -1,7 +1,7 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
-import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket } from "lucide-react";
+import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode } from "lucide-react";
 import AdminLoginForm from "@/components/admin/AdminLoginForm";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -13,8 +13,8 @@ const navItems = [
   { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "owner" as AdminRole },
   { id: "reports", label: "Relatórios", icon: BarChart3, path: "/reports", minRole: "owner" as AdminRole },
   { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", minRole: "owner" as AdminRole },
-  { id: "training", label: "Treinamento", icon: Rocket, path: "/training", minRole: "manager" as AdminRole },
-  { id: "settings", label: "Config.", icon: Settings, path: "/settings", minRole: "staff" as AdminRole },
+  { id: "training", label: "Treinamento", icon: Rocket, path: "/training", minRole: "staff" as AdminRole },
+  { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", minRole: "staff" as AdminRole },
 ];
 
 export default function AdminLayout() {
