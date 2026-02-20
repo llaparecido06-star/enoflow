@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
-import { Users, Receipt, TrendingUp, Loader2, BarChart3 } from "lucide-react";
+import { DollarSign, Users, Wine, Star, Loader2, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 export default function AdminDashboardPage() {
@@ -29,7 +29,15 @@ export default function AdminDashboardPage() {
 
   const kpis = [
     {
-      label: "Novos Leads (LGPD)",
+      label: "Vendas Hoje (App)",
+      value: `R$ ${(data?.sales_today ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      sub: "Vouchers validados hoje",
+      icon: DollarSign,
+      color: "text-accent",
+      bg: "bg-accent/10",
+    },
+    {
+      label: "Novos Leads (Hoje)",
       value: data?.leads_today ?? 0,
       sub: `${data?.leads_month ?? 0} no mês`,
       icon: Users,
@@ -37,20 +45,20 @@ export default function AdminDashboardPage() {
       bg: "bg-primary/10",
     },
     {
-      label: "Taxa de Conversão",
-      value: `${(data?.conversion_rate ?? 0).toFixed(1)}%`,
-      sub: "Degustação → Voucher",
-      icon: Receipt,
-      color: "text-accent",
-      bg: "bg-accent/10",
+      label: "Vinho Campeão (Mês)",
+      value: data?.top_wine_name ?? "—",
+      sub: data?.top_wine_detail ?? "Sem dados",
+      icon: Wine,
+      color: "text-primary",
+      bg: "bg-primary/10",
     },
     {
-      label: "Receita Influenciada",
-      value: `R$ ${(data?.influenced_revenue ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-      sub: "Vouchers validados",
-      icon: TrendingUp,
-      color: "text-green-600",
-      bg: "bg-green-500/10",
+      label: "Satisfação Média",
+      value: data?.avg_satisfaction ? `${Number(data.avg_satisfaction).toFixed(1)} ⭐` : "—",
+      sub: `${data?.ratings_today ?? 0} avaliações hoje`,
+      icon: Star,
+      color: "text-accent",
+      bg: "bg-accent/10",
     },
   ];
 
@@ -60,11 +68,11 @@ export default function AdminDashboardPage() {
     <div>
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Dashboard Executivo</h1>
-        <p className="text-sm text-muted-foreground">Painel de conversão financeira</p>
+        <p className="text-sm text-muted-foreground">Visão geral de {winery.name}</p>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {kpis.map((kpi) => (
           <div key={kpi.label} className="bg-card rounded-xl border border-border p-5">
             <div className="flex items-center gap-3 mb-3">
@@ -73,7 +81,7 @@ export default function AdminDashboardPage() {
               </div>
               <span className="text-xs text-muted-foreground">{kpi.label}</span>
             </div>
-            <p className="font-display text-2xl font-bold text-foreground">{kpi.value}</p>
+            <p className="font-display text-2xl font-bold text-foreground truncate">{kpi.value}</p>
             <p className="text-[11px] text-muted-foreground mt-1">{kpi.sub}</p>
           </div>
         ))}
@@ -84,7 +92,7 @@ export default function AdminDashboardPage() {
         <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 className="w-5 h-5 text-primary" />
-            <h2 className="font-display text-base font-semibold text-foreground">Leads vs. Vouchers Validados — Últimos 7 dias</h2>
+            <h2 className="font-display text-base font-semibold text-foreground">Vendas & Leads — Últimos 7 dias</h2>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -101,10 +109,10 @@ export default function AdminDashboardPage() {
                 />
                 <Legend
                   wrapperStyle={{ fontSize: 11 }}
-                  formatter={(value) => (value === "leads" ? "Novos Leads" : "Vouchers Validados")}
+                  formatter={(value) => (value === "leads" ? "Novos Leads" : "Vendas (R$)")}
                 />
-                <Bar dataKey="leads" fill="hsl(350, 82%, 22%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="redeemed" fill="hsl(38, 70%, 50%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="leads" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="sales" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

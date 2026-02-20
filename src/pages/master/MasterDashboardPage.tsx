@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
 import { invokeAuth } from "@/lib/auth-api";
-import { Building2, Users, Wine, Receipt, TrendingUp, DollarSign, BarChart3, Loader2, Sparkles } from "lucide-react";
+import { Building2, Users, Wine, Receipt, TrendingUp, DollarSign, BarChart3, Loader2, Sparkles, CreditCard, Percent } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 interface Metrics {
@@ -14,6 +14,8 @@ interface Metrics {
   redeemed_voucher_value: number;
   total_commissions: number;
   total_admins: number;
+  total_mrr: number;
+  platform_commissions: number;
 }
 
 interface PersonaStats {
@@ -68,14 +70,30 @@ export default function MasterDashboardPage() {
 
   if (!metrics) return null;
 
+  const heroKpis = [
+    {
+      label: "MRR Total (Assinaturas)",
+      value: `R$ ${metrics.total_mrr.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      icon: CreditCard,
+      color: "text-accent",
+      bg: "bg-accent/10",
+    },
+    {
+      label: "Comissões da Plataforma",
+      value: `R$ ${metrics.platform_commissions.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+      icon: Percent,
+      color: "text-green-500",
+      bg: "bg-green-500/10",
+    },
+  ];
+
   const stats = [
     { label: "Vinícolas", value: metrics.total_wineries, icon: Building2, color: "text-accent" },
     { label: "Leads Totais", value: metrics.total_leads, icon: Users, color: "text-primary" },
-    { label: "Vinhos Cadastrados", value: metrics.total_wines, icon: Wine, color: "text-wine-light" },
+    { label: "Vinhos Cadastrados", value: metrics.total_wines, icon: Wine, color: "text-primary" },
     { label: "Vouchers Gerados", value: metrics.total_vouchers, icon: Receipt, color: "text-green-500" },
     { label: "Receita Vouchers", value: `R$ ${metrics.total_voucher_value.toFixed(2)}`, icon: DollarSign, color: "text-accent" },
     { label: "Vouchers Resgatados", value: `R$ ${metrics.redeemed_voucher_value.toFixed(2)}`, icon: TrendingUp, color: "text-green-500" },
-    { label: "Comissões Totais", value: `R$ ${metrics.total_commissions.toFixed(2)}`, icon: BarChart3, color: "text-primary" },
     { label: "Admins", value: metrics.total_admins, icon: Users, color: "text-muted-foreground" },
   ];
 
@@ -86,11 +104,26 @@ export default function MasterDashboardPage() {
         <p className="text-sm text-muted-foreground">Visão global da plataforma SmartSommelier</p>
       </div>
 
+      {/* Hero Financial KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        {heroKpis.map((kpi) => (
+          <div key={kpi.label} className="bg-card rounded-xl border border-border p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`w-12 h-12 rounded-xl ${kpi.bg} flex items-center justify-center`}>
+                <kpi.icon className={`w-6 h-6 ${kpi.color}`} />
+              </div>
+              <span className="text-xs text-muted-foreground">{kpi.label}</span>
+            </div>
+            <p className="font-display text-3xl font-bold text-foreground">{kpi.value}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Persona Intelligence Card */}
       {personaStats && personaTotal > 0 && (
-        <div className="bg-gradient-to-r from-wine/10 to-gold/10 rounded-xl border border-gold/20 p-4 mb-6">
+        <div className="bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border border-accent/20 p-4 mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-gold" />
+            <Sparkles className="w-4 h-4 text-accent" />
             <h3 className="font-display text-sm font-semibold text-foreground">Perfil do Público Hoje</h3>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -132,17 +165,16 @@ export default function MasterDashboardPage() {
               <AreaChart data={leadsChart}>
                 <defs>
                   <linearGradient id="leadGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(38, 70%, 50%)" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="hsl(38, 70%, 50%)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(30, 10%, 55%)" }} tickFormatter={(v) => v.slice(5)} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(30, 10%, 55%)" }} allowDecimals={false} />
+                <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => v.slice(5)} />
+                <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "hsl(0, 0%, 13%)", border: "1px solid hsl(0, 0%, 18%)", borderRadius: 8, fontSize: 12 }}
-                  labelStyle={{ color: "hsl(30, 20%, 92%)" }}
+                  contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
                 />
-                <Area type="monotone" dataKey="count" stroke="hsl(38, 70%, 50%)" fill="url(#leadGrad)" strokeWidth={2} />
+                <Area type="monotone" dataKey="count" stroke="hsl(var(--accent))" fill="url(#leadGrad)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           </div>

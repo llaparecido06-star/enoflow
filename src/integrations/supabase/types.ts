@@ -330,8 +330,10 @@ export type Database = {
           logo_url: string | null
           name: string
           plan_level: Database["public"]["Enums"]["plan_level"]
+          platform_commission_rate: number
           primary_color: string
           slug: string
+          subscription_value: number
           updated_at: string
         }
         Insert: {
@@ -340,8 +342,10 @@ export type Database = {
           logo_url?: string | null
           name: string
           plan_level?: Database["public"]["Enums"]["plan_level"]
+          platform_commission_rate?: number
           primary_color?: string
           slug: string
+          subscription_value?: number
           updated_at?: string
         }
         Update: {
@@ -350,8 +354,10 @@ export type Database = {
           logo_url?: string | null
           name?: string
           plan_level?: Database["public"]["Enums"]["plan_level"]
+          platform_commission_rate?: number
           primary_color?: string
           slug?: string
+          subscription_value?: number
           updated_at?: string
         }
         Relationships: []
