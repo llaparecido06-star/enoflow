@@ -66,6 +66,9 @@ Deno.serve(async (req) => {
       const now = new Date();
       const todayStr = now.toISOString().slice(0, 10);
       const monthStart = `${todayStr.slice(0, 7)}-01`;
+      const nextDay = new Date(now);
+      nextDay.setDate(nextDay.getDate() + 1);
+      const tomorrowStr = nextDay.toISOString().slice(0, 10);
 
       // Leads today (with LGPD consent)
       const { count: leadsToday } = await supabase
@@ -73,7 +76,8 @@ Deno.serve(async (req) => {
         .select("id", { count: "exact", head: true })
         .eq("winery_id", winery_id)
         .eq("accepted_terms", true)
-        .gte("created_at", todayStr);
+        .gte("created_at", todayStr)
+        .lt("created_at", tomorrowStr);
 
       // Leads this month
       const { count: leadsMonth } = await supabase
@@ -83,44 +87,75 @@ Deno.serve(async (req) => {
         .eq("accepted_terms", true)
         .gte("created_at", monthStart);
 
-      // Total leads who have at least 1 rating (participated in tasting)
-      const { data: allLeads } = await supabase
-        .from("users_leads")
-        .select("id")
-        .eq("winery_id", winery_id);
-
-      const leadIds = (allLeads ?? []).map((l) => l.id);
-
-      let tastingCount = 0;
-      if (leadIds.length > 0) {
-        const { data: ratingsData } = await supabase
-          .from("ratings")
-          .select("user_id")
-          .in("user_id", leadIds);
-        const uniqueRaters = new Set((ratingsData ?? []).map((r) => r.user_id));
-        tastingCount = uniqueRaters.size;
-      }
-
-      // Vouchers redeemed
-      const { data: redeemedVouchers } = await supabase
+      // Sales today: redeemed vouchers today
+      const { data: todayVouchers } = await supabase
         .from("vouchers")
         .select("total")
         .eq("winery_id", winery_id)
-        .eq("redeemed", true);
+        .eq("redeemed", true)
+        .gte("created_at", todayStr)
+        .lt("created_at", tomorrowStr);
+      const salesToday = (todayVouchers ?? []).reduce((s, v) => s + Number(v.total || 0), 0);
 
-      const totalRedeemed = (redeemedVouchers ?? []).reduce((s, v) => s + Number(v.total), 0);
-
-      // Conversion rate: users who did tasting AND have a redeemed voucher
-      const { data: allVouchers } = await supabase
-        .from("vouchers")
-        .select("user_id, redeemed")
+      // Top wine of the month (best avg rating)
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: wineryWines } = await supabase
+        .from("wines")
+        .select("id, name")
         .eq("winery_id", winery_id);
+      const wineIds = (wineryWines ?? []).map(w => w.id);
+      const wineNameMap: Record<string, string> = {};
+      (wineryWines ?? []).forEach(w => { wineNameMap[w.id] = w.name; });
 
-      const voucherUsers = new Set((allVouchers ?? []).filter((v) => v.redeemed).map((v) => v.user_id));
-      const conversionRate = tastingCount > 0 ? (voucherUsers.size / tastingCount) * 100 : 0;
+      let topWineName = null;
+      let topWineDetail = "Sem dados";
+      if (wineIds.length > 0) {
+        const { data: monthRatings } = await supabase
+          .from("ratings")
+          .select("wine_id, stars_acidity, stars_body, stars_sweetness")
+          .in("wine_id", wineIds)
+          .gte("created_at", thirtyDaysAgo);
 
-      // Weekly chart: last 7 days
-      const weeklyChart: { date: string; leads: number; redeemed: number }[] = [];
+        if (monthRatings && monthRatings.length > 0) {
+          const wineScores: Record<string, { total: number; count: number }> = {};
+          monthRatings.forEach(r => {
+            const avg = (r.stars_acidity + r.stars_body + r.stars_sweetness) / 3;
+            if (!wineScores[r.wine_id]) wineScores[r.wine_id] = { total: 0, count: 0 };
+            wineScores[r.wine_id].total += avg;
+            wineScores[r.wine_id].count++;
+          });
+          let bestId = "";
+          let bestAvg = 0;
+          Object.entries(wineScores).forEach(([id, s]) => {
+            const avg = s.total / s.count;
+            if (avg > bestAvg) { bestAvg = avg; bestId = id; }
+          });
+          if (bestId) {
+            topWineName = wineNameMap[bestId] || "—";
+            topWineDetail = `${bestAvg.toFixed(1)}⭐ (${wineScores[bestId].count} aval.)`;
+          }
+        }
+      }
+
+      // Average satisfaction today
+      let avgSatisfaction = null;
+      let ratingsToday = 0;
+      if (wineIds.length > 0) {
+        const { data: todayRatings } = await supabase
+          .from("ratings")
+          .select("stars_acidity, stars_body, stars_sweetness")
+          .in("wine_id", wineIds)
+          .gte("created_at", todayStr)
+          .lt("created_at", tomorrowStr);
+        ratingsToday = todayRatings?.length ?? 0;
+        if (ratingsToday > 0) {
+          const sum = todayRatings!.reduce((s, r) => s + (r.stars_acidity + r.stars_body + r.stars_sweetness) / 3, 0);
+          avgSatisfaction = sum / ratingsToday;
+        }
+      }
+
+      // Weekly chart: last 7 days with leads + sales
+      const weeklyChart: { date: string; leads: number; sales: number }[] = [];
       for (let i = 6; i >= 0; i--) {
         const d = new Date(now);
         d.setDate(d.getDate() - i);
@@ -136,22 +171,26 @@ Deno.serve(async (req) => {
           .gte("created_at", ds)
           .lt("created_at", nds);
 
-        const { count: vc } = await supabase
+        const { data: dayVouchers } = await supabase
           .from("vouchers")
-          .select("id", { count: "exact", head: true })
+          .select("total")
           .eq("winery_id", winery_id)
           .eq("redeemed", true)
           .gte("created_at", ds)
           .lt("created_at", nds);
+        const daySales = (dayVouchers ?? []).reduce((s, v) => s + Number(v.total || 0), 0);
 
-        weeklyChart.push({ date: ds, leads: lc ?? 0, redeemed: vc ?? 0 });
+        weeklyChart.push({ date: ds, leads: lc ?? 0, sales: daySales });
       }
 
       return json({
         leads_today: leadsToday ?? 0,
         leads_month: leadsMonth ?? 0,
-        conversion_rate: conversionRate,
-        influenced_revenue: totalRedeemed,
+        sales_today: salesToday,
+        top_wine_name: topWineName,
+        top_wine_detail: topWineDetail,
+        avg_satisfaction: avgSatisfaction,
+        ratings_today: ratingsToday,
         weekly_chart: weeklyChart,
       });
     }

@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: create_winery ───────────────────────────
     if (action === "create_winery") {
-      const { name, slug, primary_color, plan_level, logo_url } = body;
+      const { name, slug, primary_color, plan_level, logo_url, subscription_value, platform_commission_rate } = body;
       if (!name || !slug) return json({ error: "name and slug required" }, 400);
       const slugClean = slug.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 50);
       const { data: winery, error } = await supabase.from("wineries").insert({
@@ -80,6 +80,8 @@ Deno.serve(async (req) => {
         primary_color: primary_color || "#630D16",
         plan_level: plan_level || "bronze",
         logo_url: logo_url || null,
+        subscription_value: Number(subscription_value) || 0,
+        platform_commission_rate: Number(platform_commission_rate) || 0,
       }).select().single();
       if (error) throw error;
       return json({ success: true, winery });
@@ -87,7 +89,7 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: update_winery ───────────────────────────
     if (action === "update_winery") {
-      const { winery_id, name, slug, primary_color, plan_level, logo_url } = body;
+      const { winery_id, name, slug, primary_color, plan_level, logo_url, subscription_value, platform_commission_rate } = body;
       if (!winery_id) return json({ error: "winery_id required" }, 400);
       const updates: Record<string, unknown> = {};
       if (name) updates.name = String(name).slice(0, 100);
@@ -95,6 +97,8 @@ Deno.serve(async (req) => {
       if (primary_color) updates.primary_color = String(primary_color).slice(0, 20);
       if (plan_level) updates.plan_level = plan_level;
       if (logo_url !== undefined) updates.logo_url = logo_url || null;
+      if (subscription_value !== undefined) updates.subscription_value = Number(subscription_value) || 0;
+      if (platform_commission_rate !== undefined) updates.platform_commission_rate = Number(platform_commission_rate) || 0;
       if (Object.keys(updates).length === 0) return json({ error: "Nothing to update" }, 400);
       const { error } = await supabase.from("wineries").update(updates).eq("id", winery_id);
       if (error) throw error;
@@ -318,7 +322,7 @@ Deno.serve(async (req) => {
 
     // ─── DEFAULT: dashboard metrics ──────────────────────
     const [wineriesRes, leadsRes, winesRes, vouchersRes, automationsRes, adminsRes, ratingsRes] = await Promise.all([
-      supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at"),
+      supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at, subscription_value, platform_commission_rate"),
       supabase.from("users_leads").select("id, winery_id, created_at, preferences_summary"),
       supabase.from("wines").select("id, winery_id"),
       supabase.from("vouchers").select("id, winery_id, total, redeemed, created_at"),
@@ -338,6 +342,15 @@ Deno.serve(async (req) => {
     const totalVoucherValue = vouchers.reduce((s, v) => s + Number(v.total || 0), 0);
     const redeemedVoucherValue = vouchers.filter(v => v.redeemed).reduce((s, v) => s + Number(v.total || 0), 0);
     const totalCommissions = automations.reduce((s, a) => s + Number(a.commission_value || 0), 0);
+    
+    // MRR from subscriptions
+    const totalMRR = wineries.reduce((s, w) => s + Number((w as any).subscription_value || 0), 0);
+    
+    // Platform commissions based on redeemed vouchers * commission rate per winery
+    const platformCommissions = wineries.reduce((s, w) => {
+      const wineryRedeemed = vouchers.filter(v => v.redeemed && v.winery_id === w.id).reduce((vs, v) => vs + Number(v.total || 0), 0);
+      return s + wineryRedeemed * (Number((w as any).platform_commission_rate || 0) / 100);
+    }, 0);
 
     const wineryMetrics = wineries.map(w => ({
       ...w,
@@ -383,7 +396,8 @@ Deno.serve(async (req) => {
       metrics: {
         total_wineries: wineries.length, total_leads: leads.length, total_wines: wines.length,
         total_vouchers: vouchers.length, total_voucher_value: totalVoucherValue,
-        redeemed_voucher_value: redeemedVoucherValue, total_commissions: totalCommissions, total_admins: admins.length,
+        redeemed_voucher_value: redeemedVoucherValue, total_commissions: totalCommissions,
+        total_admins: admins.length, total_mrr: totalMRR, platform_commissions: platformCommissions,
       },
       wineries: wineryMetrics, leads_chart: leadsChart,
       persona_stats: personaCounts, persona_total: Object.values(personaCounts).reduce((s, v) => s + v, 0),

@@ -41,7 +41,7 @@ export default function MasterWineriesPage() {
   const [editTarget, setEditTarget] = useState<WineryMetric | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<WineryMetric | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "" });
+  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0" });
 
   const fetchData = async () => {
     try {
@@ -60,13 +60,13 @@ export default function MasterWineriesPage() {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "" });
+    setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0" });
     setModalOpen(true);
   };
 
   const openEdit = (w: WineryMetric) => {
     setEditTarget(w);
-    setForm({ name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "" });
+    setForm({ name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0") });
     setModalOpen(true);
   };
 
@@ -83,11 +83,13 @@ export default function MasterWineriesPage() {
             primary_color: form.primary_color,
             plan_level: form.plan_level,
             logo_url: form.logo_url || null,
+            subscription_value: parseFloat(form.subscription_value) || 0,
+            platform_commission_rate: parseFloat(form.platform_commission_rate) || 0,
         });
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinícola atualizada!");
       } else {
-        const res = await invokeAuth("master-dashboard", { action: "create_winery", ...form, logo_url: form.logo_url || null });
+        const res = await invokeAuth("master-dashboard", { action: "create_winery", ...form, logo_url: form.logo_url || null, subscription_value: parseFloat(form.subscription_value) || 0, platform_commission_rate: parseFloat(form.platform_commission_rate) || 0 });
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinícola criada!");
       }
@@ -307,6 +309,17 @@ export default function MasterWineriesPage() {
                   <SelectItem value="gold">Gold</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Mensalidade (R$)</Label>
+                <Input type="number" step="0.01" min="0" value={form.subscription_value} onChange={e => setForm(f => ({ ...f, subscription_value: e.target.value }))} placeholder="2500.00" />
+              </div>
+              <div>
+                <Label>Comissão (%)</Label>
+                <Input type="number" step="0.01" min="0" max="100" value={form.platform_commission_rate} onChange={e => setForm(f => ({ ...f, platform_commission_rate: e.target.value }))} placeholder="5" />
+                <p className="text-[10px] text-muted-foreground mt-1">{parseFloat(form.platform_commission_rate) || 0}% sobre vendas</p>
+              </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
