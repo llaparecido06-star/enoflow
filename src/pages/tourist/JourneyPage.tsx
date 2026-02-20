@@ -3,7 +3,6 @@ import { useOutletContext, useLocation, useNavigate } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useTouristAuth } from "@/hooks/useTouristAuth";
 import { useFavorites } from "@/hooks/useFavorites";
-import { useCart } from "@/hooks/useCart";
 import { invokeAuth } from "@/lib/auth-api";
 import { calculatePersona, type WinePersona } from "@/components/tourist/CelebrationModal";
 import Confetti from "@/components/tourist/Confetti";
@@ -42,14 +41,12 @@ export default function JourneyPage() {
   const [loadingRatings, setLoadingRatings] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Check if we arrived from the "Finalizar" button
   const navState = location.state as { persona?: WinePersona; recommendations?: Wine[]; justFinished?: boolean } | null;
 
   useEffect(() => {
     if (navState?.justFinished) {
       setShowConfetti(true);
       const t = setTimeout(() => setShowConfetti(false), 4000);
-      // Clear the state so refresh doesn't re-trigger confetti
       window.history.replaceState({}, "");
       return () => clearTimeout(t);
     }
@@ -69,7 +66,6 @@ export default function JourneyPage() {
   const tastingWines = useMemo(() => wines?.filter(w => w.on_tasting) ?? [], [wines]);
   const favoriteWines = useMemo(() => wines?.filter(w => isFavorite(w.id)) ?? [], [wines, isFavorite]);
 
-  // Calculate persona from ratings or use nav state
   const flavorProfile = useMemo(() => {
     if (ratings.length === 0) return null;
     const avg = (key: keyof RatingData) =>
@@ -83,7 +79,6 @@ export default function JourneyPage() {
     return calculatePersona(flavorProfile.acidity, flavorProfile.body, flavorProfile.sweetness);
   }, [navState?.persona, flavorProfile]);
 
-  // Recommendations from nav state or computed
   const recommendations = useMemo(() => {
     if (navState?.recommendations && navState.recommendations.length > 0) return navState.recommendations;
     if (!flavorProfile || !wines) return [];
@@ -106,7 +101,6 @@ export default function JourneyPage() {
   }, [ratings, tastingWines]);
 
   const handleBuyNow = (wine: Wine) => {
-    // Navigate to shop with the wine to add + discount flag
     navigate(`/app/${winery.slug}/shop`, {
       state: { addToCart: wine, applyDiscount: true },
     });
@@ -190,7 +184,7 @@ export default function JourneyPage() {
         </motion.div>
       )}
 
-      {/* Recommendations with 1-click buy */}
+      {/* Recommendations */}
       {recommendations.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <div className="flex items-center gap-2 mb-3">

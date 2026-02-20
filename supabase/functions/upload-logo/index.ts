@@ -41,6 +41,7 @@ Deno.serve(async (req) => {
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
+    const folder = (formData.get("folder") as string) || "logos";
     if (!file) {
       return new Response(JSON.stringify({ error: "No file provided" }), {
         status: 400,
@@ -78,9 +79,11 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Generate unique filename
+    // Generate unique filename with folder
+    const safeFolders = ["logos", "wines", "menu", "products"];
+    const safeFolder = safeFolders.includes(folder) ? folder : "logos";
     const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
-    const path = `logos/${crypto.randomUUID()}.${ext}`;
+    const path = `${safeFolder}/${crypto.randomUUID()}.${ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("wine-images")
