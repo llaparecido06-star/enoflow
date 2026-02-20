@@ -73,6 +73,7 @@ Deno.serve(async (req) => {
         .from("admin_users")
         .select("id, name, email, role, created_at")
         .eq("winery_id", winery_id)
+        .neq("role", "master")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return json({ success: true, staff: data ?? [] });
