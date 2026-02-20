@@ -38,6 +38,12 @@ export default function AdminMenuPage() {
 
   const wineMap = new Map((wines ?? []).map((w) => [w.id, w]));
 
+  // Group by category
+  const grouped = (menuItems ?? []).reduce<Record<string, MenuItem[]>>((acc, item) => {
+    (acc[item.category] ??= []).push(item);
+    return acc;
+  }, {});
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -51,67 +57,55 @@ export default function AdminMenuPage() {
         </button>
       </div>
 
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border bg-secondary/50">
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Item</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Categoria</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Preço</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Vinho sugerido</th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {menuItems?.map((item) => {
-              const suggestedWine = item.suggested_wine_id ? wineMap.get(item.suggested_wine_id) : undefined;
-              return (
-                <tr key={item.id} className="border-b border-border last:border-0 hover:bg-secondary/30 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center">
-                        <UtensilsCrossed className="w-4 h-4 text-gold" />
+      {/* Card layout grouped by category */}
+      <div className="space-y-5">
+        {Object.entries(grouped).map(([category, items]) => (
+          <div key={category}>
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{category}</h3>
+            <div className="space-y-2">
+              {items.map((item) => {
+                const suggestedWine = item.suggested_wine_id ? wineMap.get(item.suggested_wine_id) : undefined;
+                return (
+                  <div key={item.id} className="bg-card rounded-xl border border-border p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <UtensilsCrossed className="w-5 h-5 text-gold" />
+                        )}
                       </div>
-                      <div>
-                        <span className="text-sm font-medium text-foreground truncate max-w-[200px] block">{item.name}</span>
-                        <span className="text-[10px] text-muted-foreground sm:hidden">{item.category}</span>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold text-foreground truncate">{item.name}</h4>
+                        <p className="text-[11px] text-muted-foreground">R$ {Number(item.price).toFixed(2)}</p>
+                        {suggestedWine && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <Wine className="w-3 h-3 text-wine-light" />
+                            <span className="text-[10px] text-muted-foreground truncate">{suggestedWine.name}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button onClick={() => setFormItem(item)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                          <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                        </button>
+                        <button onClick={() => setDeleteItem(item)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                        </button>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{item.category}</td>
-                  <td className="px-4 py-3 text-sm text-foreground hidden md:table-cell">R$ {Number(item.price).toFixed(2)}</td>
-                  <td className="px-4 py-3 hidden lg:table-cell">
-                    {suggestedWine ? (
-                      <div className="flex items-center gap-1.5">
-                        <Wine className="w-3 h-3 text-wine-light" />
-                        <span className="text-xs text-muted-foreground truncate max-w-[150px]">{suggestedWine.name}</span>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center gap-1 justify-end">
-                      <button onClick={() => setFormItem(item)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
-                        <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                      </button>
-                      <button onClick={() => setDeleteItem(item)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
-                        <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-            {(!menuItems || menuItems.length === 0) && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  Nenhum item no cardápio ainda.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        {(!menuItems || menuItems.length === 0) && (
+          <div className="bg-card rounded-xl border border-border p-8 text-center">
+            <UtensilsCrossed className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+            <p className="text-sm text-muted-foreground">Nenhum item no cardápio ainda.</p>
+          </div>
+        )}
       </div>
 
       {formItem !== undefined && (

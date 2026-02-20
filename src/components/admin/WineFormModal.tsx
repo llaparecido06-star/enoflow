@@ -4,6 +4,7 @@ import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Wine } from "@/hooks/useWinery";
+import ImageUploadField from "./ImageUploadField";
 
 interface WineFormModalProps {
   wineryId: string;
@@ -40,13 +41,13 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
     price_bottle: wine?.price_bottle?.toString() ?? "",
     price_glass: wine?.price_glass?.toString() ?? "",
     description: wine?.description ?? "",
+    image_url: wine?.image_url ?? "",
     sensory_acidity: wine?.sensory_acidity ?? 3,
     sensory_body: wine?.sensory_body ?? 3,
     sensory_sweetness: wine?.sensory_sweetness ?? 3,
     on_tasting: wine?.on_tasting ?? false,
     on_restaurant: wine?.on_restaurant ?? false,
     on_shop: wine?.on_shop ?? true,
-    // Ficha Técnica fields
     grape: wine?.grape ?? "",
     region: wine?.region ?? "",
     alcohol_content: wine?.alcohol_content ?? "",
@@ -77,6 +78,7 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
         price_bottle: parseFloat(form.price_bottle),
         price_glass: form.price_glass ? parseFloat(form.price_glass) : null,
         description: form.description.trim() || null,
+        image_url: form.image_url || null,
         sensory_acidity: form.sensory_acidity,
         sensory_body: form.sensory_body,
         sensory_sweetness: form.sensory_sweetness,
@@ -123,6 +125,15 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
         </div>
 
         <div className="p-4 space-y-4">
+          {/* Image Upload */}
+          <ImageUploadField
+            label="Foto do Vinho"
+            currentUrl={form.image_url || null}
+            onUploaded={(url) => set("image_url", url)}
+            onRemove={() => set("image_url", "")}
+            folder="wines"
+          />
+
           {/* Name */}
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Nome *</label>
@@ -151,7 +162,7 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
             </div>
           </div>
 
-          {/* Year */}
+          {/* Year & Grape */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-muted-foreground block mb-1">Safra (Ano)</label>

@@ -12,15 +12,15 @@ export interface WinePersona {
 
 export function calculatePersona(avgAcidity: number, avgBody: number, avgSweetness: number): WinePersona {
   if (avgSweetness > 4) {
-    return { key: "sweet_tooth", label: "Sweet Tooth", emoji: "🍬", description: "Amante de Doçura — Você aprecia vinhos com notas frutadas e aveludadas." };
+    return { key: "sweet_tooth", label: "Amante de Doçura", emoji: "🍬", description: "Você aprecia vinhos com notas frutadas e aveludadas, com toques suaves e envolventes." };
   }
   if (avgBody > 4) {
-    return { key: "bold_intense", label: "Bold & Intense", emoji: "🦁", description: "Forte e Encorpado — Você prefere vinhos robustos com presença marcante." };
+    return { key: "bold_intense", label: "Forte e Encorpado", emoji: "🦁", description: "Você prefere vinhos robustos com presença marcante e sabores intensos." };
   }
   if (avgAcidity > 4) {
-    return { key: "fresh_crisp", label: "Fresh & Crisp", emoji: "🍋", description: "Fresco e Leve — Você gosta de vinhos vibrantes com acidez refrescante." };
+    return { key: "fresh_crisp", label: "Fresco e Vibrante", emoji: "🍋", description: "Você gosta de vinhos vibrantes com acidez refrescante e leveza." };
   }
-  return { key: "balanced_explorer", label: "Balanced Explorer", emoji: "⚖️", description: "Explorador Equilibrado — Você aprecia vinhos harmoniosos e versáteis." };
+  return { key: "balanced_explorer", label: "Explorador Equilibrado", emoji: "⚖️", description: "Você aprecia vinhos harmoniosos e versáteis, com equilíbrio perfeito." };
 }
 
 interface CelebrationModalProps {

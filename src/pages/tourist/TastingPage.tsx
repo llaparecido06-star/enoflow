@@ -7,7 +7,7 @@ import TastingCard from "@/components/tourist/TastingCard";
 import TastingWelcome from "@/components/tourist/TastingWelcome";
 import { calculatePersona } from "@/components/tourist/CelebrationModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Package, ChevronLeft, ChevronRight, Wine as WineIcon } from "lucide-react";
+import { Sparkles, ChevronLeft, ChevronRight, Wine as WineIcon, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { invokeAuth } from "@/lib/auth-api";
 import type { Tables } from "@/integrations/supabase/types";
@@ -16,18 +16,18 @@ interface RatingEntry { wineId: string; acidity: number; body: number; sweetness
 
 const STORAGE_KEY = "smartsommelier_tasting_progress";
 
-function loadProgress(leadId: string, wineryId: string): { index: number; ratings: RatingEntry[] } | null {
+function loadProgress(leadId: string, wineryId: string): { index: number; ratings: RatingEntry[]; packageId?: string } | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw);
-    if (data.leadId === leadId && data.wineryId === wineryId) return { index: data.index ?? 0, ratings: data.ratings ?? [] };
+    if (data.leadId === leadId && data.wineryId === wineryId) return { index: data.index ?? 0, ratings: data.ratings ?? [], packageId: data.packageId };
   } catch {}
   return null;
 }
 
-function saveProgress(leadId: string, wineryId: string, index: number, ratings: RatingEntry[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ leadId, wineryId, index, ratings }));
+function saveProgress(leadId: string, wineryId: string, index: number, ratings: RatingEntry[], packageId?: string) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ leadId, wineryId, index, ratings, packageId }));
 }
 
 export default function TastingPage() {
@@ -39,15 +39,26 @@ export default function TastingPage() {
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const tastingWines = useMemo(() => wines?.filter((w) => w.on_tasting) ?? [], [wines]);
-  const shopWines = useMemo(() => wines?.filter((w) => w.on_shop && !w.on_tasting) ?? [], [wines]);
-
   // Load saved progress
   const saved = useMemo(() => lead ? loadProgress(lead.id, winery.id) : null, [lead, winery.id]);
 
+  const [selectedPackageId, setSelectedPackageId] = useState<string | undefined>(saved?.packageId);
   const [currentIndex, setCurrentIndex] = useState(saved?.index ?? 0);
   const [showWelcome, setShowWelcome] = useState(!saved || saved.ratings.length === 0);
   const [localRatings, setLocalRatings] = useState<RatingEntry[]>(saved?.ratings ?? []);
+
+  // Determine tasting wines based on selected package
+  const tastingWines = useMemo(() => {
+    if (selectedPackageId && packages) {
+      const pkg = packages.find(p => p.id === selectedPackageId);
+      if (pkg && wines) {
+        return wines.filter(w => pkg.wine_ids.includes(w.id));
+      }
+    }
+    return wines?.filter((w) => w.on_tasting) ?? [];
+  }, [wines, packages, selectedPackageId]);
+
+  const shopWines = useMemo(() => wines?.filter((w) => w.on_shop && !w.on_tasting) ?? [], [wines]);
 
   // Also load ratings from server on mount
   useEffect(() => {
@@ -64,7 +75,7 @@ export default function TastingPage() {
           }));
           setLocalRatings(serverRatings);
           setShowWelcome(false);
-          saveProgress(lead.id, winery.id, currentIndex, serverRatings);
+          saveProgress(lead.id, winery.id, currentIndex, serverRatings, selectedPackageId);
         }
       } catch {}
     })();
@@ -72,8 +83,8 @@ export default function TastingPage() {
 
   // Save progress on changes
   useEffect(() => {
-    if (lead) saveProgress(lead.id, winery.id, currentIndex, localRatings);
-  }, [currentIndex, localRatings, lead, winery.id]);
+    if (lead) saveProgress(lead.id, winery.id, currentIndex, localRatings, selectedPackageId);
+  }, [currentIndex, localRatings, lead, winery.id, selectedPackageId]);
 
   // Scroll to saved index on mount
   useEffect(() => {
@@ -84,7 +95,10 @@ export default function TastingPage() {
     }
   }, [tastingWines.length]);
 
-  const handleStartTasting = useCallback(() => setShowWelcome(false), []);
+  const handleStartTasting = useCallback((packageId?: string) => {
+    setSelectedPackageId(packageId);
+    setShowWelcome(false);
+  }, []);
 
   const handleRatingSubmit = async (wine: Wine, ratings: { acidity: number; body: number; sweetness: number }) => {
     if (!lead) return;
@@ -103,24 +117,24 @@ export default function TastingPage() {
   const handleFinishTasting = async () => {
     if (!lead || localRatings.length === 0) return;
 
-    const avgAcidity = localRatings.reduce((s, r) => s + r.acidity, 0) / localRatings.length;
-    const avgBody = localRatings.reduce((s, r) => s + r.body, 0) / localRatings.length;
-    const avgSweetness = localRatings.reduce((s, r) => s + r.sweetness, 0) / localRatings.length;
+    const relevantRatings = localRatings.filter(r => tastingWines.some(w => w.id === r.wineId));
+    if (relevantRatings.length === 0) return;
+
+    const avgAcidity = relevantRatings.reduce((s, r) => s + r.acidity, 0) / relevantRatings.length;
+    const avgBody = relevantRatings.reduce((s, r) => s + r.body, 0) / relevantRatings.length;
+    const avgSweetness = relevantRatings.reduce((s, r) => s + r.sweetness, 0) / relevantRatings.length;
     const persona = calculatePersona(avgAcidity, avgBody, avgSweetness);
 
-    // Find compatible wines from shop
     const recs = shopWines
       .map(w => ({ wine: w, score: Math.abs(w.sensory_acidity - avgAcidity) + Math.abs(w.sensory_body - avgBody) + Math.abs(w.sensory_sweetness - avgSweetness) }))
       .sort((a, b) => a.score - b.score)
       .slice(0, 3)
       .map(r => r.wine);
 
-    // Save persona to backend
     try {
       await invokeAuth("tourist-actions", { action: "save_persona", persona_key: persona.key, persona_label: persona.label });
     } catch {}
 
-    // Navigate to profile/journey page with persona data
     navigate(`/app/${winery.slug}/journey`, {
       state: { persona, recommendations: recs, justFinished: true },
     });
@@ -143,43 +157,25 @@ export default function TastingPage() {
   };
 
   const allTastingRated = tastingWines.length > 0 && tastingWines.every(w => localRatings.some(r => r.wineId === w.id));
+  const ratedCount = localRatings.filter(r => tastingWines.some(w => w.id === r.wineId)).length;
 
   // Welcome screen
   if (showWelcome && tastingWines.length > 0 && localRatings.length === 0) {
     return (
       <AnimatePresence>
-        <TastingWelcome wineryName={winery.name} wineryLogo={winery.logo_url} wineCount={tastingWines.length} onStart={handleStartTasting} />
+        <TastingWelcome
+          wineryName={winery.name}
+          wineryLogo={winery.logo_url}
+          wineCount={tastingWines.length}
+          onStart={handleStartTasting}
+          packages={packages}
+        />
       </AnimatePresence>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Packages */}
-      {packages && packages.length > 0 && (
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <Package className="w-4 h-4 text-gold" />
-            <h2 className="font-display text-sm font-semibold text-foreground">Pacotes de Degustação</h2>
-          </div>
-          <div className="space-y-3">
-            {packages.map((pkg) => (
-              <motion.div key={pkg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-r from-wine/10 to-gold/10 rounded-xl border border-wine/20 p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-display text-sm font-semibold text-foreground">{pkg.name}</h3>
-                    {pkg.description && <p className="text-[11px] text-muted-foreground mt-1">{pkg.description}</p>}
-                    <p className="text-[10px] text-muted-foreground mt-1">{pkg.wine_ids.length} vinhos incluídos</p>
-                  </div>
-                  <span className="font-display text-lg font-bold text-gold">R$ {Number(pkg.price).toFixed(2)}</span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* Tasting wines section */}
       <section>
         <div className="flex items-center justify-between mb-4">
@@ -207,20 +203,33 @@ export default function TastingPage() {
           <div className="mb-4">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] text-muted-foreground">
-                {localRatings.filter(r => tastingWines.some(w => w.id === r.wineId)).length}/{tastingWines.length} avaliados
+                {ratedCount}/{tastingWines.length} avaliados
               </span>
-              {!allTastingRated && localRatings.length > 0 && (
+              {!allTastingRated && ratedCount > 0 && (
                 <span className="text-[10px] text-gold font-medium">
-                  Faltam {tastingWines.length - localRatings.filter(r => tastingWines.some(w => w.id === r.wineId)).length}!
+                  Faltam {tastingWines.length - ratedCount}!
                 </span>
               )}
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
               <motion.div className="h-full bg-gold rounded-full" initial={{ width: 0 }}
-                animate={{ width: `${(localRatings.filter(r => tastingWines.some(w => w.id === r.wineId)).length / Math.max(tastingWines.length, 1)) * 100}%` }}
+                animate={{ width: `${(ratedCount / Math.max(tastingWines.length, 1)) * 100}%` }}
                 transition={{ duration: 0.5 }} />
             </div>
           </div>
+        )}
+
+        {/* End tasting early button */}
+        {ratedCount > 0 && !allTastingRated && (
+          <motion.button
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={handleFinishTasting}
+            className="w-full mb-4 py-2.5 rounded-xl border border-gold/30 text-gold text-xs font-medium hover:bg-gold/5 transition-colors flex items-center justify-center gap-2"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Encerrar degustação e ver meu perfil
+          </motion.button>
         )}
 
         <div ref={scrollRef} className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-2 -mx-4 px-4"

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import type { MenuItem } from "@/hooks/useMenuItems";
 import type { Wine } from "@/hooks/useWinery";
+import ImageUploadField from "./ImageUploadField";
 
 interface MenuItemFormModalProps {
   wineryId: string;
@@ -26,6 +27,7 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, onCl
     price: item?.price?.toString() ?? "",
     description: item?.description ?? "",
     suggested_wine_id: item?.suggested_wine_id ?? "",
+    image_url: item?.image_url ?? "",
   });
 
   const set = (key: string, val: unknown) => setForm((f) => ({ ...f, [key]: val }));
@@ -43,6 +45,7 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, onCl
         price: parseFloat(form.price),
         description: form.description.trim() || null,
         suggested_wine_id: form.suggested_wine_id || null,
+        image_url: form.image_url || null,
       };
 
       const body = isEdit
@@ -71,6 +74,15 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, onCl
         </div>
 
         <div className="p-4 space-y-4">
+          {/* Image Upload */}
+          <ImageUploadField
+            label="Foto do Prato"
+            currentUrl={form.image_url || null}
+            onUploaded={(url) => set("image_url", url)}
+            onRemove={() => set("image_url", "")}
+            folder="menu"
+          />
+
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Nome *</label>
             <input value={form.name} onChange={(e) => set("name", e.target.value)} maxLength={200}

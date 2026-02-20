@@ -1,15 +1,23 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Wine } from "lucide-react";
+import { Wine, Package } from "lucide-react";
 import tastingBg from "@/assets/tasting-welcome-bg.jpg";
+import type { TastingPackage } from "@/hooks/useWinery";
 
 interface TastingWelcomeProps {
   wineryName: string;
   wineryLogo?: string | null;
   wineCount: number;
-  onStart: () => void;
+  onStart: (packageId?: string) => void;
+  packages?: TastingPackage[];
 }
 
-export default function TastingWelcome({ wineryName, wineryLogo, wineCount, onStart }: TastingWelcomeProps) {
+export default function TastingWelcome({ wineryName, wineryLogo, wineCount, onStart, packages }: TastingWelcomeProps) {
+  const hasMultiplePackages = packages && packages.length > 1;
+  const [selectedPkg, setSelectedPkg] = useState<string | undefined>(
+    packages && packages.length === 1 ? packages[0].id : undefined
+  );
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -64,21 +72,61 @@ export default function TastingWelcome({ wineryName, wineryLogo, wineCount, onSt
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="text-white/60 text-sm leading-relaxed mb-10"
+          className="text-white/60 text-sm leading-relaxed mb-6"
         >
           Descubra seu paladar em {wineCount} {wineCount === 1 ? "passo" : "passos"}. 
           Avalie, descubra sua persona e receba recomendações personalizadas.
         </motion.p>
 
+        {/* Package selection */}
+        {hasMultiplePackages && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.55 }}
+            className="w-full mb-6 space-y-2"
+          >
+            <p className="text-white/70 text-xs font-medium mb-2">Selecione sua degustação:</p>
+            {packages.map((pkg) => (
+              <button
+                key={pkg.id}
+                onClick={() => setSelectedPkg(pkg.id)}
+                className={`w-full text-left rounded-xl p-3 border transition-all ${
+                  selectedPkg === pkg.id
+                    ? "bg-gold/20 border-gold/50 ring-1 ring-gold/30"
+                    : "bg-white/5 border-white/10 hover:bg-white/10"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Package className={`w-4 h-4 ${selectedPkg === pkg.id ? "text-gold" : "text-white/40"}`} />
+                  <span className={`text-sm font-medium ${selectedPkg === pkg.id ? "text-gold" : "text-white/80"}`}>
+                    {pkg.name}
+                  </span>
+                  <span className={`text-xs ml-auto ${selectedPkg === pkg.id ? "text-gold/80" : "text-white/40"}`}>
+                    R$ {Number(pkg.price).toFixed(2)}
+                  </span>
+                </div>
+                {pkg.description && (
+                  <p className="text-[10px] text-white/40 mt-1 ml-6">{pkg.description}</p>
+                )}
+                <p className="text-[10px] text-white/30 mt-0.5 ml-6">{pkg.wine_ids.length} vinhos</p>
+              </button>
+            ))}
+          </motion.div>
+        )}
+
         <motion.button
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.6 }}
-          onClick={onStart}
-          className="relative px-10 py-4 rounded-2xl bg-gold text-gold-foreground font-display text-base font-semibold shadow-lg shadow-gold/30 hover:shadow-xl hover:shadow-gold/40 transition-all duration-300"
+          onClick={() => onStart(selectedPkg)}
+          disabled={hasMultiplePackages && !selectedPkg}
+          className="relative px-10 py-4 rounded-2xl bg-gold text-gold-foreground font-display text-base font-semibold shadow-lg shadow-gold/30 hover:shadow-xl hover:shadow-gold/40 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {/* Pulse ring */}
-          <span className="absolute inset-0 rounded-2xl animate-ping bg-gold/20" style={{ animationDuration: '2s' }} />
+          {(!hasMultiplePackages || selectedPkg) && (
+            <span className="absolute inset-0 rounded-2xl animate-ping bg-gold/20" style={{ animationDuration: '2s' }} />
+          )}
           <span className="relative flex items-center gap-2">
             <Wine className="w-5 h-5" />
             Iniciar Degustação

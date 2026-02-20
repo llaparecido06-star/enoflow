@@ -47,49 +47,51 @@ export default function AdminWinesPage() {
         </button>
       </div>
 
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border bg-secondary/50">
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Vinho</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Tipo</th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden md:table-cell">Preço</th>
-              <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Deg.</th>
-              <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Rest.</th>
-              <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Loja</th>
-              <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {wines?.map((wine) => (
-              <tr key={wine.id} className="border-b border-border last:border-0 hover:bg-secondary/30 transition-colors">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <WineIcon className="w-4 h-4 text-primary" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground truncate max-w-[200px]">{wine.name}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm text-muted-foreground hidden sm:table-cell">{wine.type}</td>
-                <td className="px-4 py-3 text-sm text-foreground hidden md:table-cell">R$ {Number(wine.price_bottle).toFixed(2)}</td>
-                <td className="px-4 py-3 text-center"><span className={`inline-block w-2 h-2 rounded-full ${wine.on_tasting ? "bg-green-500" : "bg-border"}`} /></td>
-                <td className="px-4 py-3 text-center hidden sm:table-cell"><span className={`inline-block w-2 h-2 rounded-full ${wine.on_restaurant ? "bg-green-500" : "bg-border"}`} /></td>
-                <td className="px-4 py-3 text-center hidden sm:table-cell"><span className={`inline-block w-2 h-2 rounded-full ${wine.on_shop ? "bg-green-500" : "bg-border"}`} /></td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex items-center gap-1 justify-end">
-                    <button onClick={() => setFormWine(wine)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
-                      <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                    </button>
-                    <button onClick={() => setDeleteWine(wine)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
-                      <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Card layout for mobile-friendly display */}
+      <div className="space-y-3">
+        {wines?.map((wine) => (
+          <div key={wine.id} className="bg-card rounded-xl border border-border p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {wine.image_url ? (
+                  <img src={wine.image_url} alt={wine.name} className="w-full h-full object-cover" />
+                ) : (
+                  <WineIcon className="w-5 h-5 text-primary" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold text-foreground truncate">{wine.name}</h3>
+                <p className="text-[11px] text-muted-foreground">{wine.type} · R$ {Number(wine.price_bottle).toFixed(2)}</p>
+                <div className="flex items-center gap-3 mt-1.5">
+                  {[
+                    { label: "Deg", active: wine.on_tasting },
+                    { label: "Rest", active: wine.on_restaurant },
+                    { label: "Loja", active: wine.on_shop },
+                  ].map(({ label, active }) => (
+                    <span key={label} className="flex items-center gap-1">
+                      <span className={`inline-block w-1.5 h-1.5 rounded-full ${active ? "bg-green-500" : "bg-border"}`} />
+                      <span className="text-[10px] text-muted-foreground">{label}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button onClick={() => setFormWine(wine)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                  <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+                <button onClick={() => setDeleteWine(wine)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {(!wines || wines.length === 0) && (
+          <div className="bg-card rounded-xl border border-border p-8 text-center">
+            <WineIcon className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+            <p className="text-sm text-muted-foreground">Nenhum vinho cadastrado ainda.</p>
+          </div>
+        )}
       </div>
 
       {formWine !== undefined && (
