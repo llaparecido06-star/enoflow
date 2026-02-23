@@ -13,8 +13,8 @@ const Index = () => {
         <img
           src={heroImage}
           alt="Wine cellar"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+          className="absolute inset-0 w-full h-full object-cover" />
+
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
         <div className="absolute top-4 right-4 z-10">
           <ThemeToggle className="bg-background/60 backdrop-blur-sm" />
@@ -22,7 +22,7 @@ const Index = () => {
         <div className="absolute bottom-0 left-0 right-0 p-6 max-w-lg mx-auto">
           <div className="flex items-center gap-2 mb-3">
             <Grape className="w-5 h-5 text-gold" />
-            <span className="text-xs font-medium text-gold tracking-wider uppercase">SmartSommelier</span>
+            <span className="text-xs font-medium text-gold tracking-wider uppercase">ENOFLOW</span>
           </div>
           <h1 className="font-display text-3xl font-bold text-white leading-tight mb-2 drop-shadow-lg">
             Inteligência em<br />Enoturismo
@@ -37,8 +37,8 @@ const Index = () => {
       <div className="max-w-lg mx-auto px-6 py-8 space-y-4">
         <button
           onClick={() => navigate("/app/vinicola-goes")}
-          className="w-full flex items-center justify-between bg-card border border-border rounded-xl p-4 hover:bg-secondary/50 transition-colors group animate-fade-in"
-        >
+          className="w-full flex items-center justify-between bg-card border border-border rounded-xl p-4 hover:bg-secondary/50 transition-colors group animate-fade-in">
+
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#630D16' }}>
               <Wine className="w-5 h-5 text-primary-foreground" />
@@ -54,8 +54,8 @@ const Index = () => {
         <button
           onClick={() => navigate("/admin/vinicola-goes")}
           className="w-full flex items-center justify-between bg-card border border-border rounded-xl p-4 hover:bg-secondary/50 transition-colors group animate-fade-in"
-          style={{ animationDelay: "0.1s" }}
-        >
+          style={{ animationDelay: "0.1s" }}>
+
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-sidebar flex items-center justify-center">
               <Wine className="w-5 h-5 text-sidebar-foreground" />
@@ -71,8 +71,8 @@ const Index = () => {
         <button
           onClick={() => navigate("/master")}
           className="w-full flex items-center justify-between bg-card border border-border rounded-xl p-4 hover:bg-secondary/50 transition-colors group animate-fade-in"
-          style={{ animationDelay: "0.2s" }}
-        >
+          style={{ animationDelay: "0.2s" }}>
+
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
               <Grape className="w-5 h-5 text-accent-foreground" />
@@ -85,8 +85,8 @@ const Index = () => {
           <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
         </button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default Index;
