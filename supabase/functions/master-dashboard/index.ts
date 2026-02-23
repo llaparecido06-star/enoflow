@@ -71,9 +71,11 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: create_winery ───────────────────────────
     if (action === "create_winery") {
-      const { name, slug, primary_color, plan_level, logo_url, subscription_value, platform_commission_rate } = body;
+      const { name, slug, primary_color, plan_level, logo_url, subscription_value, platform_commission_rate, enabled_modules } = body;
       if (!name || !slug) return json({ error: "name and slug required" }, 400);
       const slugClean = slug.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 50);
+      const validModules = ["tasting", "restaurant", "shop"];
+      const modules = Array.isArray(enabled_modules) ? enabled_modules.filter((m: string) => validModules.includes(m)) : validModules;
       const { data: winery, error } = await supabase.from("wineries").insert({
         name: String(name).slice(0, 100),
         slug: slugClean,
@@ -82,6 +84,7 @@ Deno.serve(async (req) => {
         logo_url: logo_url || null,
         subscription_value: Number(subscription_value) || 0,
         platform_commission_rate: Number(platform_commission_rate) || 0,
+        enabled_modules: modules,
       }).select().single();
       if (error) throw error;
       return json({ success: true, winery });
@@ -89,7 +92,7 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: update_winery ───────────────────────────
     if (action === "update_winery") {
-      const { winery_id, name, slug, primary_color, plan_level, logo_url, subscription_value, platform_commission_rate } = body;
+      const { winery_id, name, slug, primary_color, plan_level, logo_url, subscription_value, platform_commission_rate, enabled_modules } = body;
       if (!winery_id) return json({ error: "winery_id required" }, 400);
       const updates: Record<string, unknown> = {};
       if (name) updates.name = String(name).slice(0, 100);
@@ -99,6 +102,10 @@ Deno.serve(async (req) => {
       if (logo_url !== undefined) updates.logo_url = logo_url || null;
       if (subscription_value !== undefined) updates.subscription_value = Number(subscription_value) || 0;
       if (platform_commission_rate !== undefined) updates.platform_commission_rate = Number(platform_commission_rate) || 0;
+      if (enabled_modules !== undefined) {
+        const validModules = ["tasting", "restaurant", "shop"];
+        updates.enabled_modules = Array.isArray(enabled_modules) ? enabled_modules.filter((m: string) => validModules.includes(m)) : validModules;
+      }
       if (Object.keys(updates).length === 0) return json({ error: "Nothing to update" }, 400);
       const { error } = await supabase.from("wineries").update(updates).eq("id", winery_id);
       if (error) throw error;
@@ -322,7 +329,7 @@ Deno.serve(async (req) => {
 
     // ─── DEFAULT: dashboard metrics ──────────────────────
     const [wineriesRes, leadsRes, winesRes, vouchersRes, automationsRes, adminsRes, ratingsRes] = await Promise.all([
-      supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at, subscription_value, platform_commission_rate"),
+      supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at, subscription_value, platform_commission_rate, enabled_modules"),
       supabase.from("users_leads").select("id, winery_id, created_at, preferences_summary"),
       supabase.from("wines").select("id, winery_id"),
       supabase.from("vouchers").select("id, winery_id, total, redeemed, created_at"),

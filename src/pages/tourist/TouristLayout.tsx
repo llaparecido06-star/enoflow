@@ -1,4 +1,4 @@
-import { Outlet, useParams } from "react-router-dom";
+import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useDynamicTheme } from "@/hooks/useDynamicTheme";
 import { TouristAuthProvider, useTouristAuth } from "@/hooks/useTouristAuth";
@@ -6,9 +6,23 @@ import BottomNav from "@/components/tourist/BottomNav";
 import WhatsAppLogin from "@/components/tourist/WhatsAppLogin";
 import { Loader2, LogOut } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useEffect } from "react";
 
 function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const { isAuthenticated, lead, login, logout } = useTouristAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const enabledModules: string[] = winery.enabled_modules ?? ["tasting", "restaurant", "shop"];
+
+  // Redirect if on a disabled module
+  const moduleMap: Record<string, string> = { restaurant: "restaurant", shop: "shop" };
+  useEffect(() => {
+    const pathSuffix = location.pathname.replace(`/app/${slug}`, "").replace(/^\//, "");
+    const mod = moduleMap[pathSuffix];
+    if (mod && !enabledModules.includes(mod)) {
+      navigate(`/app/${slug}`, { replace: true });
+    }
+  }, [location.pathname, enabledModules]);
 
   if (!isAuthenticated) {
     return (
@@ -53,7 +67,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
         <Outlet context={{ winery, lead }} />
       </main>
 
-      <BottomNav slug={slug} />
+      <BottomNav slug={slug} enabledModules={enabledModules} />
     </div>
   );
 }

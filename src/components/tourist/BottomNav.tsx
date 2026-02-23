@@ -4,21 +4,23 @@ import { motion } from "framer-motion";
 
 interface BottomNavProps {
   slug: string;
+  enabledModules?: string[];
 }
 
-const tabs = [
-  { id: "tasting", label: "Degustação", icon: Wine, path: "" },
-  { id: "restaurant", label: "Restaurante", icon: UtensilsCrossed, path: "/restaurant" },
-  { id: "shop", label: "Loja", icon: ShoppingBag, path: "/shop" },
-  { id: "journey", label: "Meu Perfil", icon: Trophy, path: "/journey" },
+const allTabs = [
+  { id: "tasting", label: "Degustação", icon: Wine, path: "", module: "tasting" },
+  { id: "restaurant", label: "Restaurante", icon: UtensilsCrossed, path: "/restaurant", module: "restaurant" },
+  { id: "shop", label: "Loja", icon: ShoppingBag, path: "/shop", module: "shop" },
+  { id: "journey", label: "Meu Perfil", icon: Trophy, path: "/journey", module: null },
 ];
 
-export default function BottomNav({ slug }: BottomNavProps) {
+export default function BottomNav({ slug, enabledModules }: BottomNavProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const basePath = `/app/${slug}`;
 
-  const activeTab = tabs.find((t) => location.pathname === basePath + t.path)?.id ?? "tasting";
+  const tabs = allTabs.filter(t => t.module === null || !enabledModules || enabledModules.includes(t.module));
+  const activeTab = tabs.find((t) => location.pathname === basePath + t.path)?.id ?? tabs[0]?.id;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-border/50">

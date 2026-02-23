@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
 import { invokeAuth } from "@/lib/auth-api";
-import { Building2, Users, Wine, Receipt, Loader2, ExternalLink, Plus, Pencil, Trash2, Image } from "lucide-react";
+import { Building2, Users, Wine, Receipt, Loader2, ExternalLink, Plus, Pencil, Trash2, Image, ToggleLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface WineryMetric {
   id: string;
@@ -41,7 +42,7 @@ export default function MasterWineriesPage() {
   const [editTarget, setEditTarget] = useState<WineryMetric | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<WineryMetric | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0" });
+  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[] });
 
   const fetchData = async () => {
     try {
@@ -60,13 +61,13 @@ export default function MasterWineriesPage() {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0" });
+    setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] });
     setModalOpen(true);
   };
 
   const openEdit = (w: WineryMetric) => {
     setEditTarget(w);
-    setForm({ name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0") });
+    setForm({ name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0"), enabled_modules: (w as any).enabled_modules ?? ["tasting", "restaurant", "shop"] });
     setModalOpen(true);
   };
 
@@ -85,11 +86,12 @@ export default function MasterWineriesPage() {
             logo_url: form.logo_url || null,
             subscription_value: parseFloat(form.subscription_value) || 0,
             platform_commission_rate: parseFloat(form.platform_commission_rate) || 0,
+            enabled_modules: form.enabled_modules,
         });
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinícola atualizada!");
       } else {
-        const res = await invokeAuth("master-dashboard", { action: "create_winery", ...form, logo_url: form.logo_url || null, subscription_value: parseFloat(form.subscription_value) || 0, platform_commission_rate: parseFloat(form.platform_commission_rate) || 0 });
+        const res = await invokeAuth("master-dashboard", { action: "create_winery", ...form, logo_url: form.logo_url || null, subscription_value: parseFloat(form.subscription_value) || 0, platform_commission_rate: parseFloat(form.platform_commission_rate) || 0, enabled_modules: form.enabled_modules });
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinícola criada!");
       }
@@ -319,6 +321,32 @@ export default function MasterWineriesPage() {
                 <Label>Comissão (%)</Label>
                 <Input type="number" step="0.01" min="0" max="100" value={form.platform_commission_rate} onChange={e => setForm(f => ({ ...f, platform_commission_rate: e.target.value }))} placeholder="5" />
                 <p className="text-[10px] text-muted-foreground mt-1">{parseFloat(form.platform_commission_rate) || 0}% sobre vendas</p>
+              </div>
+            </div>
+            <div>
+              <Label>Módulos do Turista</Label>
+              <p className="text-[10px] text-muted-foreground mb-2">Selecione quais seções ficam visíveis para o visitante</p>
+              <div className="space-y-2">
+                {([
+                  { key: "tasting", label: "Degustação" },
+                  { key: "restaurant", label: "Restaurante" },
+                  { key: "shop", label: "Loja" },
+                ] as const).map(mod => (
+                  <label key={mod.key} className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={form.enabled_modules.includes(mod.key)}
+                      onCheckedChange={(checked) => {
+                        setForm(f => ({
+                          ...f,
+                          enabled_modules: checked
+                            ? [...f.enabled_modules, mod.key]
+                            : f.enabled_modules.filter(m => m !== mod.key),
+                        }));
+                      }}
+                    />
+                    <span className="text-sm">{mod.label}</span>
+                  </label>
+                ))}
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
