@@ -21,6 +21,7 @@ import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
 import AdminStaffPage from "./pages/admin/AdminStaffPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminTrainingPage from "./pages/admin/AdminTrainingPage";
+import AdminLocationsPage from "./pages/admin/AdminLocationsPage";
 import MasterLayout from "./pages/master/MasterLayout";
 import MasterDashboardPage from "./pages/master/MasterDashboardPage";
 import MasterWineriesPage from "./pages/master/MasterWineriesPage";
@@ -71,6 +72,7 @@ const App = () => {
             <Route path="leads" element={<AdminLeadsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="staff" element={<AdminStaffPage />} />
+            <Route path="locations" element={<AdminLocationsPage />} />
             <Route path="training" element={<AdminTrainingPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
           </Route>
