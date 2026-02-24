@@ -17,12 +17,20 @@ const STORAGE_KEY = "smartsommelier_admin";
 export function useAdminAuth(wineryId: string) {
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [checkedWineryId, setCheckedWineryId] = useState<string | null>(null);
 
   useEffect(() => {
     setAdmin(null);
+
+    if (!wineryId) {
+      setLoading(false);
+      setCheckedWineryId("");
+      return;
+    }
+
     setLoading(true);
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && wineryId) {
+    if (stored) {
       try {
         const parsed = JSON.parse(stored) as AdminUser;
         if (parsed.winery_id === wineryId) {
@@ -30,6 +38,8 @@ export function useAdminAuth(wineryId: string) {
         }
       } catch {}
     }
+
+    setCheckedWineryId(wineryId);
     setLoading(false);
   }, [wineryId]);
 
@@ -70,5 +80,7 @@ export function useAdminAuth(wineryId: string) {
     [admin]
   );
 
-  return { admin, loading, login, logout, hasPermission };
+  const authLoading = loading || checkedWineryId !== wineryId;
+
+  return { admin, loading: authLoading, login, logout, hasPermission };
 }
