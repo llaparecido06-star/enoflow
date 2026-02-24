@@ -95,7 +95,12 @@ Deno.serve(async (req) => {
       const { persona_key, persona_label } = body;
       if (!persona_key || !persona_label) return json({ error: "persona_key and persona_label required" }, 400);
 
-      const summary = `Wine Persona: ${String(persona_label).slice(0, 50)} (${String(persona_key).slice(0, 30)})`;
+      // Sanitize persona values - only allow alphanumeric + basic chars
+      const safeKey = String(persona_key).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 30);
+      const safeLabel = String(persona_label).replace(/[<>"'&]/g, "").slice(0, 50);
+      if (!safeKey || !safeLabel) return json({ error: "Invalid persona values" }, 400);
+
+      const summary = `Wine Persona: ${safeLabel} (${safeKey})`;
       const { error } = await supabase
         .from("users_leads")
         .update({ preferences_summary: summary })
@@ -164,9 +169,16 @@ Deno.serve(async (req) => {
     // ─── ACTION: update_profile ──────────────────────────
     if (action === "update_profile") {
       const updates: Record<string, unknown> = {};
-      if (body.birth_date) updates.birth_date = body.birth_date;
-      if (body.income_class) updates.income_class = body.income_class;
-      if (body.preferences_summary) updates.preferences_summary = body.preferences_summary;
+      if (body.birth_date && typeof body.birth_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.birth_date)) {
+        updates.birth_date = body.birth_date;
+      }
+      const allowedIncomeClasses = ["A", "B", "C", "D", "E"];
+      if (body.income_class && allowedIncomeClasses.includes(body.income_class)) {
+        updates.income_class = body.income_class;
+      }
+      if (body.preferences_summary && typeof body.preferences_summary === "string") {
+        updates.preferences_summary = str(body.preferences_summary, 500);
+      }
 
       if (Object.keys(updates).length > 0) {
         const { error } = await supabase.from("users_leads").update(updates).eq("id", user_id);

@@ -42,12 +42,33 @@ async function signJwt(
   return `${header}.${body}.${sig}`;
 }
 
+// ─── Simple in-memory rate limiter for login ────────────
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_WINDOW = 300_000; // 5 minutes
+const MAX_ATTEMPTS = 10;
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip);
+  if (!entry || now > entry.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= MAX_ATTEMPTS;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Rate limit login attempts by IP
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!checkRateLimit(clientIp)) {
+      return json({ error: "Muitas tentativas. Aguarde alguns minutos." }, 429);
+    }
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -221,7 +242,7 @@ Deno.serve(async (req) => {
       return json({ success: true, lead, token });
     }
 
-    return json({ error: "Invalid type. Use: sso, admin, master, or tourist" }, 400);
+    return json({ error: "Requisição inválida" }, 400);
   } catch (error) {
     console.error("session-auth error:", error);
     return json({ error: "An error occurred. Please try again." }, 500);
