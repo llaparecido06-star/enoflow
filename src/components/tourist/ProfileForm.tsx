@@ -22,10 +22,14 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
+    if (!birthDate) {
+      toast.error("Data de nascimento é obrigatória");
+      return;
+    }
     setLoading(true);
     try {
       await onComplete({
-        birth_date: birthDate || undefined,
+        birth_date: birthDate,
         income_class: incomeClass || undefined,
       });
     } catch {
@@ -52,7 +56,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
       <div>
         <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
           <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-          Data de Nascimento
+          Data de Nascimento <span className="text-destructive">*</span>
         </label>
         <input
           type="date"
