@@ -12,19 +12,19 @@ interface WhatsAppLoginProps {
 }
 
 const countryCodes = [
-  { code: "+55", flag: "🇧🇷", name: "Brasil" },
-  { code: "+1", flag: "🇺🇸", name: "USA" },
-  { code: "+54", flag: "🇦🇷", name: "Argentina" },
-  { code: "+56", flag: "🇨🇱", name: "Chile" },
-  { code: "+598", flag: "🇺🇾", name: "Uruguay" },
-  { code: "+351", flag: "🇵🇹", name: "Portugal" },
-  { code: "+34", flag: "🇪🇸", name: "España" },
-  { code: "+33", flag: "🇫🇷", name: "France" },
-  { code: "+39", flag: "🇮🇹", name: "Italia" },
-  { code: "+49", flag: "🇩🇪", name: "Deutschland" },
-  { code: "+44", flag: "🇬🇧", name: "UK" },
-  { code: "+81", flag: "🇯🇵", name: "Japan" },
-  { code: "+86", flag: "🇨🇳", name: "China" },
+  { code: "+55", flag: "🇧🇷", name: "Brasil", placeholder: "(99) 99999-9999" },
+  { code: "+1", flag: "🇺🇸", name: "USA", placeholder: "(555) 123-4567" },
+  { code: "+54", flag: "🇦🇷", name: "Argentina", placeholder: "11 1234-5678" },
+  { code: "+56", flag: "🇨🇱", name: "Chile", placeholder: "9 1234 5678" },
+  { code: "+598", flag: "🇺🇾", name: "Uruguay", placeholder: "99 123 456" },
+  { code: "+351", flag: "🇵🇹", name: "Portugal", placeholder: "912 345 678" },
+  { code: "+34", flag: "🇪🇸", name: "España", placeholder: "612 34 56 78" },
+  { code: "+33", flag: "🇫🇷", name: "France", placeholder: "06 12 34 56 78" },
+  { code: "+39", flag: "🇮🇹", name: "Italia", placeholder: "312 345 6789" },
+  { code: "+49", flag: "🇩🇪", name: "Deutschland", placeholder: "151 1234 5678" },
+  { code: "+44", flag: "🇬🇧", name: "UK", placeholder: "7911 123456" },
+  { code: "+81", flag: "🇯🇵", name: "Japan", placeholder: "90-1234-5678" },
+  { code: "+86", flag: "🇨🇳", name: "China", placeholder: "131 2345 6789" },
 ];
 
 export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onLogin }: WhatsAppLoginProps) {
@@ -154,7 +154,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="tel"
-                  placeholder="99999-9999"
+                  placeholder={selectedCountry.placeholder}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/[^\d\s\-()]/g, ""))}
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()}
