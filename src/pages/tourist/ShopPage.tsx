@@ -1,5 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useOutletContext, useLocation } from "react-router-dom";
+import QRCode from "qrcode";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useTouristAuth } from "@/hooks/useTouristAuth";
 import { useCart } from "@/hooks/useCart";
@@ -260,15 +261,15 @@ export default function ShopPage() {
   const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [detailWine, setDetailWine] = useState<Wine | null>(null);
-  const [discountApplied, setDiscountApplied] = useState(false);
+  const [discountApplied, setDiscountApplied] = useState(true);
   const [showNps, setShowNps] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   // Handle wine added from profile recommendation
   useEffect(() => {
     const navState = location.state as { addToCart?: Wine; applyDiscount?: boolean } | null;
     if (navState?.addToCart) {
       addItem(navState.addToCart);
-      if (navState.applyDiscount) setDiscountApplied(true);
       setShowCart(true);
       // Clear nav state
       window.history.replaceState({}, "");
@@ -325,8 +326,13 @@ export default function ShopPage() {
       if (data?.error) throw new Error(data.error);
       setVoucher({ code, id: data?.voucher?.id });
       toast.success("Voucher gerado!");
-      // Show NPS after a brief delay
-      setTimeout(() => setShowNps(true), 1500);
+      // Generate QR code
+      try {
+        const qrUrl = await QRCode.toDataURL(code, { width: 200, margin: 2, color: { dark: "#000000", light: "#ffffff" } });
+        setQrDataUrl(qrUrl);
+      } catch {}
+      // Show NPS after a longer delay
+      setTimeout(() => setShowNps(true), 5000);
     } catch {
       toast.error("Erro ao gerar voucher");
     } finally {
@@ -430,7 +436,11 @@ export default function ShopPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="bg-card rounded-xl border-2 border-gold/30 p-6 text-center luxury-shadow"
         >
-          <QrCode className="w-16 h-16 mx-auto text-gold mb-3" />
+          {qrDataUrl ? (
+            <img src={qrDataUrl} alt="QR Code do Voucher" className="w-48 h-48 mx-auto mb-3 rounded-xl" />
+          ) : (
+            <QrCode className="w-16 h-16 mx-auto text-gold mb-3" />
+          )}
           <p className="text-[11px] text-muted-foreground mb-1">Apresente no caixa</p>
           <p className="font-display text-2xl font-bold text-foreground tracking-wider">{voucher.code}</p>
           <p className="text-sm text-muted-foreground mt-1">Total: {formatCurrency(discountedTotal, cur)}</p>
@@ -445,7 +455,7 @@ export default function ShopPage() {
             <button onClick={copyCode} className="flex items-center gap-1.5 text-sm border border-border px-4 py-2 rounded-xl hover:bg-muted transition-colors">
               <Copy className="w-3.5 h-3.5" /> Copiar
             </button>
-            <button onClick={() => { setVoucher(null); clearCart(); setShowCart(false); }}
+            <button onClick={() => { setVoucher(null); setQrDataUrl(null); clearCart(); setShowCart(false); }}
               className="text-sm bg-gold text-gold-foreground px-4 py-2 rounded-xl hover:bg-gold/90 transition-colors">
               Nova compra
             </button>
