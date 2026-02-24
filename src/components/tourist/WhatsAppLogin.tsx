@@ -79,10 +79,10 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
 
         <div className="text-center mb-8">
           {wineryLogo ? (
-            <img src={wineryLogo} alt={wineryName} className="w-24 h-24 rounded-2xl mx-auto mb-4 object-contain" />
+            <img src={wineryLogo} alt={wineryName} className="w-40 h-40 rounded-3xl mx-auto mb-6 object-contain drop-shadow-xl" />
           ) : (
             <div
-              className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-xl font-bold"
+              className="w-28 h-28 rounded-3xl mx-auto mb-6 flex items-center justify-center text-4xl font-bold shadow-lg"
               style={{ backgroundColor: wineryColor, color: '#fff' }}
             >
               {wineryName.charAt(0)}
