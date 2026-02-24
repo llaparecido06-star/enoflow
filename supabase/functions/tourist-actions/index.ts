@@ -146,6 +146,21 @@ Deno.serve(async (req) => {
       return json({ success: true, voucher: data });
     }
 
+    // ─── ACTION: submit_nps ─────────────────────────────
+    if (action === "submit_nps") {
+      const { voucher_id, nps_score } = body;
+      if (!voucher_id || typeof nps_score !== "number" || nps_score < 0 || nps_score > 10) {
+        return json({ error: "voucher_id and nps_score (0-10) required" }, 400);
+      }
+      const { error } = await supabase
+        .from("vouchers")
+        .update({ nps_score })
+        .eq("id", voucher_id)
+        .eq("user_id", user_id);
+      if (error) throw error;
+      return json({ success: true });
+    }
+
     // ─── ACTION: update_profile ──────────────────────────
     if (action === "update_profile") {
       const updates: Record<string, unknown> = {};

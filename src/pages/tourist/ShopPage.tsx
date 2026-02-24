@@ -4,11 +4,13 @@ import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useTouristAuth } from "@/hooks/useTouristAuth";
 import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
+import { formatCurrency, formatCurrencyShort } from "@/lib/currency";
+import NpsModal from "@/components/tourist/NpsModal";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingBag, Minus, Plus, Trash2, QrCode, Copy,
   Search, SlidersHorizontal, X, Wine as WineIcon, Heart, Star,
-  Grape, MapPin, Thermometer, Clock, User, FlaskConical, ChevronRight
+  Grape, MapPin, Thermometer, Clock, User, FlaskConical, ChevronRight, AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
 import { invokeAuth } from "@/lib/auth-api";
@@ -81,11 +83,11 @@ function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite }: {
         <div className="flex items-center justify-between pt-1">
           <div>
             <span className="font-display text-sm font-bold text-gold">
-              R$ {Number(wine.price_bottle).toFixed(0)}
+              {formatCurrencyShort(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}
             </span>
             {wine.price_glass && (
               <span className="text-[9px] text-muted-foreground ml-1">
-                Taça {Number(wine.price_glass).toFixed(0)}
+                Taça {formatCurrencyShort(Number(wine.price_glass), (window as any).__enoflow_currency || "BRL")}
               </span>
             )}
           </div>
@@ -222,9 +224,9 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
           {/* Price + Add to cart */}
           <div className="flex items-center justify-between pt-3 border-t border-border/30">
             <div>
-              <span className="font-display text-xl font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(2)}</span>
+              <span className="font-display text-xl font-bold text-gold">{formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}</span>
               {wine.price_glass && (
-                <span className="text-[10px] text-muted-foreground ml-2">Taça R$ {Number(wine.price_glass).toFixed(0)}</span>
+                <span className="text-[10px] text-muted-foreground ml-2">Taça {formatCurrencyShort(Number(wine.price_glass), (window as any).__enoflow_currency || "BRL")}</span>
               )}
             </div>
             <button
@@ -247,7 +249,8 @@ export default function ShopPage() {
   const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart();
   const { favorites, isFavorite, toggleFavorite } = useFavorites(lead?.id);
   const location = useLocation();
-  const [voucher, setVoucher] = useState<{ code: string } | null>(null);
+  const cur = winery.currency || "BRL";
+  const [voucher, setVoucher] = useState<{ code: string; id?: string } | null>(null);
   const [showCart, setShowCart] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [search, setSearch] = useState("");
@@ -258,6 +261,7 @@ export default function ShopPage() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [detailWine, setDetailWine] = useState<Wine | null>(null);
   const [discountApplied, setDiscountApplied] = useState(false);
+  const [showNps, setShowNps] = useState(false);
 
   // Handle wine added from profile recommendation
   useEffect(() => {
@@ -319,13 +323,29 @@ export default function ShopPage() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setVoucher({ code });
+      setVoucher({ code, id: data?.voucher?.id });
       toast.success("Voucher gerado!");
+      // Show NPS after a brief delay
+      setTimeout(() => setShowNps(true), 1500);
     } catch {
       toast.error("Erro ao gerar voucher");
     } finally {
       setGenerating(false);
     }
+  };
+
+  const handleNpsSubmit = async (score: number) => {
+    if (voucher?.id) {
+      try {
+        await invokeAuth("tourist-actions", {
+          action: "submit_nps",
+          voucher_id: voucher.id,
+          nps_score: score,
+        });
+        toast.success("Obrigado pelo feedback! 🙏");
+      } catch {}
+    }
+    setShowNps(false);
   };
 
   const copyCode = () => {
@@ -349,7 +369,7 @@ export default function ShopPage() {
             <ShoppingBag className="w-4 h-4" />
             <span className="text-sm font-medium">{items.length} {items.length === 1 ? "item" : "itens"}</span>
           </div>
-          <span className="font-display font-bold">R$ {discountedTotal.toFixed(2)}{discountApplied && " (-10%)"}</span>
+          <span className="font-display font-bold">{formatCurrency(discountedTotal, cur)}{discountApplied && " (-10%)"}</span>
         </motion.button>
       )}
 
@@ -368,7 +388,7 @@ export default function ShopPage() {
                 <div key={item.wine.id} className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.wine.name}</p>
-                    <p className="text-[11px] text-muted-foreground">R$ {Number(item.wine.price_bottle).toFixed(2)}</p>
+                    <p className="text-[11px] text-muted-foreground">{formatCurrency(Number(item.wine.price_bottle), cur)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => updateQuantity(item.wine.id, item.quantity - 1)}
@@ -389,8 +409,8 @@ export default function ShopPage() {
               ))}
               <div className="pt-3 border-t border-border flex items-center justify-between">
                 <div>
-                  {discountApplied && <p className="text-[10px] text-muted-foreground line-through">R$ {total.toFixed(2)}</p>}
-                  <span className="font-display font-bold text-lg text-gold">R$ {discountedTotal.toFixed(2)}</span>
+                  {discountApplied && <p className="text-[10px] text-muted-foreground line-through">{formatCurrency(total, cur)}</p>}
+                  <span className="font-display font-bold text-lg text-gold">{formatCurrency(discountedTotal, cur)}</span>
                   {discountApplied && <span className="text-[10px] text-green-500 ml-1 font-medium">-10%</span>}
                 </div>
                 <button onClick={generateVoucher} disabled={generating}
@@ -413,7 +433,14 @@ export default function ShopPage() {
           <QrCode className="w-16 h-16 mx-auto text-gold mb-3" />
           <p className="text-[11px] text-muted-foreground mb-1">Apresente no caixa</p>
           <p className="font-display text-2xl font-bold text-foreground tracking-wider">{voucher.code}</p>
-          <p className="text-sm text-muted-foreground mt-1">Total: R$ {total.toFixed(2)}</p>
+          <p className="text-sm text-muted-foreground mt-1">Total: {formatCurrency(discountedTotal, cur)}</p>
+          
+          {/* Expiration alert */}
+          <div className="mt-3 flex items-center justify-center gap-1.5 bg-destructive/10 text-destructive rounded-lg px-3 py-2">
+            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="text-[11px] font-medium">Válido apenas hoje (expira às 23h59)</span>
+          </div>
+
           <div className="flex gap-2 mt-4 justify-center">
             <button onClick={copyCode} className="flex items-center gap-1.5 text-sm border border-border px-4 py-2 rounded-xl hover:bg-muted transition-colors">
               <Copy className="w-3.5 h-3.5" /> Copiar
@@ -425,6 +452,13 @@ export default function ShopPage() {
           </div>
         </motion.div>
       )}
+
+      {/* NPS Modal */}
+      <AnimatePresence>
+        {showNps && (
+          <NpsModal onSubmit={handleNpsSubmit} onSkip={() => setShowNps(false)} />
+        )}
+      </AnimatePresence>
 
       {/* Favorites Shelf */}
       {!voucher && favoriteWines.length > 0 && !showFavoritesOnly && (
@@ -451,7 +485,7 @@ export default function ShopPage() {
                   </div>
                   <div className="p-2">
                     <p className="text-[10px] font-semibold text-foreground line-clamp-1">{wine.name}</p>
-                    <p className="text-[10px] font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(0)}</p>
+                    <p className="text-[10px] font-bold text-gold">{formatCurrencyShort(Number(wine.price_bottle), cur)}</p>
                   </div>
                 </div>
               </div>

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
+import { formatCurrency } from "@/lib/currency";
 import { DollarSign, Users, Wine, Star, Loader2, BarChart3, TrendingUp, Receipt, Target } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
@@ -41,11 +42,13 @@ export default function AdminDashboardPage() {
     );
   }
 
+  const cur = winery.currency || "BRL";
+
   const kpis = [
     {
       label: "Receita Total",
-      value: `R$ ${(data?.revenue_total ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-      sub: `R$ ${(data?.revenue_month ?? 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} no mês`,
+      value: formatCurrency(data?.revenue_total ?? 0, cur),
+      sub: `${formatCurrency(data?.revenue_month ?? 0, cur)} no mês`,
       icon: DollarSign, color: "text-accent", bg: "bg-accent/10",
     },
     {

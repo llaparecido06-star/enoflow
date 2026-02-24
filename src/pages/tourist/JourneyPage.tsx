@@ -5,6 +5,7 @@ import { useTouristAuth } from "@/hooks/useTouristAuth";
 import { useFavorites } from "@/hooks/useFavorites";
 import { invokeAuth } from "@/lib/auth-api";
 import { calculatePersona, type WinePersona } from "@/components/tourist/CelebrationModal";
+import { formatCurrencyShort, formatCurrency } from "@/lib/currency";
 import Confetti from "@/components/tourist/Confetti";
 import { motion } from "framer-motion";
 import { Star, Heart, Wine as WineIcon, Trophy, TrendingUp, Sparkles, Loader2, ShoppingBag, User } from "lucide-react";
@@ -204,8 +205,8 @@ export default function JourneyPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-foreground truncate">{wine.name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <p className="text-[10px] text-muted-foreground line-through">R$ {Number(wine.price_bottle).toFixed(0)}</p>
-                    <p className="text-xs font-bold text-gold">R$ {(Number(wine.price_bottle) * 0.9).toFixed(0)}</p>
+                    <p className="text-[10px] text-muted-foreground line-through">{formatCurrencyShort(Number(wine.price_bottle), winery.currency)}</p>
+                    <p className="text-xs font-bold text-gold">{formatCurrencyShort(Number(wine.price_bottle) * 0.9, winery.currency)}</p>
                   </div>
                 </div>
                 <button
