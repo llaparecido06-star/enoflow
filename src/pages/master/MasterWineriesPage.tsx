@@ -42,7 +42,7 @@ export default function MasterWineriesPage() {
   const [editTarget, setEditTarget] = useState<WineryMetric | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<WineryMetric | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[], status: "active" });
+  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[], status: "active", max_locations: "5", currency: "BRL" });
 
   const fetchData = async () => {
     try {
@@ -61,13 +61,13 @@ export default function MasterWineriesPage() {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"], status: "active" });
+    setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"], status: "active", max_locations: "5", currency: "BRL" });
     setModalOpen(true);
   };
 
   const openEdit = (w: WineryMetric) => {
     setEditTarget(w);
-    setForm({ name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0"), enabled_modules: (w as any).enabled_modules ?? ["tasting", "restaurant", "shop"], status: (w as any).status ?? "active" });
+    setForm({ name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0"), enabled_modules: (w as any).enabled_modules ?? ["tasting", "restaurant", "shop"], status: (w as any).status ?? "active", max_locations: String((w as any).max_locations ?? "5"), currency: (w as any).currency ?? "BRL" });
     setModalOpen(true);
   };
 
@@ -88,11 +88,13 @@ export default function MasterWineriesPage() {
             platform_commission_rate: parseFloat(form.platform_commission_rate) || 0,
             enabled_modules: form.enabled_modules,
             status: form.status,
+            max_locations: parseInt(form.max_locations) || 5,
+            currency: form.currency,
         });
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinícola atualizada!");
       } else {
-        const res = await invokeAuth("master-dashboard", { action: "create_winery", ...form, logo_url: form.logo_url || null, subscription_value: parseFloat(form.subscription_value) || 0, platform_commission_rate: parseFloat(form.platform_commission_rate) || 0, enabled_modules: form.enabled_modules });
+        const res = await invokeAuth("master-dashboard", { action: "create_winery", ...form, logo_url: form.logo_url || null, subscription_value: parseFloat(form.subscription_value) || 0, platform_commission_rate: parseFloat(form.platform_commission_rate) || 0, enabled_modules: form.enabled_modules, max_locations: parseInt(form.max_locations) || 5, currency: form.currency });
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinícola criada!");
       }
@@ -344,6 +346,24 @@ export default function MasterWineriesPage() {
                 <Label>Comissão (%)</Label>
                 <Input type="number" step="0.01" min="0" max="100" value={form.platform_commission_rate} onChange={e => setForm(f => ({ ...f, platform_commission_rate: e.target.value }))} placeholder="5" />
                 <p className="text-[10px] text-muted-foreground mt-1">{parseFloat(form.platform_commission_rate) || 0}% sobre vendas</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Máx. Locais</Label>
+                <Input type="number" min="1" max="100" value={form.max_locations} onChange={e => setForm(f => ({ ...f, max_locations: e.target.value }))} />
+                <p className="text-[10px] text-muted-foreground mt-1">Pontos de captura</p>
+              </div>
+              <div>
+                <Label>Moeda</Label>
+                <Select value={form.currency} onValueChange={v => setForm(f => ({ ...f, currency: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="BRL">R$ (BRL)</SelectItem>
+                    <SelectItem value="USD">$ (USD)</SelectItem>
+                    <SelectItem value="EUR">€ (EUR)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div>

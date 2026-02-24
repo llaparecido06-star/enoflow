@@ -1,1 +1,4 @@
 project_id = "vhxcaaqknltkkdujaygi"
+
+[functions.admin-locations]
+verify_jwt = false

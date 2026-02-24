@@ -76,6 +76,7 @@ Deno.serve(async (req) => {
       const slugClean = slug.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 50);
       const validModules = ["tasting", "restaurant", "shop"];
       const modules = Array.isArray(enabled_modules) ? enabled_modules.filter((m: string) => validModules.includes(m)) : validModules;
+      const validCurrencies = ["BRL", "USD", "EUR"];
       const { data: winery, error } = await supabase.from("wineries").insert({
         name: String(name).slice(0, 100),
         slug: slugClean,
@@ -85,6 +86,8 @@ Deno.serve(async (req) => {
         subscription_value: Number(subscription_value) || 0,
         platform_commission_rate: Number(platform_commission_rate) || 0,
         enabled_modules: modules,
+        max_locations: Math.max(1, Math.min(100, Number(body.max_locations) || 5)),
+        currency: validCurrencies.includes(body.currency) ? body.currency : "BRL",
       }).select().single();
       if (error) throw error;
       return json({ success: true, winery });
@@ -108,6 +111,11 @@ Deno.serve(async (req) => {
       }
       if (body.status !== undefined && ["active", "inactive"].includes(body.status)) {
         updates.status = body.status;
+      }
+      if (body.max_locations !== undefined) updates.max_locations = Math.max(1, Math.min(100, Number(body.max_locations) || 5));
+      if (body.currency !== undefined) {
+        const validCurrencies = ["BRL", "USD", "EUR"];
+        if (validCurrencies.includes(body.currency)) updates.currency = body.currency;
       }
       if (Object.keys(updates).length === 0) return json({ error: "Nothing to update" }, 400);
       const { error } = await supabase.from("wineries").update(updates).eq("id", winery_id);
@@ -332,7 +340,7 @@ Deno.serve(async (req) => {
 
     // ─── DEFAULT: dashboard metrics ──────────────────────
     const [wineriesRes, leadsRes, winesRes, vouchersRes, automationsRes, adminsRes, ratingsRes] = await Promise.all([
-      supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at, subscription_value, platform_commission_rate, enabled_modules, logo_url, status"),
+      supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at, subscription_value, platform_commission_rate, enabled_modules, logo_url, status, max_locations, currency"),
       supabase.from("users_leads").select("id, winery_id, created_at, preferences_summary"),
       supabase.from("wines").select("id, winery_id"),
       supabase.from("vouchers").select("id, winery_id, total, redeemed, created_at"),

@@ -100,6 +100,41 @@ export type Database = {
           },
         ]
       }
+      capture_points: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          name: string
+          redirect_url: string | null
+          winery_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          name: string
+          redirect_url?: string | null
+          winery_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          redirect_url?: string | null
+          winery_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capture_points_winery_id_fkey"
+            columns: ["winery_id"]
+            isOneToOne: false
+            referencedRelation: "wineries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_items: {
         Row: {
           category: string
@@ -329,9 +364,11 @@ export type Database = {
       wineries: {
         Row: {
           created_at: string
+          currency: string
           enabled_modules: string[]
           id: string
           logo_url: string | null
+          max_locations: number
           name: string
           plan_level: Database["public"]["Enums"]["plan_level"]
           platform_commission_rate: number
@@ -343,9 +380,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          currency?: string
           enabled_modules?: string[]
           id?: string
           logo_url?: string | null
+          max_locations?: number
           name: string
           plan_level?: Database["public"]["Enums"]["plan_level"]
           platform_commission_rate?: number
@@ -357,9 +396,11 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          currency?: string
           enabled_modules?: string[]
           id?: string
           logo_url?: string | null
+          max_locations?: number
           name?: string
           plan_level?: Database["public"]["Enums"]["plan_level"]
           platform_commission_rate?: number
