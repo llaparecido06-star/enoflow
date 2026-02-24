@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const secret = Deno.env.get("JWT_SIGNING_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const body = await req.json();
     const { type } = body;
 
