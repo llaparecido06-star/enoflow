@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Phone, User, ArrowRight, Loader2, ExternalLink } from "lucide-react";
+import { Phone, User, ArrowRight, Loader2, ExternalLink, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
+import { useI18n, LanguageSelector } from "@/lib/i18n";
 
 interface WhatsAppLoginProps {
   wineryName: string;
@@ -9,44 +10,59 @@ interface WhatsAppLoginProps {
   onLogin: (name: string, whatsapp: string, acceptedTerms: boolean) => Promise<void>;
 }
 
+const countryCodes = [
+  { code: "+55", flag: "🇧🇷", name: "Brasil" },
+  { code: "+1", flag: "🇺🇸", name: "USA" },
+  { code: "+54", flag: "🇦🇷", name: "Argentina" },
+  { code: "+56", flag: "🇨🇱", name: "Chile" },
+  { code: "+598", flag: "🇺🇾", name: "Uruguay" },
+  { code: "+351", flag: "🇵🇹", name: "Portugal" },
+  { code: "+34", flag: "🇪🇸", name: "España" },
+  { code: "+33", flag: "🇫🇷", name: "France" },
+  { code: "+39", flag: "🇮🇹", name: "Italia" },
+  { code: "+49", flag: "🇩🇪", name: "Deutschland" },
+  { code: "+44", flag: "🇬🇧", name: "UK" },
+  { code: "+81", flag: "🇯🇵", name: "Japan" },
+  { code: "+86", flag: "🇨🇳", name: "China" },
+];
+
 export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: WhatsAppLoginProps) {
+  const { t } = useI18n();
   const [name, setName] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
+  const [phone, setPhone] = useState("");
+  const [countryCode, setCountryCode] = useState("+55");
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [step, setStep] = useState<"name" | "phone">("name");
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(true);
 
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 11);
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-  };
+  const selectedCountry = countryCodes.find(c => c.code === countryCode) ?? countryCodes[0];
 
   const handleNameSubmit = () => {
     if (name.trim().length < 2) {
-      toast.error("Digite seu nome");
+      toast.error(t("login.name_required"));
       return;
     }
     setStep("phone");
   };
 
   const handleLogin = async () => {
-    const digits = whatsapp.replace(/\D/g, "");
-    if (digits.length < 10) {
-      toast.error("Digite um número de WhatsApp válido");
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 7) {
+      toast.error(t("login.phone_invalid"));
       return;
     }
     if (!acceptedTerms) {
-      toast.error("Você precisa aceitar os Termos de Privacidade para continuar.");
+      toast.error(t("login.terms_required"));
       return;
     }
     setLoading(true);
     try {
-      await onLogin(name.trim(), digits, true);
-      toast.success("Bem-vindo(a)! 🍷");
+      const fullNumber = countryCode.replace("+", "") + digits;
+      await onLogin(name.trim(), fullNumber, true);
+      toast.success(t("login.welcome"));
     } catch {
-      toast.error("Erro ao entrar. Tente novamente.");
+      toast.error(t("login.error"));
     } finally {
       setLoading(false);
     }
@@ -55,6 +71,11 @@ export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: What
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-sm animate-fade-in">
+        {/* Language selector */}
+        <div className="flex justify-end mb-4">
+          <LanguageSelector />
+        </div>
+
         <div className="text-center mb-8">
           <div
             className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-xl font-bold"
@@ -64,7 +85,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: What
           </div>
           <h1 className="font-display text-xl font-bold text-foreground">{wineryName}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {step === "name" ? "Como devemos te chamar?" : "Entre com seu WhatsApp"}
+            {step === "name" ? t("login.how_to_call") : t("login.enter_whatsapp")}
           </p>
         </div>
 
@@ -74,7 +95,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: What
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Seu nome"
+                placeholder={t("login.your_name")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleNameSubmit()}
@@ -88,30 +109,62 @@ export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: What
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-primary-foreground transition-colors"
               style={{ backgroundColor: wineryColor }}
             >
-              Continuar
+              {t("login.continue")}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         ) : (
           <div className="space-y-4 animate-fade-in">
-            <div className="relative">
-              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="tel"
-                placeholder="(11) 99999-9999"
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(formatPhone(e.target.value))}
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                autoFocus
-              />
+            {/* Phone with DDI selector */}
+            <div className="flex gap-2">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowCountryPicker(!showCountryPicker)}
+                  className="flex items-center gap-1 px-3 py-3 bg-card border border-border rounded-xl text-sm min-w-[5rem] hover:bg-secondary transition-colors"
+                >
+                  <span className="text-base">{selectedCountry.flag}</span>
+                  <span className="text-xs text-muted-foreground">{selectedCountry.code}</span>
+                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                </button>
+                {showCountryPicker && (
+                  <div className="absolute top-full left-0 mt-1 z-50 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto w-48">
+                    {countryCodes.map((c) => (
+                      <button
+                        key={c.code}
+                        onClick={() => { setCountryCode(c.code); setShowCountryPicker(false); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary transition-colors ${
+                          c.code === countryCode ? "bg-primary/5" : ""
+                        }`}
+                      >
+                        <span>{c.flag}</span>
+                        <span className="text-xs text-muted-foreground">{c.code}</span>
+                        <span className="text-xs truncate">{c.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="relative flex-1">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="tel"
+                  placeholder="99999-9999"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/[^\d\s\-()]/g, ""))}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                  className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  autoFocus
+                />
+              </div>
             </div>
+
             <div className="flex gap-2">
               <button
                 onClick={() => setStep("name")}
                 className="px-4 py-3 rounded-xl text-sm border border-border hover:bg-secondary transition-colors"
               >
-                Voltar
+                {t("login.back")}
               </button>
               <button
                 onClick={handleLogin}
@@ -119,7 +172,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: What
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-primary-foreground transition-colors disabled:opacity-50"
                 style={{ backgroundColor: wineryColor }}
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Entrar"}
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("login.enter")}
               </button>
             </div>
             <label className="flex items-start gap-2 cursor-pointer mt-1">
@@ -130,11 +183,11 @@ export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: What
                 className="mt-0.5 w-4 h-4 rounded border-border accent-primary"
               />
               <span className="text-[11px] text-muted-foreground leading-tight">
-                Li e aceito os{" "}
+                {t("login.terms_text")}{" "}
                 <Link to="/privacidade" target="_blank" className="underline text-primary inline-flex items-center gap-0.5">
-                  Termos de Privacidade <ExternalLink className="w-3 h-3 inline" />
+                  {t("login.privacy_terms")} <ExternalLink className="w-3 h-3 inline" />
                 </Link>{" "}
-                e concordo em receber ofertas via WhatsApp.
+                {t("login.terms_suffix")}
               </span>
             </label>
           </div>

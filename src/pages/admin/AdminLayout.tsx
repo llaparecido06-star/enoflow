@@ -1,8 +1,7 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
-import { Wine, Package, BarChart3, Users, Settings, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode } from "lucide-react";
-import AdminLoginForm from "@/components/admin/AdminLoginForm";
+import { Wine, Package, BarChart3, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const navItems = [
@@ -42,13 +41,29 @@ export default function AdminLayout() {
     );
   }
 
+  // Kill switch: winery inactive
+  if ((winery as any).status && (winery as any).status !== "active") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="text-center max-w-sm">
+          <div className="w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+            <Wine className="w-7 h-7 text-destructive" />
+          </div>
+          <h1 className="font-display text-xl font-bold text-foreground mb-2">Vinícola Inativa</h1>
+          <p className="text-sm text-muted-foreground">Esta vinícola está temporariamente inativa. Contate a administração.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!admin) {
-    return <AdminLoginForm onLogin={login} wineryName={winery.name} />;
+    // Redirect to SSO login
+    navigate("/admin/login", { replace: true });
+    return null;
   }
 
   const visibleNav = navItems.filter((n) => hasPermission(n.minRole));
 
-  // Redirect staff/manager to vouchers if they land on the base path (dashboard they can't see)
   const currentPath = location.pathname;
   const isBasePath = currentPath === basePath || currentPath === basePath + "/";
   if (isBasePath && !hasPermission("owner" as AdminRole) && visibleNav.length > 0) {
@@ -71,12 +86,16 @@ export default function AdminLayout() {
       <aside className="hidden md:flex w-60 flex-col bg-sidebar border-r border-sidebar-border">
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold"
-              style={{ backgroundColor: winery.primary_color, color: '#fff' }}
-            >
-              {winery.name.charAt(0)}
-            </div>
+            {winery.logo_url ? (
+              <img src={winery.logo_url} alt={winery.name} className="w-9 h-9 rounded-lg object-cover" />
+            ) : (
+              <div
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold"
+                style={{ backgroundColor: winery.primary_color, color: '#fff' }}
+              >
+                {winery.name.charAt(0)}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="font-display text-sm font-semibold text-sidebar-foreground truncate">{winery.name}</p>
               <p className="text-[10px] text-sidebar-foreground/60">{admin.name} · {roleLabel[admin.role]}</p>
@@ -103,7 +122,7 @@ export default function AdminLayout() {
           })}
         </nav>
         <div className="p-3 border-t border-sidebar-border flex items-center justify-between">
-          <button onClick={() => { logout(); navigate("/"); }} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive/80 hover:bg-destructive/10 transition-colors">
+          <button onClick={() => { logout(); navigate("/admin/login"); }} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive/80 hover:bg-destructive/10 transition-colors">
             <LogOut className="w-4 h-4" />
             Sair
           </button>
@@ -130,7 +149,7 @@ export default function AdminLayout() {
             );
           })}
           <button
-            onClick={() => { logout(); navigate("/"); }}
+            onClick={() => { logout(); navigate("/admin/login"); }}
             className="flex flex-col items-center gap-0.5 px-1.5 py-1 min-w-[3rem] text-destructive/70"
           >
             <LogOut className="w-5 h-5" />
