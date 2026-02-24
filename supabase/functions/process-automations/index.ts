@@ -11,7 +11,7 @@ async function verifySession(req: Request): Promise<{ sub: string; role: string;
     if (!token) return null;
     const [hB64, pB64, sB64] = token.split(".");
     if (!hB64 || !pB64 || !sB64) return null;
-    const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const secret = Deno.env.get("JWT_SIGNING_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
     const sig = Uint8Array.from(atob(sB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
     const valid = await crypto.subtle.verify("HMAC", key, sig, new TextEncoder().encode(`${hB64}.${pB64}`));
