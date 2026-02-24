@@ -5,6 +5,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
 };
 
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
 async function verifySession(req: Request): Promise<{ sub: string; role: string; winery_id: string; type: string } | null> {
   try {
     const token = req.headers.get("x-session-token");
@@ -30,10 +36,7 @@ Deno.serve(async (req) => {
   try {
     const session = await verifySession(req);
     if (!session || (session.type !== "admin" && session.type !== "master")) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Não autorizado" }, 401);
     }
 
     const supabase = createClient(
@@ -44,7 +47,6 @@ Deno.serve(async (req) => {
     const admin_id = session.sub;
     const winery_id = session.winery_id;
 
-    // Verify admin belongs to winery with owner+ role
     const { data: admin, error: adminErr } = await supabase
       .from("admin_users")
       .select("id, role")
@@ -53,36 +55,51 @@ Deno.serve(async (req) => {
       .single();
 
     if (adminErr || !admin) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Não autorizado" }, 403);
     }
 
     const roleHierarchy = ["staff", "manager", "owner", "master"];
-    if (roleHierarchy.indexOf(admin.role) < roleHierarchy.indexOf("owner")) {
-      return new Response(JSON.stringify({ error: "Apenas owners podem acessar leads" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (roleHierarchy.indexOf(admin.role) < roleHierarchy.indexOf("manager")) {
+      return json({ error: "Sem permissão para acessar leads" }, 403);
     }
 
+    // Fetch leads
     const { data: leads, error } = await supabase
       .from("users_leads")
-      .select("id, name, whatsapp, created_at, preferences_summary")
+      .select("id, name, whatsapp, created_at, preferences_summary, birth_date, income_class, acquisition_category, acquisition_location")
       .eq("winery_id", winery_id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
 
-    return new Response(JSON.stringify({ success: true, leads: leads ?? [] }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // Fetch voucher totals per user for LTV
+    const leadIds = (leads ?? []).map(l => l.id);
+    let ltvMap: Record<string, { total: number; count: number }> = {};
+
+    if (leadIds.length > 0) {
+      const { data: vouchers } = await supabase
+        .from("vouchers")
+        .select("user_id, total, redeemed")
+        .eq("winery_id", winery_id)
+        .eq("redeemed", true)
+        .in("user_id", leadIds);
+
+      for (const v of vouchers ?? []) {
+        if (!ltvMap[v.user_id]) ltvMap[v.user_id] = { total: 0, count: 0 };
+        ltvMap[v.user_id].total += Number(v.total || 0);
+        ltvMap[v.user_id].count++;
+      }
+    }
+
+    const enrichedLeads = (leads ?? []).map(l => ({
+      ...l,
+      ltv: ltvMap[l.id]?.total ?? 0,
+      voucher_count: ltvMap[l.id]?.count ?? 0,
+    }));
+
+    return json({ success: true, leads: enrichedLeads });
   } catch (error) {
     console.error("admin-leads error:", error);
-    return new Response(JSON.stringify({ error: "An error occurred. Please try again." }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: "An error occurred. Please try again." }, 500);
   }
 });

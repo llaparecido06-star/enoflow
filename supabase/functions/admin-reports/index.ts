@@ -28,6 +28,16 @@ async function verifySession(req: Request): Promise<{ sub: string; role: string;
   } catch { return null; }
 }
 
+function getAgeGroup(birthDate: string): string {
+  const age = Math.floor((Date.now() - new Date(birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+  if (age < 25) return "18-24";
+  if (age < 35) return "25-34";
+  if (age < 45) return "35-44";
+  if (age < 55) return "45-54";
+  if (age < 65) return "55-64";
+  return "65+";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -47,7 +57,6 @@ Deno.serve(async (req) => {
     const admin_id = session.sub;
     const winery_id = session.winery_id;
 
-    // Verify admin belongs to winery
     const { data: admin, error: adminErr } = await supabase
       .from("admin_users")
       .select("id, role")
@@ -55,9 +64,7 @@ Deno.serve(async (req) => {
       .eq("winery_id", winery_id)
       .single();
 
-    if (adminErr || !admin) {
-      return json({ error: "Não autorizado" }, 403);
-    }
+    if (adminErr || !admin) return json({ error: "Não autorizado" }, 403);
 
     const body = await req.json().catch(() => ({}));
 
@@ -70,7 +77,7 @@ Deno.serve(async (req) => {
       nextDay.setDate(nextDay.getDate() + 1);
       const tomorrowStr = nextDay.toISOString().slice(0, 10);
 
-      // Leads today (with LGPD consent)
+      // Leads today
       const { count: leadsToday } = await supabase
         .from("users_leads")
         .select("id", { count: "exact", head: true })
@@ -87,28 +94,45 @@ Deno.serve(async (req) => {
         .eq("accepted_terms", true)
         .gte("created_at", monthStart);
 
-      // Sales today: redeemed vouchers today
-      const { data: todayVouchers } = await supabase
-        .from("vouchers")
-        .select("total")
+      // Total leads
+      const { count: leadsTotal } = await supabase
+        .from("users_leads")
+        .select("id", { count: "exact", head: true })
         .eq("winery_id", winery_id)
-        .eq("redeemed", true)
-        .gte("created_at", todayStr)
-        .lt("created_at", tomorrowStr);
-      const salesToday = (todayVouchers ?? []).reduce((s, v) => s + Number(v.total || 0), 0);
+        .eq("accepted_terms", true);
 
-      // Top wine of the month (best avg rating)
+      // Vouchers data
+      const { data: allVouchers } = await supabase
+        .from("vouchers")
+        .select("total, redeemed, created_at, user_id")
+        .eq("winery_id", winery_id);
+
+      const vouchersTotal = (allVouchers ?? []).length;
+      const vouchersRedeemed = (allVouchers ?? []).filter(v => v.redeemed).length;
+      const revenueTotal = (allVouchers ?? []).filter(v => v.redeemed).reduce((s, v) => s + Number(v.total || 0), 0);
+      const revenueMonth = (allVouchers ?? [])
+        .filter(v => v.redeemed && v.created_at >= monthStart)
+        .reduce((s, v) => s + Number(v.total || 0), 0);
+      const salesToday = (allVouchers ?? [])
+        .filter(v => v.redeemed && v.created_at >= todayStr && v.created_at < tomorrowStr)
+        .reduce((s, v) => s + Number(v.total || 0), 0);
+      const conversionRate = leadsTotal && leadsTotal > 0
+        ? ((vouchersRedeemed / leadsTotal) * 100).toFixed(1)
+        : "0";
+
+      // Top wine
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const { data: wineryWines } = await supabase
-        .from("wines")
-        .select("id, name")
-        .eq("winery_id", winery_id);
+        .from("wines").select("id, name").eq("winery_id", winery_id);
       const wineIds = (wineryWines ?? []).map(w => w.id);
       const wineNameMap: Record<string, string> = {};
       (wineryWines ?? []).forEach(w => { wineNameMap[w.id] = w.name; });
 
       let topWineName = null;
       let topWineDetail = "Sem dados";
+      let avgSatisfaction = null;
+      let ratingsToday = 0;
+
       if (wineIds.length > 0) {
         const { data: monthRatings } = await supabase
           .from("ratings")
@@ -124,8 +148,7 @@ Deno.serve(async (req) => {
             wineScores[r.wine_id].total += avg;
             wineScores[r.wine_id].count++;
           });
-          let bestId = "";
-          let bestAvg = 0;
+          let bestId = "", bestAvg = 0;
           Object.entries(wineScores).forEach(([id, s]) => {
             const avg = s.total / s.count;
             if (avg > bestAvg) { bestAvg = avg; bestId = id; }
@@ -135,12 +158,7 @@ Deno.serve(async (req) => {
             topWineDetail = `${bestAvg.toFixed(1)}⭐ (${wineScores[bestId].count} aval.)`;
           }
         }
-      }
 
-      // Average satisfaction today
-      let avgSatisfaction = null;
-      let ratingsToday = 0;
-      if (wineIds.length > 0) {
         const { data: todayRatings } = await supabase
           .from("ratings")
           .select("stars_acidity, stars_body, stars_sweetness")
@@ -154,44 +172,70 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Weekly chart: last 7 days with leads + sales
+      // Weekly chart
       const weeklyChart: { date: string; leads: number; sales: number }[] = [];
       for (let i = 6; i >= 0; i--) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - i);
+        const d = new Date(now); d.setDate(d.getDate() - i);
         const ds = d.toISOString().slice(0, 10);
-        const nextD = new Date(d);
-        nextD.setDate(nextD.getDate() + 1);
+        const nextD = new Date(d); nextD.setDate(nextD.getDate() + 1);
         const nds = nextD.toISOString().slice(0, 10);
-
         const { count: lc } = await supabase
-          .from("users_leads")
-          .select("id", { count: "exact", head: true })
-          .eq("winery_id", winery_id)
-          .gte("created_at", ds)
-          .lt("created_at", nds);
-
-        const { data: dayVouchers } = await supabase
-          .from("vouchers")
-          .select("total")
-          .eq("winery_id", winery_id)
-          .eq("redeemed", true)
-          .gte("created_at", ds)
-          .lt("created_at", nds);
-        const daySales = (dayVouchers ?? []).reduce((s, v) => s + Number(v.total || 0), 0);
-
+          .from("users_leads").select("id", { count: "exact", head: true })
+          .eq("winery_id", winery_id).gte("created_at", ds).lt("created_at", nds);
+        const daySales = (allVouchers ?? [])
+          .filter(v => v.redeemed && v.created_at >= ds && v.created_at < nds)
+          .reduce((s, v) => s + Number(v.total || 0), 0);
         weeklyChart.push({ date: ds, leads: lc ?? 0, sales: daySales });
       }
+
+      // ─── BI: Age distribution ───
+      const { data: allLeads } = await supabase
+        .from("users_leads")
+        .select("birth_date, acquisition_location, preferences_summary")
+        .eq("winery_id", winery_id)
+        .eq("accepted_terms", true);
+
+      const ageDist: Record<string, number> = {};
+      const originDist: Record<string, number> = {};
+      const prefDist: Record<string, number> = {};
+
+      for (const l of allLeads ?? []) {
+        if (l.birth_date) {
+          const group = getAgeGroup(l.birth_date);
+          ageDist[group] = (ageDist[group] || 0) + 1;
+        }
+        if (l.acquisition_location) {
+          originDist[l.acquisition_location] = (originDist[l.acquisition_location] || 0) + 1;
+        }
+        if (l.preferences_summary) {
+          const prefs = l.preferences_summary.split(",").map((p: string) => p.trim()).filter(Boolean);
+          for (const p of prefs) {
+            prefDist[p] = (prefDist[p] || 0) + 1;
+          }
+        }
+      }
+
+      const toChartArray = (map: Record<string, number>) =>
+        Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
 
       return json({
         leads_today: leadsToday ?? 0,
         leads_month: leadsMonth ?? 0,
+        leads_total: leadsTotal ?? 0,
         sales_today: salesToday,
+        revenue_total: revenueTotal,
+        revenue_month: revenueMonth,
+        vouchers_total: vouchersTotal,
+        vouchers_redeemed: vouchersRedeemed,
+        conversion_rate: conversionRate,
         top_wine_name: topWineName,
         top_wine_detail: topWineDetail,
         avg_satisfaction: avgSatisfaction,
         ratings_today: ratingsToday,
         weekly_chart: weeklyChart,
+        bi_age: toChartArray(ageDist),
+        bi_origin: toChartArray(originDist).slice(0, 10),
+        bi_preferences: toChartArray(prefDist).slice(0, 10),
       });
     }
 
@@ -206,13 +250,9 @@ Deno.serve(async (req) => {
 
     const userIds = [...new Set((automations ?? []).map(a => a.user_id))];
     let leadsMap: Record<string, { name: string; whatsapp: string }> = {};
-
     if (userIds.length > 0) {
       const { data: leads } = await supabase
-        .from("users_leads")
-        .select("id, name, whatsapp")
-        .in("id", userIds);
-
+        .from("users_leads").select("id, name, whatsapp").in("id", userIds);
       for (const lead of leads ?? []) {
         leadsMap[lead.id] = { name: lead.name, whatsapp: lead.whatsapp };
       }
