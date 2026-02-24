@@ -5,6 +5,8 @@ import { useTouristAuth } from "@/hooks/useTouristAuth";
 import { useFavorites } from "@/hooks/useFavorites";
 import TastingCard from "@/components/tourist/TastingCard";
 import TastingWelcome from "@/components/tourist/TastingWelcome";
+import QuizSommelier from "@/components/tourist/QuizSommelier";
+import ProfileForm from "@/components/tourist/ProfileForm";
 import { calculatePersona } from "@/components/tourist/CelebrationModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight, Wine as WineIcon, LogOut } from "lucide-react";
@@ -32,7 +34,7 @@ function saveProgress(leadId: string, wineryId: string, index: number, ratings: 
 
 export default function TastingPage() {
   const { winery } = useOutletContext<{ winery: Winery; lead: Tables<"users_leads"> }>();
-  const { lead } = useTouristAuth();
+  const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { data: packages } = useTastingPackages(winery.id);
   const { isFavorite, toggleFavorite } = useFavorites(lead?.id);
@@ -46,6 +48,8 @@ export default function TastingPage() {
   const [currentIndex, setCurrentIndex] = useState(saved?.index ?? 0);
   const [showWelcome, setShowWelcome] = useState(!saved || saved.ratings.length === 0);
   const [localRatings, setLocalRatings] = useState<RatingEntry[]>(saved?.ratings ?? []);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [showProfileForm, setShowProfileForm] = useState(false);
 
   // Determine tasting wines based on selected package
   const tastingWines = useMemo(() => {
@@ -98,7 +102,23 @@ export default function TastingPage() {
   const handleStartTasting = useCallback((packageId?: string) => {
     setSelectedPackageId(packageId);
     setShowWelcome(false);
-  }, []);
+    // Check if quiz was already done (preferences_summary exists)
+    const hasPrefs = lead?.preferences_summary;
+    if (!hasPrefs) {
+      setShowQuiz(true);
+    }
+  }, [lead]);
+
+  const handleQuizComplete = async (preferences: string) => {
+    try {
+      await updateProfile({ preferences_summary: preferences });
+    } catch {}
+    setShowQuiz(false);
+  };
+
+  const handleQuizSkip = () => {
+    setShowQuiz(false);
+  };
 
   const handleRatingSubmit = async (wine: Wine, ratings: { acidity: number; body: number; sweetness: number }) => {
     if (!lead) return;
@@ -113,6 +133,9 @@ export default function TastingPage() {
       toast.error("Erro ao enviar avaliação");
     }
   };
+
+  // Store finish data for after profile form
+  const [finishData, setFinishData] = useState<{ persona: any; recs: Wine[] } | null>(null);
 
   const handleFinishTasting = async () => {
     if (!lead || localRatings.length === 0) return;
@@ -135,9 +158,33 @@ export default function TastingPage() {
       await invokeAuth("tourist-actions", { action: "save_persona", persona_key: persona.key, persona_label: persona.label });
     } catch {}
 
+    // Show profile form before navigating (if birth_date not set)
+    if (!lead.preferences_summary || !finishData) {
+      setFinishData({ persona, recs });
+      setShowProfileForm(true);
+      return;
+    }
+
+    navigateToJourney(persona, recs);
+  };
+
+  const navigateToJourney = (persona: any, recs: Wine[]) => {
     navigate(`/app/${winery.slug}/journey`, {
       state: { persona, recommendations: recs, justFinished: true },
     });
+  };
+
+  const handleProfileComplete = async (data: { birth_date?: string; income_class?: string }) => {
+    try {
+      await updateProfile(data);
+    } catch {}
+    setShowProfileForm(false);
+    if (finishData) navigateToJourney(finishData.persona, finishData.recs);
+  };
+
+  const handleProfileSkip = () => {
+    setShowProfileForm(false);
+    if (finishData) navigateToJourney(finishData.persona, finishData.recs);
   };
 
   const handleToggleFavorite = (wineId: string) => {
@@ -171,6 +218,30 @@ export default function TastingPage() {
           packages={packages}
         />
       </AnimatePresence>
+    );
+  }
+
+  // Quiz Sommelier screen
+  if (showQuiz) {
+    return (
+      <QuizSommelier
+        wineryColor={winery.primary_color}
+        onComplete={handleQuizComplete}
+        onSkip={handleQuizSkip}
+      />
+    );
+  }
+
+  // Profile form (before finishing)
+  if (showProfileForm) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <ProfileForm
+          wineryColor={winery.primary_color}
+          onComplete={handleProfileComplete}
+          onSkip={handleProfileSkip}
+        />
+      </div>
     );
   }
 

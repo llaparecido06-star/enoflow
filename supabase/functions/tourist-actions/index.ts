@@ -146,6 +146,20 @@ Deno.serve(async (req) => {
       return json({ success: true, voucher: data });
     }
 
+    // ─── ACTION: update_profile ──────────────────────────
+    if (action === "update_profile") {
+      const updates: Record<string, unknown> = {};
+      if (body.birth_date) updates.birth_date = body.birth_date;
+      if (body.income_class) updates.income_class = body.income_class;
+      if (body.preferences_summary) updates.preferences_summary = body.preferences_summary;
+
+      if (Object.keys(updates).length > 0) {
+        const { error } = await supabase.from("users_leads").update(updates).eq("id", user_id);
+        if (error) throw error;
+      }
+      return json({ success: true });
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (error) {
     console.error("tourist-actions error:", error);

@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
 
     // ─── TOURIST LOGIN ───────────────────────────────────
     if (type === "tourist") {
-      const { name, whatsapp, winery_id } = body;
+      const { name, whatsapp, winery_id, acquisition_category, acquisition_location } = body;
       if (!whatsapp || !winery_id) return json({ error: "whatsapp and winery_id required" }, 400);
 
       // Check winery status
@@ -199,6 +199,8 @@ Deno.serve(async (req) => {
             name, whatsapp, winery_id,
             accepted_terms: body.accepted_terms === true,
             lgpd_consent_date: body.accepted_terms === true ? new Date().toISOString() : null,
+            acquisition_category: acquisition_category || null,
+            acquisition_location: acquisition_location || null,
           })
           .select("id, winery_id, name, whatsapp, created_at, preferences_summary, accepted_terms, lgpd_consent_date")
           .single();
