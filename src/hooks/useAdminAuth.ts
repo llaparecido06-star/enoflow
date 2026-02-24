@@ -19,8 +19,10 @@ export function useAdminAuth(wineryId: string) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setAdmin(null);
+    setLoading(true);
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    if (stored && wineryId) {
       try {
         const parsed = JSON.parse(stored) as AdminUser;
         if (parsed.winery_id === wineryId) {
