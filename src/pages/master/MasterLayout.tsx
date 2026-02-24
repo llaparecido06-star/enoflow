@@ -1,8 +1,7 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useMasterAuth } from "@/hooks/useMasterAuth";
-import { BarChart3, Building2, Users, Loader2, LogOut, Lock, Mail, Shield, Upload, FileBarChart } from "lucide-react";
+import { BarChart3, Building2, Users, Loader2, LogOut, Shield, Upload, FileBarChart } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
-import { useState } from "react";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3, path: "" },
@@ -16,7 +15,7 @@ export default function MasterLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const basePath = "/master";
-  const { admin, loading, login, logout } = useMasterAuth();
+  const { admin, loading, logout } = useMasterAuth();
 
   if (loading) {
     return (
@@ -27,7 +26,9 @@ export default function MasterLayout() {
   }
 
   if (!admin) {
-    return <MasterLoginForm onLogin={login} />;
+    // Redirect to SSO login
+    navigate("/admin/login", { replace: true });
+    return null;
   }
 
   const activeItem = navItems.find((n) => location.pathname === basePath + n.path)?.id ?? "dashboard";
@@ -66,7 +67,7 @@ export default function MasterLayout() {
           })}
         </nav>
         <div className="p-3 border-t border-sidebar-border flex items-center justify-between">
-          <button onClick={() => { logout(); navigate("/"); }} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive/80 hover:bg-destructive/10 transition-colors">
+          <button onClick={() => { logout(); navigate("/admin/login"); }} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive/80 hover:bg-destructive/10 transition-colors">
             <LogOut className="w-4 h-4" />
             Sair
           </button>
@@ -91,7 +92,7 @@ export default function MasterLayout() {
               </button>
             );
           })}
-          <button onClick={() => { logout(); navigate("/"); }} className="flex flex-col items-center gap-0.5 px-2 py-1 text-destructive/70">
+          <button onClick={() => { logout(); navigate("/admin/login"); }} className="flex flex-col items-center gap-0.5 px-2 py-1 text-destructive/70">
             <LogOut className="w-5 h-5" />
             <span className="text-[10px]">Sair</span>
           </button>
@@ -101,83 +102,6 @@ export default function MasterLayout() {
       <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
         <Outlet context={{ admin }} />
       </main>
-    </div>
-  );
-}
-
-function MasterLoginForm({ onLogin }: { onLogin: (email: string, password: string) => Promise<any> }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      await onLogin(email, password);
-    } catch (err: any) {
-      setError(err.message || "Erro ao fazer login");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
-            <Shield className="w-7 h-7 text-accent" />
-          </div>
-          <h1 className="font-display text-xl font-bold text-foreground">Master Admin</h1>
-          <p className="text-sm text-muted-foreground mt-1">SmartSommelier Platform</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-xs text-muted-foreground block mb-1.5">Email</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="master@smartsommelier.com"
-                required
-                className="w-full pl-10 pr-3 py-2.5 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-accent/20"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground block mb-1.5">Senha</label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="w-full pl-10 pr-3 py-2.5 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-accent/20"
-              />
-            </div>
-          </div>
-          {error && <p className="text-xs text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-accent text-accent-foreground py-2.5 rounded-xl text-sm font-medium hover:bg-accent/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            Entrar como Master
-          </button>
-        </form>
-        <p className="text-[10px] text-muted-foreground text-center mt-6">
-          Credenciais: master@smartsommelier.com / master123
-        </p>
-      </div>
     </div>
   );
 }

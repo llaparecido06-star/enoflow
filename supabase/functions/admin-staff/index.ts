@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     if (action === "list") {
       const { data, error } = await supabase
         .from("admin_users")
-        .select("id, name, email, role, created_at")
+        .select("id, name, email, role, created_at, is_active")
         .eq("winery_id", winery_id)
         .neq("role", "master")
         .order("created_at", { ascending: false });
@@ -170,6 +170,28 @@ Deno.serve(async (req) => {
       const { error } = await supabase
         .from("admin_users")
         .delete()
+        .eq("id", target_id)
+        .eq("winery_id", winery_id);
+
+      if (error) throw error;
+      return json({ success: true });
+    }
+
+    // ─── ACTION: toggle_status ──────────────────────────
+    if (action === "toggle_status") {
+      if (!target_id) return json({ error: "target_id required" }, 400);
+      const { data: target } = await supabase
+        .from("admin_users")
+        .select("role, winery_id")
+        .eq("id", target_id)
+        .single();
+
+      if (!target || target.winery_id !== winery_id) return json({ error: "Funcionário não encontrado" }, 404);
+      if (target.role === "owner" || target.role === "master") return json({ error: "Não é possível alterar status de owner/master" }, 403);
+
+      const { error } = await supabase
+        .from("admin_users")
+        .update({ is_active: body.is_active === true })
         .eq("id", target_id)
         .eq("winery_id", winery_id);
 

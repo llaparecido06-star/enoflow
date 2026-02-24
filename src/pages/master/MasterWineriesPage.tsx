@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
 import { invokeAuth } from "@/lib/auth-api";
-import { Building2, Users, Wine, Receipt, Loader2, ExternalLink, Plus, Pencil, Trash2, Image, ToggleLeft } from "lucide-react";
+import { Building2, Users, Wine, Receipt, Loader2, ExternalLink, Plus, Pencil, Trash2, Image, ToggleLeft, Copy, Link as LinkIcon, Power } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -42,7 +42,7 @@ export default function MasterWineriesPage() {
   const [editTarget, setEditTarget] = useState<WineryMetric | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<WineryMetric | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[] });
+  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[], status: "active" });
 
   const fetchData = async () => {
     try {
@@ -61,13 +61,13 @@ export default function MasterWineriesPage() {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] });
+    setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"], status: "active" });
     setModalOpen(true);
   };
 
   const openEdit = (w: WineryMetric) => {
     setEditTarget(w);
-    setForm({ name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0"), enabled_modules: (w as any).enabled_modules ?? ["tasting", "restaurant", "shop"] });
+    setForm({ name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0"), enabled_modules: (w as any).enabled_modules ?? ["tasting", "restaurant", "shop"], status: (w as any).status ?? "active" });
     setModalOpen(true);
   };
 
@@ -87,6 +87,7 @@ export default function MasterWineriesPage() {
             subscription_value: parseFloat(form.subscription_value) || 0,
             platform_commission_rate: parseFloat(form.platform_commission_rate) || 0,
             enabled_modules: form.enabled_modules,
+            status: form.status,
         });
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinícola atualizada!");
@@ -197,6 +198,9 @@ export default function MasterWineriesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {(w as any).status !== "active" && (
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">Inativa</span>
+                )}
                 <select
                   value={w.plan_level}
                   onChange={(e) => updatePlan(w.id, e.target.value)}
@@ -207,16 +211,35 @@ export default function MasterWineriesPage() {
                     <option key={p} value={p} className="bg-card text-foreground">{p.charAt(0).toUpperCase() + p.slice(1)}</option>
                   ))}
                 </select>
-                <button onClick={() => openEdit(w)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                <button onClick={() => openEdit(w)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors" title="Editar">
                   <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
-                <button onClick={() => setDeleteTarget(w)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                <button onClick={() => setDeleteTarget(w)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors" title="Remover">
                   <Trash2 className="w-3.5 h-3.5 text-destructive" />
                 </button>
-                <a href={`/admin/${w.slug}`} target="_blank" rel="noopener" className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
-                  <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-                </a>
               </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 mb-4">
+              <a
+                href={`/app/${w.slug}`}
+                target="_blank"
+                rel="noopener"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" /> Acessar App
+              </a>
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/app/${w.slug}`;
+                  navigator.clipboard.writeText(url);
+                  toast.success("Link copiado!");
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
+              >
+                <Copy className="w-3 h-3" /> Copiar Link
+              </button>
             </div>
 
             <div className="grid grid-cols-4 gap-3">
@@ -349,6 +372,19 @@ export default function MasterWineriesPage() {
                 ))}
               </div>
             </div>
+            {editTarget && (
+              <div>
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Ativa</SelectItem>
+                    <SelectItem value="inactive">Inativa (Kill Switch)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground mt-1">Vinícolas inativas bloqueiam login da equipe e acesso do turista</p>
+              </div>
+            )}
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
               <Button onClick={handleSave} disabled={saving || !form.name || !form.slug}>

@@ -12,6 +12,7 @@ interface StaffMember {
   name: string;
   email: string;
   role: string;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -133,6 +134,22 @@ export default function AdminStaffPage() {
 
   const canEdit = (member: StaffMember) => member.role !== "owner" && member.role !== "master" && member.id !== admin.id;
 
+  const toggleActive = async (member: StaffMember) => {
+    try {
+      const { data, error } = await invokeAuth("admin-staff", {
+        action: "toggle_status",
+        target_id: member.id,
+        is_active: !member.is_active,
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success(member.is_active ? "Usuário desativado" : "Usuário ativado");
+      fetchStaff();
+    } catch (e: any) {
+      toast.error(e.message || "Erro ao alterar status");
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -181,8 +198,20 @@ export default function AdminStaffPage() {
                     }`}>
                       {roleLabels[member.role] || member.role}
                     </span>
+                    {!member.is_active && (
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
+                        Inativo
+                      </span>
+                    )}
                     {canEdit(member) && (
                       <>
+                        <button
+                          onClick={() => toggleActive(member)}
+                          className={`p-1.5 rounded-lg transition-colors ${member.is_active ? "hover:bg-destructive/10" : "hover:bg-green-500/10"}`}
+                          title={member.is_active ? "Desativar" : "Ativar"}
+                        >
+                          <Shield className={`w-3.5 h-3.5 ${member.is_active ? "text-green-500" : "text-destructive"}`} />
+                        </button>
                         <button onClick={() => openEdit(member)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
                           <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                         </button>

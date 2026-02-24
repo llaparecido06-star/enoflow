@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_active: boolean
           name: string
           password_hash: string
           role: Database["public"]["Enums"]["admin_role"]
@@ -28,6 +29,7 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          is_active?: boolean
           name: string
           password_hash: string
           role?: Database["public"]["Enums"]["admin_role"]
@@ -37,6 +39,7 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          is_active?: boolean
           name?: string
           password_hash?: string
           role?: Database["public"]["Enums"]["admin_role"]
@@ -334,6 +337,7 @@ export type Database = {
           platform_commission_rate: number
           primary_color: string
           slug: string
+          status: string
           subscription_value: number
           updated_at: string
         }
@@ -347,6 +351,7 @@ export type Database = {
           platform_commission_rate?: number
           primary_color?: string
           slug: string
+          status?: string
           subscription_value?: number
           updated_at?: string
         }
@@ -360,6 +365,7 @@ export type Database = {
           platform_commission_rate?: number
           primary_color?: string
           slug?: string
+          status?: string
           subscription_value?: number
           updated_at?: string
         }
@@ -509,6 +515,19 @@ export type Database = {
           name: string
           role: Database["public"]["Enums"]["admin_role"]
           winery_id: string
+        }[]
+      }
+      sso_login: {
+        Args: { p_email: string; p_password: string }
+        Returns: {
+          email: string
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["admin_role"]
+          winery_id: string
+          winery_name: string
+          winery_slug: string
+          winery_status: string
         }[]
       }
     }

@@ -2,19 +2,20 @@ import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useDynamicTheme } from "@/hooks/useDynamicTheme";
 import { TouristAuthProvider, useTouristAuth } from "@/hooks/useTouristAuth";
+import { I18nProvider, useI18n, LanguageSelector } from "@/lib/i18n";
 import BottomNav from "@/components/tourist/BottomNav";
 import WhatsAppLogin from "@/components/tourist/WhatsAppLogin";
-import { Loader2, LogOut } from "lucide-react";
+import { Loader2, LogOut, Wine } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useEffect } from "react";
 
 function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const { isAuthenticated, lead, login, logout } = useTouristAuth();
+  const { t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
   const enabledModules: string[] = winery.enabled_modules ?? ["tasting", "restaurant", "shop"];
 
-  // Redirect if on a disabled module
   const moduleMap: Record<string, string> = { restaurant: "restaurant", shop: "shop" };
   useEffect(() => {
     const pathSuffix = location.pathname.replace(`/app/${slug}`, "").replace(/^\//, "");
@@ -51,10 +52,11 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
             )}
             <div>
               <h1 className="font-display text-base font-semibold text-foreground truncate">{winery.name}</h1>
-              <p className="text-[10px] text-muted-foreground">Olá, {lead?.name}</p>
+              <p className="text-[10px] text-muted-foreground">{t("header.hello")} {lead?.name}</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
+            <LanguageSelector />
             <ThemeToggle />
             <button onClick={logout} className="p-2 rounded-lg hover:bg-muted transition-colors">
               <LogOut className="w-4 h-4 text-muted-foreground" />
@@ -97,9 +99,26 @@ export default function TouristLayout() {
     );
   }
 
+  // Kill Switch: winery inactive
+  if ((winery as any).status && (winery as any).status !== "active") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="text-center max-w-sm">
+          <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-4">
+            <Wine className="w-8 h-8 text-destructive" />
+          </div>
+          <h1 className="font-display text-xl font-bold text-foreground mb-2">Experiência indisponível</h1>
+          <p className="text-sm text-muted-foreground">Esta experiência está temporariamente indisponível. Contate a administração.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <TouristAuthProvider wineryId={winery.id}>
-      <InnerLayout slug={slug!} winery={winery} />
-    </TouristAuthProvider>
+    <I18nProvider>
+      <TouristAuthProvider wineryId={winery.id}>
+        <InnerLayout slug={slug!} winery={winery} />
+      </TouristAuthProvider>
+    </I18nProvider>
   );
 }

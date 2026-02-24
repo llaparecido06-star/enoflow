@@ -106,6 +106,9 @@ Deno.serve(async (req) => {
         const validModules = ["tasting", "restaurant", "shop"];
         updates.enabled_modules = Array.isArray(enabled_modules) ? enabled_modules.filter((m: string) => validModules.includes(m)) : validModules;
       }
+      if (body.status !== undefined && ["active", "inactive"].includes(body.status)) {
+        updates.status = body.status;
+      }
       if (Object.keys(updates).length === 0) return json({ error: "Nothing to update" }, 400);
       const { error } = await supabase.from("wineries").update(updates).eq("id", winery_id);
       if (error) throw error;
@@ -329,7 +332,7 @@ Deno.serve(async (req) => {
 
     // ─── DEFAULT: dashboard metrics ──────────────────────
     const [wineriesRes, leadsRes, winesRes, vouchersRes, automationsRes, adminsRes, ratingsRes] = await Promise.all([
-      supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at, subscription_value, platform_commission_rate, enabled_modules"),
+      supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at, subscription_value, platform_commission_rate, enabled_modules, logo_url, status"),
       supabase.from("users_leads").select("id, winery_id, created_at, preferences_summary"),
       supabase.from("wines").select("id, winery_id"),
       supabase.from("vouchers").select("id, winery_id, total, redeemed, created_at"),

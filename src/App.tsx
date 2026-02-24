@@ -10,6 +10,7 @@ import TastingPage from "./pages/tourist/TastingPage";
 import RestaurantPage from "./pages/tourist/RestaurantPage";
 import ShopPage from "./pages/tourist/ShopPage";
 import JourneyPage from "./pages/tourist/JourneyPage";
+import AdminLoginPage from "./pages/admin/AdminLoginPage";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminWinesPage from "./pages/admin/AdminWinesPage";
 import AdminPackagesPage from "./pages/admin/AdminPackagesPage";
@@ -31,7 +32,6 @@ import PrivacyPage from "./pages/PrivacyPage";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Initialize theme from localStorage on mount
   if (typeof window !== "undefined") {
     const stored = localStorage.getItem("smartsommelier_theme");
     const prefersDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -50,6 +50,9 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+
+          {/* SSO Login */}
+          <Route path="/admin/login" element={<AdminLoginPage />} />
 
           {/* Tourist routes */}
           <Route path="/app/:slug" element={<TouristLayout />}>
