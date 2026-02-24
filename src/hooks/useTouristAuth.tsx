@@ -14,7 +14,8 @@ interface Lead {
 interface TouristAuthContextType {
   lead: Lead | null;
   isAuthenticated: boolean;
-  login: (name: string, whatsapp: string, wineryId: string, acceptedTerms?: boolean) => Promise<void>;
+  login: (name: string, whatsapp: string, wineryId: string, acceptedTerms?: boolean, acquisitionCategory?: string, acquisitionLocation?: string) => Promise<void>;
+  updateProfile: (data: { birth_date?: string; income_class?: string; preferences_summary?: string }) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -41,21 +42,30 @@ export function TouristAuthProvider({ children, wineryId }: { children: ReactNod
     setIsLoading(false);
   }, [wineryId]);
 
-  const login = useCallback(async (name: string, whatsapp: string, wineryId: string, acceptedTerms = false) => {
+  const login = useCallback(async (name: string, whatsapp: string, wineryId: string, acceptedTerms = false, acquisitionCategory?: string, acquisitionLocation?: string) => {
     const res = await supabase.functions.invoke("session-auth", {
-      body: { type: "tourist", name, whatsapp, winery_id: wineryId, accepted_terms: acceptedTerms },
+      body: {
+        type: "tourist", name, whatsapp, winery_id: wineryId, accepted_terms: acceptedTerms,
+        acquisition_category: acquisitionCategory || undefined,
+        acquisition_location: acquisitionLocation || undefined,
+      },
     });
 
     if (res.error) throw res.error;
     if (res.data?.error) throw new Error(res.data.error);
     if (!res.data?.lead || !res.data?.token) throw new Error("Erro ao fazer login");
 
-    // Store JWT token for authenticated tourist API calls
     setSessionToken(res.data.token);
-
     const lead = res.data.lead as Lead;
     setLead(lead);
     localStorage.setItem(`lead_${wineryId}`, JSON.stringify(lead));
+  }, []);
+
+  const updateProfile = useCallback(async (data: { birth_date?: string; income_class?: string; preferences_summary?: string }) => {
+    const { invokeAuth } = await import("@/lib/auth-api");
+    const res = await invokeAuth("tourist-actions", { action: "update_profile", ...data });
+    if (res.error) throw res.error;
+    if (res.data?.error) throw new Error(res.data.error);
   }, []);
 
   const logout = useCallback(() => {
@@ -65,7 +75,7 @@ export function TouristAuthProvider({ children, wineryId }: { children: ReactNod
   }, [wineryId]);
 
   return (
-    <TouristAuthContext.Provider value={{ lead, isAuthenticated: !!lead, login, logout, isLoading }}>
+    <TouristAuthContext.Provider value={{ lead, isAuthenticated: !!lead, login, updateProfile, logout, isLoading }}>
       {children}
     </TouristAuthContext.Provider>
   );

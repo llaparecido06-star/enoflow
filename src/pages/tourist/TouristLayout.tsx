@@ -16,6 +16,11 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const navigate = useNavigate();
   const enabledModules: string[] = winery.enabled_modules ?? ["tasting", "restaurant", "shop"];
 
+  // Read acquisition params from URL
+  const searchParams = new URLSearchParams(location.search);
+  const acqCategory = searchParams.get("category") || undefined;
+  const acqLocation = searchParams.get("location") || undefined;
+
   const moduleMap: Record<string, string> = { restaurant: "restaurant", shop: "shop" };
   useEffect(() => {
     const pathSuffix = location.pathname.replace(`/app/${slug}`, "").replace(/^\//, "");
@@ -30,7 +35,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
       <WhatsAppLogin
         wineryName={winery.name}
         wineryColor={winery.primary_color}
-        onLogin={(name, whatsapp, acceptedTerms) => login(name, whatsapp, winery.id, acceptedTerms)}
+        onLogin={(name, whatsapp, acceptedTerms) => login(name, whatsapp, winery.id, acceptedTerms, acqCategory, acqLocation)}
       />
     );
   }
