@@ -322,7 +322,7 @@ export default function ShopPage() {
     }
   };
 
-  const handleProfileComplete = async (data: { birth_date?: string; income_class?: string }) => {
+  const handleProfileComplete = async (data: { birth_date?: string; income_class?: string; gender?: string }) => {
     try {
       await invokeAuth("tourist-actions", { action: "update_profile", ...data });
     } catch {}

@@ -277,6 +277,7 @@ export type Database = {
           auth_user_id: string | null
           birth_date: string | null
           created_at: string
+          gender: string | null
           id: string
           income_class: string | null
           lgpd_consent_date: string | null
@@ -292,6 +293,7 @@ export type Database = {
           auth_user_id?: string | null
           birth_date?: string | null
           created_at?: string
+          gender?: string | null
           id?: string
           income_class?: string | null
           lgpd_consent_date?: string | null
@@ -307,6 +309,7 @@ export type Database = {
           auth_user_id?: string | null
           birth_date?: string | null
           created_at?: string
+          gender?: string | null
           id?: string
           income_class?: string | null
           lgpd_consent_date?: string | null
