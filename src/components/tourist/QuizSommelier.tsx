@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wine, ArrowRight, Sparkles } from "lucide-react";
+import { Wine, ArrowRight, Sparkles, Check } from "lucide-react";
 
 interface QuizSommelierProps {
   wineryColor: string;
@@ -11,31 +11,34 @@ interface QuizSommelierProps {
 const questions = [
   {
     id: "type",
+    emoji: "🍷",
     question: "Qual tipo de vinho você prefere?",
     options: [
-      { label: "🍷 Tinto", value: "Tinto" },
-      { label: "🥂 Branco", value: "Branco" },
-      { label: "🌸 Rosé", value: "Rosé" },
-      { label: "🍾 Espumante", value: "Espumante" },
+      { label: "Tinto", emoji: "🍷", value: "Tinto" },
+      { label: "Branco", emoji: "🥂", value: "Branco" },
+      { label: "Rosé", emoji: "🌸", value: "Rosé" },
+      { label: "Espumante", emoji: "🍾", value: "Espumante" },
     ],
   },
   {
     id: "sweetness",
+    emoji: "🍬",
     question: "Qual o nível de doçura que agrada mais?",
     options: [
-      { label: "Seco", value: "Seco" },
-      { label: "Meio-seco", value: "Meio-seco" },
-      { label: "Suave", value: "Suave" },
-      { label: "Doce", value: "Doce" },
+      { label: "Seco", emoji: "🌵", value: "Seco" },
+      { label: "Meio-seco", emoji: "🌤️", value: "Meio-seco" },
+      { label: "Suave", emoji: "🌺", value: "Suave" },
+      { label: "Doce", emoji: "🍯", value: "Doce" },
     ],
   },
   {
     id: "body",
+    emoji: "💪",
     question: "Como você gosta do corpo do vinho?",
     options: [
-      { label: "Leve", value: "Leve" },
-      { label: "Médio", value: "Médio" },
-      { label: "Encorpado", value: "Encorpado" },
+      { label: "Leve", emoji: "🪶", value: "Leve" },
+      { label: "Médio", emoji: "⚖️", value: "Médio" },
+      { label: "Encorpado", emoji: "🏋️", value: "Encorpado" },
     ],
   },
 ];
@@ -43,72 +46,183 @@ const questions = [
 export default function QuizSommelier({ wineryColor, onComplete, onSkip }: QuizSommelierProps) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
+  const [selectedValue, setSelectedValue] = useState<string | null>(null);
+  const [direction, setDirection] = useState(1);
 
   const handleAnswer = (value: string) => {
-    const next = [...answers, value];
-    setAnswers(next);
-    if (step < questions.length - 1) {
-      setStep(step + 1);
-    } else {
-      onComplete(next.join(", "));
-    }
+    setSelectedValue(value);
+    setTimeout(() => {
+      const next = [...answers, value];
+      setAnswers(next);
+      setSelectedValue(null);
+      if (step < questions.length - 1) {
+        setDirection(1);
+        setStep(step + 1);
+      } else {
+        onComplete(next.join(", "));
+      }
+    }, 400);
   };
 
   const q = questions[step];
   const progress = ((step + 1) / questions.length) * 100;
 
+  const slideVariants = {
+    enter: (dir: number) => ({ x: dir > 0 ? 80 : -80, opacity: 0, scale: 0.95 }),
+    center: { x: 0, opacity: 1, scale: 1 },
+    exit: (dir: number) => ({ x: dir > 0 ? -80 : 80, opacity: 0, scale: 0.95 }),
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-6">
-          <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center bg-primary/10">
-            <Sparkles className="w-7 h-7 text-primary" />
-          </div>
-          <h1 className="font-display text-lg font-bold text-foreground">Quiz Sommelier</h1>
+      <motion.div
+        className="w-full max-w-sm"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        {/* Header */}
+        <motion.div
+          className="text-center mb-6"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          <motion.div
+            className="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center bg-primary/10"
+            animate={{ rotate: [0, -5, 5, -3, 3, 0] }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <Sparkles className="w-8 h-8 text-primary" />
+          </motion.div>
+          <h1 className="font-display text-xl font-bold text-foreground">Quiz Sommelier</h1>
           <p className="text-xs text-muted-foreground mt-1">Descubra seus vinhos ideais</p>
+        </motion.div>
+
+        {/* Step indicators */}
+        <div className="flex items-center justify-center gap-2 mb-5">
+          {questions.map((_, i) => (
+            <motion.div
+              key={i}
+              className="relative flex items-center justify-center"
+              initial={false}
+            >
+              <motion.div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors"
+                animate={{
+                  borderColor: i <= step ? wineryColor : "hsl(var(--border))",
+                  backgroundColor: i < step ? wineryColor : "transparent",
+                  color: i < step ? "#fff" : i === step ? wineryColor : "hsl(var(--muted-foreground))",
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                {i < step ? (
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300 }}>
+                    <Check className="w-4 h-4" />
+                  </motion.div>
+                ) : (
+                  <span>{questions[i].emoji}</span>
+                )}
+              </motion.div>
+              {i < questions.length - 1 && (
+                <motion.div
+                  className="absolute left-full top-1/2 -translate-y-1/2 w-4 h-0.5 rounded-full"
+                  animate={{ backgroundColor: i < step ? wineryColor : "hsl(var(--border))" }}
+                  transition={{ duration: 0.3 }}
+                />
+              )}
+            </motion.div>
+          ))}
         </div>
 
         {/* Progress bar */}
-        <div className="w-full h-1.5 bg-secondary rounded-full mb-6 overflow-hidden">
+        <div className="w-full h-1 bg-secondary rounded-full mb-6 overflow-hidden">
           <motion.div
             className="h-full rounded-full"
             style={{ backgroundColor: wineryColor }}
             animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
           />
         </div>
 
-        <AnimatePresence mode="wait">
+        {/* Question card */}
+        <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step}
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -30 }}
-            transition={{ duration: 0.25 }}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <p className="text-sm font-medium text-foreground mb-4 text-center">{q.question}</p>
-            <div className="space-y-2">
-              {q.options.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => handleAnswer(opt.value)}
-                  className="w-full flex items-center justify-between px-4 py-3.5 bg-card border border-border rounded-xl text-sm font-medium text-foreground hover:border-primary/50 hover:bg-primary/5 transition-all"
-                >
-                  {opt.label}
-                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                </button>
-              ))}
+            <motion.p
+              className="text-sm font-medium text-foreground mb-5 text-center"
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              {q.question}
+            </motion.p>
+
+            <div className="space-y-2.5">
+              {q.options.map((opt, i) => {
+                const isSelected = selectedValue === opt.value;
+                return (
+                  <motion.button
+                    key={opt.value}
+                    onClick={() => !selectedValue && handleAnswer(opt.value)}
+                    disabled={!!selectedValue}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 * i + 0.15, duration: 0.25 }}
+                    whileHover={!selectedValue ? { scale: 1.02, x: 4 } : {}}
+                    whileTap={!selectedValue ? { scale: 0.98 } : {}}
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all border ${
+                      isSelected
+                        ? "border-primary bg-primary/10 text-foreground shadow-md"
+                        : selectedValue
+                          ? "border-border bg-card/50 text-muted-foreground opacity-50"
+                          : "border-border bg-card text-foreground hover:border-primary/40 hover:bg-primary/5"
+                    }`}
+                  >
+                    <motion.span
+                      className="text-lg"
+                      animate={isSelected ? { scale: [1, 1.3, 1] } : {}}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {opt.emoji}
+                    </motion.span>
+                    <span className="flex-1 text-left">{opt.label}</span>
+                    {isSelected ? (
+                      <motion.div
+                        initial={{ scale: 0, rotate: -90 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: "spring", stiffness: 400 }}
+                      >
+                        <Check className="w-4 h-4 text-primary" />
+                      </motion.div>
+                    ) : (
+                      <ArrowRight className="w-4 h-4 text-muted-foreground/40" />
+                    )}
+                  </motion.button>
+                );
+              })}
             </div>
           </motion.div>
         </AnimatePresence>
 
-        <button
+        <motion.button
           onClick={onSkip}
           className="w-full mt-6 text-xs text-muted-foreground hover:text-foreground transition-colors text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          whileHover={{ scale: 1.02 }}
         >
           Pular quiz →
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     </div>
   );
 }
