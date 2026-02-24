@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Wallet, ArrowRight, Loader2 } from "lucide-react";
+import { Calendar, Wallet, ArrowRight, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProfileFormProps {
   wineryColor: string;
-  onComplete: (data: { birth_date?: string; income_class?: string }) => Promise<void>;
+  onComplete: (data: { birth_date?: string; income_class?: string; gender?: string }) => Promise<void>;
   onSkip: () => void;
 }
 
@@ -16,9 +16,16 @@ const incomeOptions = [
   { label: "Acima de R$ 15.000", value: "acima_15k" },
 ];
 
+const genderOptions = [
+  { label: "Masculino", value: "masculino" },
+  { label: "Feminino", value: "feminino" },
+  { label: "Prefiro não informar", value: "nao_informar" },
+];
+
 export default function ProfileForm({ wineryColor, onComplete, onSkip }: ProfileFormProps) {
   const [birthDate, setBirthDate] = useState("");
   const [incomeClass, setIncomeClass] = useState("");
+  const [gender, setGender] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
@@ -31,6 +38,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
       await onComplete({
         birth_date: birthDate,
         income_class: incomeClass || undefined,
+        gender: gender || undefined,
       });
     } catch {
       toast.error("Erro ao salvar dados");
@@ -66,6 +74,29 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
           min="1920-01-01"
           className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
+      </div>
+
+      {/* Gender */}
+      <div>
+        <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
+          <Users className="w-3.5 h-3.5 text-muted-foreground" />
+          Sexo
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {genderOptions.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setGender(gender === opt.value ? "" : opt.value)}
+              className={`px-2 py-2 rounded-xl text-xs font-medium border transition-all ${
+                gender === opt.value
+                  ? "border-primary bg-primary/10 text-foreground"
+                  : "border-border bg-background text-muted-foreground hover:border-primary/30"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Income */}

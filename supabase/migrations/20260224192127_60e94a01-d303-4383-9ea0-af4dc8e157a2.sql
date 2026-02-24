@@ -1,0 +1,1 @@
+ALTER TABLE public.users_leads ADD COLUMN gender text NULL;

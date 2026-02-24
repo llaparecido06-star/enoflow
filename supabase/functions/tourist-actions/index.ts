@@ -172,9 +172,13 @@ Deno.serve(async (req) => {
       if (body.birth_date && typeof body.birth_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.birth_date)) {
         updates.birth_date = body.birth_date;
       }
-      const allowedIncomeClasses = ["A", "B", "C", "D", "E"];
+      const allowedIncomeClasses = ["A", "B", "C", "D", "E", "ate_3k", "3k_8k", "8k_15k", "acima_15k"];
       if (body.income_class && allowedIncomeClasses.includes(body.income_class)) {
         updates.income_class = body.income_class;
+      }
+      const allowedGenders = ["masculino", "feminino", "nao_informar"];
+      if (body.gender && allowedGenders.includes(body.gender)) {
+        updates.gender = body.gender;
       }
       if (body.preferences_summary && typeof body.preferences_summary === "string") {
         updates.preferences_summary = str(body.preferences_summary, 500);
