@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     // Fetch leads
     const { data: leads, error } = await supabase
       .from("users_leads")
-      .select("id, name, whatsapp, created_at, preferences_summary, birth_date, income_class, acquisition_category, acquisition_location")
+      .select("id, name, whatsapp, created_at, preferences_summary, birth_date, income_class, gender, acquisition_category, acquisition_location")
       .eq("winery_id", winery_id)
       .order("created_at", { ascending: false });
 

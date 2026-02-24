@@ -16,6 +16,7 @@ interface Lead {
   preferences_summary: string | null;
   birth_date: string | null;
   income_class: string | null;
+  gender: string | null;
   acquisition_category: string | null;
   acquisition_location: string | null;
   ltv: number;
@@ -23,6 +24,11 @@ interface Lead {
 }
 
 const ORIGINS = ["Todos", "Restaurante", "Degustação", "Loja", "WiFi", "QR"];
+
+const genderLabel = (g: string) => {
+  const map: Record<string, string> = { masculino: "Masculino", feminino: "Feminino", nao_informar: "N/I" };
+  return map[g] || g;
+};
 const STATUSES = [
   { label: "Todos", value: "all" },
   { label: "Com voucher", value: "has_voucher" },
@@ -106,13 +112,14 @@ export default function AdminLeadsPage() {
   const exportCSV = () => {
     if (!filtered.length) { toast.error("Nenhum lead para exportar"); return; }
     const sym = winery.currency || "BRL";
-    const headers = ["Nome", "WhatsApp", "Data", "Origem", "Local", `LTV (${sym})`, "Vouchers", "Nascimento", "Renda", "Preferências"];
+    const headers = ["Nome", "WhatsApp", "Data", "Origem", "Local", `LTV (${sym})`, "Vouchers", "Nascimento", "Sexo", "Renda", "Preferências"];
     const rows = filtered.map((l) => [
       l.name, l.whatsapp,
       new Date(l.created_at).toLocaleDateString("pt-BR"),
       l.acquisition_category ?? "", l.acquisition_location ?? "",
       l.ltv.toFixed(2), l.voucher_count,
       l.birth_date ? new Date(l.birth_date).toLocaleDateString("pt-BR") : "",
+      l.gender ? genderLabel(l.gender) : "",
       l.income_class ?? "", l.preferences_summary ?? "",
     ]);
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
@@ -217,14 +224,15 @@ export default function AdminLeadsPage() {
           <div className="bg-card rounded-xl border border-border overflow-x-auto">
             <table className="w-full min-w-[700px]">
               <thead>
-                <tr className="border-b border-border bg-secondary/50">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Nome</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">WhatsApp</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Origem</th>
-                  <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">LTV</th>
-                  <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Vouchers</th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Data</th>
-                </tr>
+                 <tr className="border-b border-border bg-secondary/50">
+                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Nome</th>
+                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">WhatsApp</th>
+                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground">Origem</th>
+                   <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Sexo</th>
+                   <th className="text-right px-4 py-3 text-xs font-medium text-muted-foreground">LTV</th>
+                   <th className="text-center px-4 py-3 text-xs font-medium text-muted-foreground">Vouchers</th>
+                   <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground hidden lg:table-cell">Data</th>
+                 </tr>
               </thead>
               <tbody>
                 {paginated.map((lead) => (
@@ -250,16 +258,19 @@ export default function AdminLeadsPage() {
                         <ExternalLink className="w-3 h-3" />
                       </a>
                     </td>
-                    <td className="px-4 py-3">
-                      {lead.acquisition_location ? (
-                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                          <MapPin className="w-3 h-3 shrink-0" />
-                          <span className="truncate max-w-[120px]">{lead.acquisition_location}</span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground/50">—</span>
-                      )}
-                    </td>
+                     <td className="px-4 py-3">
+                       {lead.acquisition_location ? (
+                         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                           <MapPin className="w-3 h-3 shrink-0" />
+                           <span className="truncate max-w-[120px]">{lead.acquisition_location}</span>
+                         </div>
+                       ) : (
+                         <span className="text-xs text-muted-foreground/50">—</span>
+                       )}
+                     </td>
+                     <td className="px-4 py-3 text-center">
+                       <span className="text-xs text-muted-foreground">{lead.gender ? genderLabel(lead.gender) : "—"}</span>
+                     </td>
                     <td className="px-4 py-3 text-right">
                       <span className={`text-sm font-semibold ${lead.ltv > 0 ? "text-accent" : "text-muted-foreground"}`}>
                         {lead.ltv > 0 ? formatCurrency(lead.ltv, winery.currency) : "—"}
