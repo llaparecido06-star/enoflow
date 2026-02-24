@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Star, ShoppingBag, X, Wine as WineIcon, Sparkles } from "lucide-react";
 import type { Wine } from "@/hooks/useWinery";
+import { formatCurrencyShort } from "@/lib/currency";
 
 export interface WinePersona {
   key: string;
@@ -29,6 +30,7 @@ interface CelebrationModalProps {
   onClose: () => void;
   onAddToCart: (wine: Wine) => void;
   onGoToShop: () => void;
+  currency?: string;
 }
 
 function ConfettiEffect() {
@@ -59,7 +61,7 @@ function ConfettiEffect() {
   );
 }
 
-export default function CelebrationModal({ persona, recommendations, onClose, onAddToCart, onGoToShop }: CelebrationModalProps) {
+export default function CelebrationModal({ persona, recommendations, onClose, onAddToCart, onGoToShop, currency = "BRL" }: CelebrationModalProps) {
   const [showConfetti, setShowConfetti] = useState(true);
 
   useEffect(() => {
@@ -142,10 +144,10 @@ export default function CelebrationModal({ persona, recommendations, onClose, on
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-[9px] text-green-500 font-bold line-through decoration-muted-foreground/40">
-                      R$ {Number(wine.price_bottle).toFixed(0)}
+                      {formatCurrencyShort(Number(wine.price_bottle), currency)}
                     </p>
                     <p className="font-display text-sm font-bold text-gold">
-                      R$ {(Number(wine.price_bottle) * 0.9).toFixed(0)}
+                      {formatCurrencyShort(Number(wine.price_bottle) * 0.9, currency)}
                     </p>
                   </div>
                   <button

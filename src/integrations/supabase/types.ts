@@ -331,6 +331,7 @@ export type Database = {
           created_at: string
           id: string
           items: Json
+          nps_score: number | null
           redeemed: boolean
           total: number
           user_id: string
@@ -341,6 +342,7 @@ export type Database = {
           created_at?: string
           id?: string
           items?: Json
+          nps_score?: number | null
           redeemed?: boolean
           total?: number
           user_id: string
@@ -351,6 +353,7 @@ export type Database = {
           created_at?: string
           id?: string
           items?: Json
+          nps_score?: number | null
           redeemed?: boolean
           total?: number
           user_id?: string
