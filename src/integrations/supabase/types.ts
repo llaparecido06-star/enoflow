@@ -272,9 +272,13 @@ export type Database = {
       users_leads: {
         Row: {
           accepted_terms: boolean
+          acquisition_category: string | null
+          acquisition_location: string | null
           auth_user_id: string | null
+          birth_date: string | null
           created_at: string
           id: string
+          income_class: string | null
           lgpd_consent_date: string | null
           name: string
           preferences_summary: string | null
@@ -283,9 +287,13 @@ export type Database = {
         }
         Insert: {
           accepted_terms?: boolean
+          acquisition_category?: string | null
+          acquisition_location?: string | null
           auth_user_id?: string | null
+          birth_date?: string | null
           created_at?: string
           id?: string
+          income_class?: string | null
           lgpd_consent_date?: string | null
           name: string
           preferences_summary?: string | null
@@ -294,9 +302,13 @@ export type Database = {
         }
         Update: {
           accepted_terms?: boolean
+          acquisition_category?: string | null
+          acquisition_location?: string | null
           auth_user_id?: string | null
+          birth_date?: string | null
           created_at?: string
           id?: string
+          income_class?: string | null
           lgpd_consent_date?: string | null
           name?: string
           preferences_summary?: string | null
