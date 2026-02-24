@@ -7,11 +7,15 @@ import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
 import { formatCurrency, formatCurrencyShort } from "@/lib/currency";
 import NpsModal from "@/components/tourist/NpsModal";
+import QuizSommelier from "@/components/tourist/QuizSommelier";
+import ProfileForm from "@/components/tourist/ProfileForm";
+import { calculatePersona, type WinePersona } from "@/components/tourist/CelebrationModal";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingBag, Minus, Plus, Trash2, QrCode, Copy,
   Search, SlidersHorizontal, X, Wine as WineIcon, Heart, Star,
-  Grape, MapPin, Thermometer, Clock, User, FlaskConical, ChevronRight, AlertTriangle
+  Grape, MapPin, Thermometer, Clock, User, FlaskConical, ChevronRight, AlertTriangle,
+  Trophy, Sparkles
 } from "lucide-react";
 import { toast } from "sonner";
 import { invokeAuth } from "@/lib/auth-api";
@@ -264,6 +268,10 @@ export default function ShopPage() {
   const [discountApplied, setDiscountApplied] = useState(true);
   const [showNps, setShowNps] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [funnelStep, setFunnelStep] = useState<"quiz" | "profile" | "persona" | null>(null);
+  const [quizPreferences, setQuizPreferences] = useState<string | null>(null);
+  const [persona, setPersona] = useState<WinePersona | null>(null);
+  const [funnelCompleted, setFunnelCompleted] = useState(false);
 
   // Handle wine added from profile recommendation
   useEffect(() => {
@@ -309,6 +317,44 @@ export default function ShopPage() {
 
   const activeFilterCount = (selectedType !== "Todos" ? 1 : 0) + (selectedPrice !== 0 ? 1 : 0) + (selectedFlavor ? 1 : 0) + (showFavoritesOnly ? 1 : 0);
 
+  const startVoucherFunnel = () => {
+    if (funnelCompleted) {
+      generateVoucher();
+    } else {
+      setFunnelStep("quiz");
+    }
+  };
+
+  const handleQuizComplete = async (preferences: string) => {
+    setQuizPreferences(preferences);
+    // Save persona
+    const parts = preferences.split(", ");
+    const sweetMap: Record<string, number> = { "Seco": 1, "Meio-seco": 2, "Suave": 4, "Doce": 5 };
+    const bodyMap: Record<string, number> = { "Leve": 1, "Médio": 3, "Encorpado": 5 };
+    const avgSweet = sweetMap[parts[1]] || 3;
+    const avgBody = bodyMap[parts[2]] || 3;
+    const avgAcidity = 3;
+    const p = calculatePersona(avgAcidity, avgBody, avgSweet);
+    setPersona(p);
+    try {
+      await invokeAuth("tourist-actions", { action: "save_persona", persona_key: p.key, persona_label: p.label });
+    } catch {}
+    setFunnelStep("profile");
+  };
+
+  const handleProfileComplete = async (data: { birth_date?: string; income_class?: string }) => {
+    try {
+      await invokeAuth("tourist-actions", { action: "update_profile", ...data });
+    } catch {}
+    setFunnelStep("persona");
+  };
+
+  const handlePersonaDone = () => {
+    setFunnelCompleted(true);
+    setFunnelStep(null);
+    generateVoucher();
+  };
+
   const generateVoucher = async () => {
     if (!lead) return;
     setGenerating(true);
@@ -326,12 +372,10 @@ export default function ShopPage() {
       if (data?.error) throw new Error(data.error);
       setVoucher({ code, id: data?.voucher?.id });
       toast.success("Voucher gerado!");
-      // Generate QR code
       try {
         const qrUrl = await QRCode.toDataURL(code, { width: 200, margin: 2, color: { dark: "#000000", light: "#ffffff" } });
         setQrDataUrl(qrUrl);
       } catch {}
-      // Show NPS after a longer delay
       setTimeout(() => setShowNps(true), 5000);
     } catch {
       toast.error("Erro ao gerar voucher");
@@ -419,9 +463,9 @@ export default function ShopPage() {
                   <span className="font-display font-bold text-lg text-gold">{formatCurrency(discountedTotal, cur)}</span>
                   {discountApplied && <span className="text-[10px] text-green-500 ml-1 font-medium">-10%</span>}
                 </div>
-                <button onClick={generateVoucher} disabled={generating}
+                <button onClick={startVoucherFunnel} disabled={generating}
                   className="bg-gold text-gold-foreground px-4 py-2 rounded-xl text-sm font-medium hover:bg-gold/90 transition-colors disabled:opacity-50">
-                  {generating ? "Gerando..." : "Gerar Voucher"}
+                  {generating ? "Gerando..." : "Gerar Voucher 10% OFF"}
                 </button>
               </div>
             </div>
@@ -462,6 +506,88 @@ export default function ShopPage() {
           </div>
         </motion.div>
       )}
+
+      {/* Voucher Funnel Overlay */}
+      <AnimatePresence>
+        {funnelStep === "quiz" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-background"
+          >
+            <QuizSommelier
+              wineryColor={winery.primary_color}
+              onComplete={handleQuizComplete}
+              onSkip={() => setFunnelStep(null)}
+            />
+          </motion.div>
+        )}
+
+        {funnelStep === "profile" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-6"
+          >
+            <div className="w-full max-w-sm">
+              <ProfileForm
+                wineryColor={winery.primary_color}
+                onComplete={handleProfileComplete}
+                onSkip={() => {
+                  setFunnelStep("persona");
+                }}
+              />
+            </div>
+          </motion.div>
+        )}
+
+        {funnelStep === "persona" && persona && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-center justify-center p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.8, y: 40, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              transition={{ type: "spring", damping: 20 }}
+              className="bg-card w-full max-w-sm rounded-2xl border border-border/30 luxury-shadow p-8 text-center"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, type: "spring" }}
+                className="text-6xl mb-4"
+              >
+                {persona.emoji}
+              </motion.div>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Trophy className="w-4 h-4 text-gold" />
+                <span className="text-xs text-gold uppercase tracking-wider font-medium">Seu Perfil de Paladar</span>
+              </div>
+              <h2 className="font-display text-2xl font-bold text-foreground mb-2">{persona.label}</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-6">{persona.description}</p>
+              <button
+                onClick={handlePersonaDone}
+                disabled={generating}
+                className="w-full py-3 rounded-xl bg-gold text-gold-foreground font-display text-sm font-semibold hover:bg-gold/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {generating ? (
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-4 h-4 border-2 border-gold-foreground border-t-transparent rounded-full" />
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Gerar meu Voucher 10% OFF
+                  </>
+                )}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* NPS Modal */}
       <AnimatePresence>
