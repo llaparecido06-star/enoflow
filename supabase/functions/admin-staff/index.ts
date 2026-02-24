@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
         return json({ error: "Owners podem criar apenas staff e manager" }, 400);
       }
       if (typeof name !== "string" || name.trim().length === 0 || name.length > 100) return json({ error: "Nome inválido" }, 400);
-      if (typeof email !== "string" || !email.includes("@") || email.length > 255) return json({ error: "Email inválido" }, 400);
+      if (typeof email !== "string" || email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Email inválido" }, 400);
       if (typeof password !== "string" || password.length < 6 || password.length > 100) return json({ error: "Senha deve ter entre 6 e 100 caracteres" }, 400);
 
       const { data: existing } = await supabase
