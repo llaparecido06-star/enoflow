@@ -35,6 +35,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
       <WhatsAppLogin
         wineryName={winery.name}
         wineryColor={winery.primary_color}
+        wineryLogo={winery.logo_url}
         onLogin={(name, whatsapp, acceptedTerms) => login(name, whatsapp, winery.id, acceptedTerms, acqCategory, acqLocation)}
       />
     );

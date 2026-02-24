@@ -7,6 +7,7 @@ import { useI18n, LanguageSelector } from "@/lib/i18n";
 interface WhatsAppLoginProps {
   wineryName: string;
   wineryColor: string;
+  wineryLogo?: string | null;
   onLogin: (name: string, whatsapp: string, acceptedTerms: boolean) => Promise<void>;
 }
 
@@ -26,7 +27,7 @@ const countryCodes = [
   { code: "+86", flag: "🇨🇳", name: "China" },
 ];
 
-export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: WhatsAppLoginProps) {
+export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onLogin }: WhatsAppLoginProps) {
   const { t } = useI18n();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -77,12 +78,16 @@ export default function WhatsAppLogin({ wineryName, wineryColor, onLogin }: What
         </div>
 
         <div className="text-center mb-8">
-          <div
-            className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-xl font-bold"
-            style={{ backgroundColor: wineryColor, color: '#fff' }}
-          >
-            {wineryName.charAt(0)}
-          </div>
+          {wineryLogo ? (
+            <img src={wineryLogo} alt={wineryName} className="w-24 h-24 rounded-2xl mx-auto mb-4 object-contain" />
+          ) : (
+            <div
+              className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-xl font-bold"
+              style={{ backgroundColor: wineryColor, color: '#fff' }}
+            >
+              {wineryName.charAt(0)}
+            </div>
+          )}
           <h1 className="font-display text-xl font-bold text-foreground">{wineryName}</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {step === "name" ? t("login.how_to_call") : t("login.enter_whatsapp")}
