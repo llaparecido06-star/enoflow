@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Wine, Star, Heart, Grape, MapPin, Thermometer, Clock, User, FlaskConical } from "lucide-react";
 import type { Wine as WineType } from "@/hooks/useWinery";
 import { useI18n } from "@/lib/i18n";
+import { useContentTranslation } from "@/hooks/useContentTranslation";
 
 interface TastingCardProps {
   wine: WineType;
@@ -48,6 +49,7 @@ function SensoryStars({ label, value }: { label: string; value: number }) {
 
 export default function TastingCard({ wine, isActive, onRate, isFavorite, onToggleFavorite, initialRatings, isLast, allRated, onFinish }: TastingCardProps) {
   const { t } = useI18n();
+  const [translatedDesc] = useContentTranslation([wine.description]);
   const [activeTab, setActiveTab] = useState<TabId>("sobre");
   const [acidity, setAcidity] = useState(initialRatings?.acidity ?? 3);
   const [body, setBody] = useState(initialRatings?.body ?? 3);
@@ -159,7 +161,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               <motion.div key="sobre" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                 {wine.description && (
                   <blockquote className="text-sm text-muted-foreground italic leading-relaxed mb-4 border-l-2 border-gold/30 pl-3">
-                    "{wine.description}"
+                    "{translatedDesc}"
                   </blockquote>
                 )}
                 <div className="bg-muted/30 rounded-xl p-4 mb-4">

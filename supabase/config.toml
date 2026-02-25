@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.upload-logo]
 verify_jwt = false
+
+[functions.translate-content]
+verify_jwt = false
