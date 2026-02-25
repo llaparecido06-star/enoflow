@@ -205,7 +205,7 @@ Deno.serve(async (req) => {
 
       const { data: existing } = await supabase
         .from("users_leads")
-        .select("id, winery_id, name, whatsapp, created_at, preferences_summary, accepted_terms, lgpd_consent_date")
+        .select("id, winery_id, name, whatsapp, created_at, preferences_summary, accepted_terms, lgpd_consent_date, birth_date, gender, income_class")
         .eq("winery_id", winery_id)
         .eq("whatsapp", whatsapp)
         .maybeSingle();
@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
             acquisition_category: acquisition_category || null,
             acquisition_location: acquisition_location || null,
           })
-          .select("id, winery_id, name, whatsapp, created_at, preferences_summary, accepted_terms, lgpd_consent_date")
+          .select("id, winery_id, name, whatsapp, created_at, preferences_summary, accepted_terms, lgpd_consent_date, birth_date, gender, income_class")
           .single();
         if (error) throw error;
         lead = data;

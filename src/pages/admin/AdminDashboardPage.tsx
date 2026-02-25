@@ -4,7 +4,7 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { formatCurrency } from "@/lib/currency";
-import { DollarSign, Users, Wine, Star, Loader2, BarChart3, TrendingUp, Receipt, Target } from "lucide-react";
+import { DollarSign, Users, Wine, Star, Loader2, BarChart3, TrendingUp, Receipt, Target, ThumbsUp } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
@@ -80,6 +80,12 @@ export default function AdminDashboardPage() {
       value: data?.avg_satisfaction ? `${Number(data.avg_satisfaction).toFixed(1)} ⭐` : "—",
       sub: `${data?.ratings_today ?? 0} avaliações hoje`,
       icon: Star, color: "text-accent", bg: "bg-accent/10",
+    },
+    {
+      label: "NPS Médio",
+      value: data?.nps_avg !== null && data?.nps_avg !== undefined ? `${Number(data.nps_avg).toFixed(1)}` : "—",
+      sub: `${data?.nps_count ?? 0} respostas · ${data?.nps_today_count ?? 0} hoje`,
+      icon: ThumbsUp, color: "text-primary", bg: "bg-primary/10",
     },
   ];
 
