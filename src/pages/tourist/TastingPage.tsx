@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight, Wine as WineIcon, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { invokeAuth } from "@/lib/auth-api";
+import { useI18n } from "@/lib/i18n";
 import type { Tables } from "@/integrations/supabase/types";
 
 interface RatingEntry { wineId: string; acidity: number; body: number; sweetness: number; }
@@ -34,6 +35,7 @@ function saveProgress(leadId: string, wineryId: string, index: number, ratings: 
 
 export default function TastingPage() {
   const { winery } = useOutletContext<{ winery: Winery; lead: Tables<"users_leads"> }>();
+  const { t } = useI18n();
   const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { data: packages } = useTastingPackages(winery.id);
@@ -126,11 +128,11 @@ export default function TastingPage() {
       const { data, error } = await invokeAuth("tourist-actions", { action: "upsert_rating", wine_id: wine.id, stars_acidity: ratings.acidity, stars_body: ratings.body, stars_sweetness: ratings.sweetness });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success("Avaliação enviada com sucesso!");
+      toast.success(t("tasting.rating_sent"));
       const updated = [...localRatings.filter(r => r.wineId !== wine.id), { wineId: wine.id, ...ratings }];
       setLocalRatings(updated);
     } catch {
-      toast.error("Erro ao enviar avaliação");
+      toast.error(t("tasting.rating_error"));
     }
   };
 
@@ -189,7 +191,7 @@ export default function TastingPage() {
 
   const handleToggleFavorite = (wineId: string) => {
     toggleFavorite(wineId);
-    if (!isFavorite(wineId)) toast.success("Adicionado aos favoritos! ❤️");
+    if (!isFavorite(wineId)) toast.success(t("shop.added_favorites"));
   };
 
   const goTo = (index: number) => {
@@ -252,7 +254,7 @@ export default function TastingPage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-gold" />
-            <h2 className="font-display text-sm font-semibold text-foreground">Vinhos em Degustação</h2>
+            <h2 className="font-display text-sm font-semibold text-foreground">{t("tasting.wines_in_tasting")}</h2>
           </div>
           {tastingWines.length > 1 && (
             <div className="flex items-center gap-1">
@@ -274,11 +276,11 @@ export default function TastingPage() {
           <div className="mb-4">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[10px] text-muted-foreground">
-                {ratedCount}/{tastingWines.length} avaliados
+                {ratedCount}/{tastingWines.length} {t("tasting.rated")}
               </span>
               {!allTastingRated && ratedCount > 0 && (
                 <span className="text-[10px] text-gold font-medium">
-                  Faltam {tastingWines.length - ratedCount}!
+                  {t("tasting.remaining")} {tastingWines.length - ratedCount}!
                 </span>
               )}
             </div>
@@ -299,7 +301,7 @@ export default function TastingPage() {
             className="w-full mb-4 py-2.5 rounded-xl border border-gold/30 text-gold text-xs font-medium hover:bg-gold/5 transition-colors flex items-center justify-center gap-2"
           >
             <LogOut className="w-3.5 h-3.5" />
-            Encerrar degustação e ver meu perfil
+            {t("tasting.end_tasting")}
           </motion.button>
         )}
 
@@ -338,7 +340,7 @@ export default function TastingPage() {
         {tastingWines.length === 0 && (
           <div className="text-center py-12">
             <WineIcon className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">Nossa adega está sendo preparada para você. 🍷</p>
+            <p className="text-sm text-muted-foreground">{t("tasting.cellar_preparing")}</p>
           </div>
         )}
       </section>

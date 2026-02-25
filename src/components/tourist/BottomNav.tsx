@@ -1,26 +1,28 @@
 import { Wine, UtensilsCrossed, ShoppingBag, Trophy } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useI18n } from "@/lib/i18n";
 
 interface BottomNavProps {
   slug: string;
   enabledModules?: string[];
 }
 
-const allTabs = [
-  { id: "tasting", label: "Degustação", icon: Wine, path: "", module: "tasting" },
-  { id: "restaurant", label: "Restaurante", icon: UtensilsCrossed, path: "/restaurant", module: "restaurant" },
-  { id: "shop", label: "Loja", icon: ShoppingBag, path: "/shop", module: "shop" },
-  { id: "journey", label: "Meu Perfil", icon: Trophy, path: "/journey", module: null },
-];
-
 export default function BottomNav({ slug, enabledModules }: BottomNavProps) {
+  const { t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
   const basePath = `/app/${slug}`;
 
-  const tabs = allTabs.filter(t => t.module === null || !enabledModules || enabledModules.includes(t.module));
-  const activeTab = tabs.find((t) => location.pathname === basePath + t.path)?.id ?? tabs[0]?.id;
+  const allTabs = [
+    { id: "tasting", label: t("nav.tasting"), icon: Wine, path: "", module: "tasting" },
+    { id: "restaurant", label: t("nav.restaurant"), icon: UtensilsCrossed, path: "/restaurant", module: "restaurant" },
+    { id: "shop", label: t("nav.shop"), icon: ShoppingBag, path: "/shop", module: "shop" },
+    { id: "journey", label: t("nav.profile"), icon: Trophy, path: "/journey", module: null },
+  ];
+
+  const tabs = allTabs.filter(tab => tab.module === null || !enabledModules || enabledModules.includes(tab.module));
+  const activeTab = tabs.find((tab) => location.pathname === basePath + tab.path)?.id ?? tabs[0]?.id;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-border/50">

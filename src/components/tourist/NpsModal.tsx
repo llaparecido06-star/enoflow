@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Send, X } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface NpsModalProps {
   onSubmit: (score: number) => void;
@@ -8,6 +9,7 @@ interface NpsModalProps {
 }
 
 export default function NpsModal({ onSubmit, onSkip }: NpsModalProps) {
+  const { t } = useI18n();
   const [score, setScore] = useState<number | null>(null);
 
   const labels = ["😡", "😞", "😕", "😐", "😐", "🙂", "🙂", "😊", "😄", "🤩", "🥳"];
@@ -36,9 +38,9 @@ export default function NpsModal({ onSubmit, onSkip }: NpsModalProps) {
 
         <div className="text-center mb-5">
           <Star className="w-8 h-8 text-gold mx-auto mb-2" />
-          <h2 className="font-display text-lg font-bold text-foreground">Como foi sua experiência?</h2>
+          <h2 className="font-display text-lg font-bold text-foreground">{t("nps.how_was_experience")}</h2>
           <p className="text-xs text-muted-foreground mt-1">
-            De 0 a 10, o quanto você recomendaria esta vinícola?
+            {t("nps.recommend_scale")}
           </p>
         </div>
 
@@ -73,7 +75,7 @@ export default function NpsModal({ onSubmit, onSkip }: NpsModalProps) {
             onClick={onSkip}
             className="flex-1 py-2.5 rounded-xl text-sm border border-border text-muted-foreground hover:bg-muted transition-colors"
           >
-            Pular
+            {t("nps.skip")}
           </button>
           <button
             onClick={() => score !== null && onSubmit(score)}
@@ -81,7 +83,7 @@ export default function NpsModal({ onSubmit, onSkip }: NpsModalProps) {
             className="flex-1 py-2.5 rounded-xl text-sm bg-gold text-gold-foreground font-medium hover:bg-gold/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
           >
             <Send className="w-3.5 h-3.5" />
-            Enviar
+            {t("nps.submit")}
           </button>
         </div>
       </motion.div>

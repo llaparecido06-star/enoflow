@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wine, Star, Heart, Grape, MapPin, Thermometer, Clock, User, FlaskConical } from "lucide-react";
 import type { Wine as WineType } from "@/hooks/useWinery";
+import { useI18n } from "@/lib/i18n";
 
 interface TastingCardProps {
   wine: WineType;
@@ -16,13 +17,6 @@ interface TastingCardProps {
 }
 
 type TabId = "sobre" | "ficha" | "harmonizacao";
-
-const defaultHarmonizacoes: Record<string, string[]> = {
-  Tinto: ["Carnes vermelhas", "Queijos maturados", "Massas com molho vermelho", "Churrasco"],
-  Branco: ["Peixes", "Frutos do mar", "Saladas frescas", "Risotos leves"],
-  Rosé: ["Salmão grelhado", "Saladas mediterrâneas", "Frutos do mar frescos", "Aperitivos"],
-  Espumante: ["Canapés", "Sobremesas com frutas vermelhas", "Frutos do mar frescos", "Aperitivos"],
-};
 
 function StarRow({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
@@ -53,6 +47,7 @@ function SensoryStars({ label, value }: { label: string; value: number }) {
 }
 
 export default function TastingCard({ wine, isActive, onRate, isFavorite, onToggleFavorite, initialRatings, isLast, allRated, onFinish }: TastingCardProps) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<TabId>("sobre");
   const [acidity, setAcidity] = useState(initialRatings?.acidity ?? 3);
   const [body, setBody] = useState(initialRatings?.body ?? 3);
@@ -73,15 +68,22 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
     Espumante: "from-amber-900/40 via-amber-900/10 to-transparent",
   };
 
+  const defaultHarmonizations: Record<string, string[]> = {
+    Tinto: [t("harm.red_meat"), t("harm.aged_cheese"), t("harm.red_pasta"), t("harm.bbq")],
+    Branco: [t("harm.fish"), t("harm.seafood"), t("harm.fresh_salads"), t("harm.light_risotto")],
+    Rosé: [t("harm.grilled_salmon"), t("harm.mediterranean"), t("harm.fresh_seafood"), t("harm.appetizers")],
+    Espumante: [t("harm.canapes"), t("harm.red_fruit_desserts"), t("harm.fresh_seafood"), t("harm.appetizers")],
+  };
+
   const tabs: { id: TabId; label: string }[] = [
-    { id: "sobre", label: "Sobre" },
-    { id: "ficha", label: "Ficha Técnica" },
-    { id: "harmonizacao", label: "Harmonização" },
+    { id: "sobre", label: t("wine.about") },
+    { id: "ficha", label: t("wine.tech_sheet") },
+    { id: "harmonizacao", label: t("wine.harmonization") },
   ];
 
   const harmonizationItems = wine.harmonization?.length
     ? wine.harmonization
-    : defaultHarmonizacoes[wine.type] ?? [];
+    : defaultHarmonizations[wine.type] ?? [];
 
   return (
     <motion.div
@@ -109,7 +111,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
           {rated && (
             <div className="absolute top-4 right-14">
               <span className="text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-gold/20 backdrop-blur-md text-gold border border-gold/30">
-                ✓ Avaliado
+                {t("tasting.rated_badge")}
               </span>
             </div>
           )}
@@ -143,10 +145,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               >
                 {tab.label}
                 {activeTab === tab.id && (
-                  <motion.div
-                    layoutId="tab-underline"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold rounded-full"
-                  />
+                  <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-gold rounded-full" />
                 )}
               </button>
             ))}
@@ -165,16 +164,16 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
                 )}
                 <div className="bg-muted/30 rounded-xl p-4 mb-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-semibold text-foreground">✨ Perfil Sensorial</span>
+                    <span className="text-xs font-semibold text-foreground">{t("wine.sensory_profile")}</span>
                   </div>
                   <div className="space-y-2">
-                    <SensoryStars label="Corpo" value={wine.sensory_body} />
-                    <SensoryStars label="Acidez" value={wine.sensory_acidity} />
-                    <SensoryStars label="Doçura" value={wine.sensory_sweetness} />
+                    <SensoryStars label={t("wine.body")} value={wine.sensory_body} />
+                    <SensoryStars label={t("wine.acidity")} value={wine.sensory_acidity} />
+                    <SensoryStars label={t("wine.sweetness")} value={wine.sensory_sweetness} />
                   </div>
                 </div>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Valor</span>
+                  <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{t("wine.value")}</span>
                   <span className="font-display text-xl font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(2)}</span>
                 </div>
               </motion.div>
@@ -184,12 +183,12 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               <motion.div key="ficha" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   {[
-                    { icon: Grape, label: "Uva", value: wine.grape },
-                    { icon: MapPin, label: "Região", value: wine.region },
-                    { icon: FlaskConical, label: "Teor Alcoólico", value: wine.alcohol_content },
-                    { icon: Thermometer, label: "Servir a", value: wine.serving_temp },
-                    { icon: Clock, label: "Envelhecimento", value: wine.aging },
-                    { icon: User, label: "Enólogo", value: wine.enologist },
+                    { icon: Grape, label: t("wine.grape"), value: wine.grape },
+                    { icon: MapPin, label: t("wine.region"), value: wine.region },
+                    { icon: FlaskConical, label: t("wine.alcohol_full"), value: wine.alcohol_content },
+                    { icon: Thermometer, label: t("wine.serving_temp_full"), value: wine.serving_temp },
+                    { icon: Clock, label: t("wine.aging"), value: wine.aging },
+                    { icon: User, label: t("wine.enologist"), value: wine.enologist },
                   ].filter(item => item.value).map((item) => (
                     <div key={item.label} className="bg-muted/30 rounded-xl p-3">
                       <div className="flex items-center gap-1.5 mb-1">
@@ -203,7 +202,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
 
                 {wine.aromatic_notes && wine.aromatic_notes.length > 0 && (
                   <div className="bg-muted/30 rounded-xl p-4">
-                    <span className="text-xs font-semibold text-foreground block mb-2">Notas Aromáticas</span>
+                    <span className="text-xs font-semibold text-foreground block mb-2">{t("wine.aromatic_notes")}</span>
                     <div className="flex flex-wrap gap-1.5">
                       {wine.aromatic_notes.map((note: string) => (
                         <span key={note} className="text-[11px] bg-card border border-border/30 rounded-full px-2.5 py-1 text-muted-foreground">
@@ -215,7 +214,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
                 )}
 
                 <div className="flex items-baseline justify-between mt-4 pt-3 border-t border-border/30">
-                  <span className="text-[11px] text-muted-foreground uppercase tracking-wider">Valor</span>
+                  <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{t("wine.value")}</span>
                   <span className="font-display text-xl font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(2)}</span>
                 </div>
               </motion.div>
@@ -223,7 +222,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
 
             {activeTab === "harmonizacao" && (
               <motion.div key="harmonizacao" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
-                <p className="text-sm font-semibold text-foreground mb-4">Harmoniza perfeitamente com:</p>
+                <p className="text-sm font-semibold text-foreground mb-4">{t("wine.harmonizes_with")}</p>
                 <div className="space-y-2.5">
                   {harmonizationItems.map((item: string) => (
                     <div key={item} className="flex items-center gap-3 bg-muted/30 rounded-xl px-4 py-3">
@@ -244,26 +243,26 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-gold/30 text-gold text-sm font-medium hover:bg-gold/5 transition-colors"
               >
                 <Star className="w-4 h-4" />
-                Avaliar este vinho
+                {t("tasting.rate_wine")}
               </button>
             ) : rated ? (
               <div className="text-center py-2">
-                <p className="text-sm text-gold font-medium">✓ Avaliação enviada</p>
+                <p className="text-sm text-gold font-medium">{t("tasting.rating_submitted")}</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">
-                  Acidez: {acidity} · Corpo: {body} · Doçura: {sweetness}
+                  {t("wine.acidity")}: {acidity} · {t("wine.body")}: {body} · {t("wine.sweetness")}: {sweetness}
                 </p>
               </div>
             ) : (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-                <StarRow label="Acidez" value={acidity} onChange={setAcidity} />
-                <StarRow label="Corpo" value={body} onChange={setBody} />
-                <StarRow label="Doçura" value={sweetness} onChange={setSweetness} />
+                <StarRow label={t("wine.acidity")} value={acidity} onChange={setAcidity} />
+                <StarRow label={t("wine.body")} value={body} onChange={setBody} />
+                <StarRow label={t("wine.sweetness")} value={sweetness} onChange={setSweetness} />
                 <div className="flex gap-2 pt-1">
                   <button onClick={() => setShowRating(false)} className="flex-1 py-2.5 rounded-xl border border-border text-sm text-muted-foreground hover:bg-muted/50 transition-colors">
-                    Cancelar
+                    {t("tasting.cancel")}
                   </button>
                   <button onClick={handleSubmit} className="flex-1 py-2.5 rounded-xl bg-gold text-gold-foreground text-sm font-semibold hover:bg-gold/90 transition-colors">
-                    Enviar
+                    {t("tasting.submit")}
                   </button>
                 </div>
               </motion.div>
@@ -279,7 +278,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               className="w-full mt-4 py-4 rounded-xl bg-gold text-gold-foreground font-display text-base font-bold hover:bg-gold/90 transition-colors animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] flex items-center justify-center gap-2"
             >
               <Star className="w-5 h-5" />
-              Finalizar & Descobrir meu Perfil
+              {t("tasting.finish_discover")}
             </motion.button>
           )}
         </div>
