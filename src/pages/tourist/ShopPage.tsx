@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useOutletContext, useLocation } from "react-router-dom";
+import { useTranslatedText } from "@/hooks/useContentTranslation";
 import QRCode from "qrcode";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useTouristAuth } from "@/hooks/useTouristAuth";
@@ -108,6 +109,7 @@ function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite }: {
 
 function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => void; onAdd: () => void }) {
   const harmonizationItems = wine.harmonization?.length ? wine.harmonization : [];
+  const translatedDescription = useTranslatedText(wine.description);
 
   return (
     <motion.div
@@ -145,7 +147,7 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
 
           {wine.description && (
             <p className="text-sm text-muted-foreground italic leading-relaxed mb-4 border-l-2 border-gold/30 pl-3">
-              "{wine.description}"
+              "{translatedDescription}"
             </p>
           )}
 

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useMenuItems, type MenuItem } from "@/hooks/useMenuItems";
+import { useContentTranslation } from "@/hooks/useContentTranslation";
 import { motion, AnimatePresence } from "framer-motion";
 import { UtensilsCrossed, Wine as WineIcon, Sparkles, Search, Loader2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
@@ -15,17 +16,18 @@ interface SommelierRecommendation {
 }
 
 function MenuItemCard({
-  item, suggestedWine, onAskSommelier, t,
+  item, suggestedWine, onAskSommelier, t, translatedName, translatedDesc,
 }: {
   item: MenuItem; suggestedWine?: Wine; onAskSommelier: (item: MenuItem) => void; t: (k: string) => string;
+  translatedName: string; translatedDesc: string;
 }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
       className="bg-card rounded-xl border border-border/30 p-4 luxury-shadow">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="font-display text-sm font-semibold text-foreground leading-tight">{item.name}</h3>
-          {item.description && <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{item.description}</p>}
+          <h3 className="font-display text-sm font-semibold text-foreground leading-tight">{translatedName}</h3>
+          {translatedDesc && <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{translatedDesc}</p>}
         </div>
         <span className="font-display text-base font-bold text-gold whitespace-nowrap">
           R$ {Number(item.price).toFixed(0)}
@@ -133,6 +135,42 @@ export default function RestaurantPage() {
   const categoryNames = Object.keys(categories);
   const currentCategory = activeCategory ?? categoryNames[0] ?? null;
 
+  // Collect all translatable texts from menu items
+  const allTexts = useMemo(() => {
+    const items = menuItems ?? [];
+    const texts: (string | null)[] = [];
+    // category names
+    categoryNames.forEach((c) => texts.push(c));
+    // item names and descriptions
+    items.forEach((item) => {
+      texts.push(item.name);
+      texts.push(item.description);
+    });
+    return texts;
+  }, [menuItems, categoryNames]);
+
+  const translated = useContentTranslation(allTexts);
+
+  // Build lookup maps
+  const translatedCategories = useMemo(() => {
+    const map: Record<string, string> = {};
+    categoryNames.forEach((c, i) => { map[c] = translated[i] || c; });
+    return map;
+  }, [categoryNames, translated]);
+
+  const translatedItems = useMemo(() => {
+    const offset = categoryNames.length;
+    const items = menuItems ?? [];
+    const map: Record<string, { name: string; description: string }> = {};
+    items.forEach((item, i) => {
+      map[item.id] = {
+        name: translated[offset + i * 2] || item.name,
+        description: translated[offset + i * 2 + 1] || item.description || "",
+      };
+    });
+    return map;
+  }, [menuItems, categoryNames.length, translated]);
+
   const askSommelier = async (item: MenuItem) => {
     setSommelierDish(item);
     setAiLoading(true);
@@ -173,7 +211,7 @@ export default function RestaurantPage() {
             <button key={cat} onClick={() => setActiveCategory(cat)}
               className={`whitespace-nowrap text-xs font-medium px-4 py-2 rounded-full border transition-all duration-300 ${
                 currentCategory === cat ? "bg-gold text-gold-foreground border-gold" : "bg-card text-muted-foreground border-border/30 hover:border-gold/30"
-              }`}>{cat}</button>
+              }`}>{translatedCategories[cat] || cat}</button>
           ))}
         </div>
       )}
@@ -184,7 +222,9 @@ export default function RestaurantPage() {
             transition={{ duration: 0.25 }} className="space-y-3">
             {categories[currentCategory].map((item) => (
               <MenuItemCard key={item.id} item={item} suggestedWine={restaurantWines.find((w) => w.id === item.suggested_wine_id)}
-                onAskSommelier={askSommelier} t={t} />
+                onAskSommelier={askSommelier} t={t}
+                translatedName={translatedItems[item.id]?.name || item.name}
+                translatedDesc={translatedItems[item.id]?.description || item.description || ""} />
             ))}
           </motion.div>
         )}
