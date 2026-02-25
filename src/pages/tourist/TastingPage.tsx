@@ -148,7 +148,7 @@ export default function TastingPage() {
     const avgAcidity = relevantRatings.reduce((s, r) => s + r.acidity, 0) / relevantRatings.length;
     const avgBody = relevantRatings.reduce((s, r) => s + r.body, 0) / relevantRatings.length;
     const avgSweetness = relevantRatings.reduce((s, r) => s + r.sweetness, 0) / relevantRatings.length;
-    const persona = calculatePersona(avgAcidity, avgBody, avgSweetness);
+    const persona = calculatePersona(avgAcidity, avgBody, avgSweetness, t);
 
     const recs = shopWines
       .map(w => ({ wine: w, score: Math.abs(w.sensory_acidity - avgAcidity) + Math.abs(w.sensory_body - avgBody) + Math.abs(w.sensory_sweetness - avgSweetness) }))

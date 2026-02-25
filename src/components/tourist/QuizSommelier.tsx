@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wine, ArrowRight, Sparkles, Check } from "lucide-react";
+import { ArrowRight, Sparkles, Check } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface QuizSommelierProps {
   wineryColor: string;
@@ -8,46 +9,47 @@ interface QuizSommelierProps {
   onSkip: () => void;
 }
 
-const questions = [
-  {
-    id: "type",
-    emoji: "🍷",
-    question: "Qual tipo de vinho você prefere?",
-    options: [
-      { label: "Tinto", emoji: "🍷", value: "Tinto" },
-      { label: "Branco", emoji: "🥂", value: "Branco" },
-      { label: "Rosé", emoji: "🌸", value: "Rosé" },
-      { label: "Espumante", emoji: "🍾", value: "Espumante" },
-    ],
-  },
-  {
-    id: "sweetness",
-    emoji: "🍬",
-    question: "Qual o nível de doçura que agrada mais?",
-    options: [
-      { label: "Seco", emoji: "🌵", value: "Seco" },
-      { label: "Meio-seco", emoji: "🌤️", value: "Meio-seco" },
-      { label: "Suave", emoji: "🌺", value: "Suave" },
-      { label: "Doce", emoji: "🍯", value: "Doce" },
-    ],
-  },
-  {
-    id: "body",
-    emoji: "💪",
-    question: "Como você gosta do corpo do vinho?",
-    options: [
-      { label: "Leve", emoji: "🪶", value: "Leve" },
-      { label: "Médio", emoji: "⚖️", value: "Médio" },
-      { label: "Encorpado", emoji: "🏋️", value: "Encorpado" },
-    ],
-  },
-];
-
 export default function QuizSommelier({ wineryColor, onComplete, onSkip }: QuizSommelierProps) {
+  const { t } = useI18n();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const [direction, setDirection] = useState(1);
+
+  const questions = [
+    {
+      id: "type",
+      emoji: "🍷",
+      question: t("quiz.q_type"),
+      options: [
+        { label: t("quiz.opt_red"), emoji: "🍷", value: "Tinto" },
+        { label: t("quiz.opt_white"), emoji: "🥂", value: "Branco" },
+        { label: t("quiz.opt_rose"), emoji: "🌸", value: "Rosé" },
+        { label: t("quiz.opt_sparkling"), emoji: "🍾", value: "Espumante" },
+      ],
+    },
+    {
+      id: "sweetness",
+      emoji: "🍬",
+      question: t("quiz.q_sweetness"),
+      options: [
+        { label: t("quiz.opt_dry"), emoji: "🌵", value: "Seco" },
+        { label: t("quiz.opt_semi_dry"), emoji: "🌤️", value: "Meio-seco" },
+        { label: t("quiz.opt_smooth"), emoji: "🌺", value: "Suave" },
+        { label: t("quiz.opt_sweet"), emoji: "🍯", value: "Doce" },
+      ],
+    },
+    {
+      id: "body",
+      emoji: "💪",
+      question: t("quiz.q_body"),
+      options: [
+        { label: t("quiz.opt_light"), emoji: "🪶", value: "Leve" },
+        { label: t("quiz.opt_medium"), emoji: "⚖️", value: "Médio" },
+        { label: t("quiz.opt_full"), emoji: "🏋️", value: "Encorpado" },
+      ],
+    },
+  ];
 
   const handleAnswer = (value: string) => {
     setSelectedValue(value);
@@ -95,18 +97,14 @@ export default function QuizSommelier({ wineryColor, onComplete, onSkip }: QuizS
           >
             <Sparkles className="w-8 h-8 text-primary" />
           </motion.div>
-          <h1 className="font-display text-xl font-bold text-foreground">Quiz Sommelier</h1>
-          <p className="text-xs text-muted-foreground mt-1">Descubra seus vinhos ideais</p>
+          <h1 className="font-display text-xl font-bold text-foreground">{t("quiz.title")}</h1>
+          <p className="text-xs text-muted-foreground mt-1">{t("quiz.discover")}</p>
         </motion.div>
 
         {/* Step indicators */}
         <div className="flex items-center justify-center gap-2 mb-5">
           {questions.map((_, i) => (
-            <motion.div
-              key={i}
-              className="relative flex items-center justify-center"
-              initial={false}
-            >
+            <motion.div key={i} className="relative flex items-center justify-center" initial={false}>
               <motion.div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors"
                 animate={{
@@ -220,7 +218,7 @@ export default function QuizSommelier({ wineryColor, onComplete, onSkip }: QuizS
           transition={{ delay: 0.5 }}
           whileHover={{ scale: 1.02 }}
         >
-          Pular quiz →
+          {t("quiz.skip")}
         </motion.button>
       </motion.div>
     </div>
