@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, Wallet, ArrowRight, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
 
 interface ProfileFormProps {
   wineryColor: string;
@@ -9,28 +10,29 @@ interface ProfileFormProps {
   onSkip: () => void;
 }
 
-const incomeOptions = [
-  { label: "Até R$ 3.000", value: "ate_3k" },
-  { label: "R$ 3.000 – R$ 8.000", value: "3k_8k" },
-  { label: "R$ 8.000 – R$ 15.000", value: "8k_15k" },
-  { label: "Acima de R$ 15.000", value: "acima_15k" },
-];
-
-const genderOptions = [
-  { label: "Masculino", value: "masculino" },
-  { label: "Feminino", value: "feminino" },
-  { label: "Prefiro não informar", value: "nao_informar" },
-];
-
 export default function ProfileForm({ wineryColor, onComplete, onSkip }: ProfileFormProps) {
+  const { t } = useI18n();
   const [birthDate, setBirthDate] = useState("");
   const [incomeClass, setIncomeClass] = useState("");
   const [gender, setGender] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const incomeOptions = [
+    { label: t("profile.income_up_to_3k"), value: "ate_3k" },
+    { label: t("profile.income_3k_8k"), value: "3k_8k" },
+    { label: t("profile.income_8k_15k"), value: "8k_15k" },
+    { label: t("profile.income_above_15k"), value: "acima_15k" },
+  ];
+
+  const genderOptions = [
+    { label: t("profile.male"), value: "masculino" },
+    { label: t("profile.female"), value: "feminino" },
+    { label: t("profile.prefer_not_say"), value: "nao_informar" },
+  ];
+
   const handleSubmit = async () => {
     if (!birthDate) {
-      toast.error("Data de nascimento é obrigatória");
+      toast.error(t("profile.birth_required"));
       return;
     }
     setLoading(true);
@@ -41,7 +43,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
         gender: gender || undefined,
       });
     } catch {
-      toast.error("Erro ao salvar dados");
+      toast.error(t("profile.save_error"));
     } finally {
       setLoading(false);
     }
@@ -54,9 +56,9 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
       className="bg-card rounded-2xl border border-border p-6 space-y-5"
     >
       <div className="text-center">
-        <h2 className="font-display text-base font-bold text-foreground">Quase lá! 🎉</h2>
+        <h2 className="font-display text-base font-bold text-foreground">{t("profile.almost_there")}</h2>
         <p className="text-xs text-muted-foreground mt-1">
-          Preencha seus dados para liberar o voucher de desconto
+          {t("profile.fill_data")}
         </p>
       </div>
 
@@ -64,7 +66,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
       <div>
         <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
           <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-          Data de Nascimento <span className="text-destructive">*</span>
+          {t("profile.birth_date")} <span className="text-destructive">*</span>
         </label>
         <input
           type="date"
@@ -80,7 +82,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
       <div>
         <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
           <Users className="w-3.5 h-3.5 text-muted-foreground" />
-          Sexo
+          {t("profile.gender")}
         </label>
         <div className="grid grid-cols-3 gap-2">
           {genderOptions.map((opt) => (
@@ -103,7 +105,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
       <div>
         <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
           <Wallet className="w-3.5 h-3.5 text-muted-foreground" />
-          Faixa de Renda
+          {t("profile.income_range")}
         </label>
         <div className="grid grid-cols-2 gap-2">
           {incomeOptions.map((opt) => (
@@ -127,7 +129,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
           onClick={onSkip}
           className="flex-1 px-4 py-3 rounded-xl text-sm border border-border hover:bg-secondary transition-colors"
         >
-          Voltar
+          {t("profile.back")}
         </button>
         <button
           onClick={handleSubmit}
@@ -136,7 +138,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
           style={{ backgroundColor: wineryColor }}
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-            <>Gerar Voucher <ArrowRight className="w-4 h-4" /></>
+            <>{t("profile.generate_voucher")} <ArrowRight className="w-4 h-4" /></>
           )}
         </button>
       </div>

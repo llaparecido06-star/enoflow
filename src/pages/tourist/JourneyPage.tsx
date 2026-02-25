@@ -10,6 +10,7 @@ import Confetti from "@/components/tourist/Confetti";
 import { motion } from "framer-motion";
 import { Star, Heart, Wine as WineIcon, Trophy, TrendingUp, Sparkles, Loader2, ShoppingBag, User } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/lib/i18n";
 
 interface RatingData {
   wine_id: string;
@@ -33,6 +34,7 @@ function SensoryStars({ value, label }: { value: number; label: string }) {
 
 export default function JourneyPage() {
   const { winery } = useOutletContext<{ winery: Winery }>();
+  const { t } = useI18n();
   const { lead } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { isFavorite } = useFavorites(lead?.id);
@@ -47,9 +49,9 @@ export default function JourneyPage() {
   useEffect(() => {
     if (navState?.justFinished) {
       setShowConfetti(true);
-      const t = setTimeout(() => setShowConfetti(false), 4000);
+      const timer = setTimeout(() => setShowConfetti(false), 4000);
       window.history.replaceState({}, "");
-      return () => clearTimeout(t);
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -85,10 +87,7 @@ export default function JourneyPage() {
     if (!flavorProfile || !wines) return [];
     return wines
       .filter(w => !w.on_tasting && w.on_shop)
-      .map(w => ({
-        wine: w,
-        score: Math.abs(w.sensory_acidity - flavorProfile.acidity) + Math.abs(w.sensory_body - flavorProfile.body) + Math.abs(w.sensory_sweetness - flavorProfile.sweetness),
-      }))
+      .map(w => ({ wine: w, score: Math.abs(w.sensory_acidity - flavorProfile.acidity) + Math.abs(w.sensory_body - flavorProfile.body) + Math.abs(w.sensory_sweetness - flavorProfile.sweetness) }))
       .sort((a, b) => a.score - b.score)
       .slice(0, 3)
       .map(r => r.wine);
@@ -102,17 +101,15 @@ export default function JourneyPage() {
   }, [ratings, tastingWines]);
 
   const handleBuyNow = (wine: Wine) => {
-    navigate(`/app/${winery.slug}/shop`, {
-      state: { addToCart: wine, applyDiscount: true },
-    });
-    toast.success(`${wine.name} adicionado com 10% OFF! 🎉`);
+    navigate(`/app/${winery.slug}/shop`, { state: { addToCart: wine, applyDiscount: true } });
+    toast.success(`${wine.name} ${t("journey.added_with_discount")}`);
   };
 
   if (loadingRatings) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-gold" />
-        <span className="ml-3 text-sm text-muted-foreground italic">Consultando nosso Sommelier Digital...</span>
+        <span className="ml-3 text-sm text-muted-foreground italic">{t("journey.consulting")}</span>
       </div>
     );
   }
@@ -121,7 +118,6 @@ export default function JourneyPage() {
     <div className="space-y-6 relative">
       {showConfetti && <Confetti />}
 
-      {/* Persona Hero */}
       {persona ? (
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}
           className="bg-gradient-to-br from-gold/10 via-wine/5 to-card rounded-2xl border border-gold/20 p-6 text-center luxury-shadow">
@@ -129,7 +125,7 @@ export default function JourneyPage() {
             className="text-6xl mb-3">{persona.emoji}</motion.div>
           <div className="flex items-center justify-center gap-2 mb-2">
             <Trophy className="w-4 h-4 text-gold" />
-            <span className="text-[10px] text-gold uppercase tracking-widest font-medium">Seu Paladar é</span>
+            <span className="text-[10px] text-gold uppercase tracking-widest font-medium">{t("journey.your_palate")}</span>
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground mb-2">{persona.label}</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">{persona.description}</p>
@@ -138,59 +134,54 @@ export default function JourneyPage() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-2 mb-1">
             <User className="w-5 h-5 text-gold" />
-            <h1 className="font-display text-lg font-bold text-foreground">Meu Perfil</h1>
+            <h1 className="font-display text-lg font-bold text-foreground">{t("journey.my_profile")}</h1>
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            Complete a degustação para descobrir seu perfil de sabor!
-          </p>
+          <p className="text-[11px] text-muted-foreground">{t("journey.complete_tasting")}</p>
         </motion.div>
       )}
 
-      {/* Stats */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         className="grid grid-cols-3 gap-3">
         <div className="bg-card rounded-xl border border-border/30 p-3 text-center">
           <WineIcon className="w-4 h-4 text-wine-light mx-auto mb-1" />
           <p className="font-display text-lg font-bold text-foreground">{tastingWines.length}</p>
-          <p className="text-[9px] text-muted-foreground">Degustados</p>
+          <p className="text-[9px] text-muted-foreground">{t("journey.tasted")}</p>
         </div>
         <div className="bg-card rounded-xl border border-border/30 p-3 text-center">
           <Star className="w-4 h-4 text-gold mx-auto mb-1" />
           <p className="font-display text-lg font-bold text-foreground">{ratings.length}</p>
-          <p className="text-[9px] text-muted-foreground">Avaliados</p>
+          <p className="text-[9px] text-muted-foreground">{t("journey.rated")}</p>
         </div>
         <div className="bg-card rounded-xl border border-border/30 p-3 text-center">
           <Heart className="w-4 h-4 fill-red-500 text-red-500 mx-auto mb-1" />
           <p className="font-display text-lg font-bold text-foreground">{favoriteWines.length}</p>
-          <p className="text-[9px] text-muted-foreground">Favoritos</p>
+          <p className="text-[9px] text-muted-foreground">{t("journey.favorites")}</p>
         </div>
       </motion.div>
 
-      {/* Flavor Profile */}
       {flavorProfile && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
           className="bg-card rounded-xl border border-border/30 p-4 luxury-shadow">
           <div className="flex items-center gap-2 mb-3">
             <Sparkles className="w-4 h-4 text-gold" />
-            <h2 className="font-display text-sm font-semibold text-foreground">Seu Perfil de Sabor</h2>
+            <h2 className="font-display text-sm font-semibold text-foreground">{t("journey.flavor_profile")}</h2>
           </div>
           <p className="text-[11px] text-muted-foreground mb-3">
-            Baseado nas suas {ratings.length} avaliações
+            {t("journey.based_on")} {ratings.length} {t("journey.evaluations")}
           </p>
           <div className="space-y-2">
-            <SensoryStars label="Corpo" value={flavorProfile.body} />
-            <SensoryStars label="Acidez" value={flavorProfile.acidity} />
-            <SensoryStars label="Doçura" value={flavorProfile.sweetness} />
+            <SensoryStars label={t("wine.body")} value={flavorProfile.body} />
+            <SensoryStars label={t("wine.acidity")} value={flavorProfile.acidity} />
+            <SensoryStars label={t("wine.sweetness")} value={flavorProfile.sweetness} />
           </div>
         </motion.div>
       )}
 
-      {/* Recommendations */}
       {recommendations.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <div className="flex items-center gap-2 mb-3">
             <TrendingUp className="w-4 h-4 text-gold" />
-            <h2 className="font-display text-sm font-semibold text-foreground">🍷 Vinhos perfeitos para você</h2>
+            <h2 className="font-display text-sm font-semibold text-foreground">{t("journey.perfect_wines")}</h2>
           </div>
           <div className="space-y-2">
             {recommendations.map((wine) => (
@@ -209,12 +200,10 @@ export default function JourneyPage() {
                     <p className="text-xs font-bold text-gold">{formatCurrencyShort(Number(wine.price_bottle) * 0.9, winery.currency)}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => handleBuyNow(wine)}
-                  className="bg-gold text-gold-foreground px-3 py-2 rounded-xl text-[10px] font-bold hover:bg-gold/90 transition-colors flex items-center gap-1 flex-shrink-0 whitespace-nowrap"
-                >
+                <button onClick={() => handleBuyNow(wine)}
+                  className="bg-gold text-gold-foreground px-3 py-2 rounded-xl text-[10px] font-bold hover:bg-gold/90 transition-colors flex items-center gap-1 flex-shrink-0 whitespace-nowrap">
                   <ShoppingBag className="w-3 h-3" />
-                  Levar Agora
+                  {t("journey.buy_now")}
                 </button>
               </div>
             ))}
@@ -222,12 +211,11 @@ export default function JourneyPage() {
         </motion.div>
       )}
 
-      {/* Rated wines summary */}
       {ratedWines.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <div className="flex items-center gap-2 mb-3">
             <Star className="w-4 h-4 text-gold" />
-            <h2 className="font-display text-sm font-semibold text-foreground">Suas Avaliações</h2>
+            <h2 className="font-display text-sm font-semibold text-foreground">{t("journey.your_ratings")}</h2>
           </div>
           <div className="space-y-2">
             {ratedWines.map(({ wine, rating }) => (
@@ -265,13 +253,10 @@ export default function JourneyPage() {
         </motion.div>
       )}
 
-      {/* Empty state */}
       {ratings.length === 0 && !persona && (
         <div className="text-center py-12">
           <WineIcon className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">
-            Avalie vinhos na degustação para descobrir seu perfil e receber recomendações personalizadas!
-          </p>
+          <p className="text-sm text-muted-foreground">{t("journey.empty_state")}</p>
         </div>
       )}
     </div>

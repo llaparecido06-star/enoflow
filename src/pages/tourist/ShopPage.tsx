@@ -7,8 +7,8 @@ import { useCart } from "@/hooks/useCart";
 import { useFavorites } from "@/hooks/useFavorites";
 import { formatCurrency, formatCurrencyShort } from "@/lib/currency";
 import NpsModal from "@/components/tourist/NpsModal";
-
 import ProfileForm from "@/components/tourist/ProfileForm";
+import { useI18n } from "@/lib/i18n";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -246,6 +246,7 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
 
 export default function ShopPage() {
   const { winery } = useOutletContext<{ winery: Winery }>();
+  const { t } = useI18n();
   const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart();
@@ -344,14 +345,14 @@ export default function ShopPage() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       setVoucher({ code, id: data?.voucher?.id });
-      toast.success("Voucher gerado!");
+      toast.success(t("shop.voucher_generated"));
       try {
         const qrUrl = await QRCode.toDataURL(code, { width: 200, margin: 2, color: { dark: "#000000", light: "#ffffff" } });
         setQrDataUrl(qrUrl);
       } catch {}
       setTimeout(() => setShowNps(true), 5000);
     } catch {
-      toast.error("Erro ao gerar voucher");
+      toast.error(t("shop.voucher_error"));
     } finally {
       setGenerating(false);
     }
@@ -365,7 +366,7 @@ export default function ShopPage() {
           voucher_id: voucher.id,
           nps_score: score,
         });
-        toast.success("Obrigado pelo feedback! 🙏");
+        toast.success(t("nps.thanks"));
       } catch {}
     }
     setShowNps(false);
@@ -374,7 +375,7 @@ export default function ShopPage() {
   const copyCode = () => {
     if (voucher) {
       navigator.clipboard.writeText(voucher.code);
-      toast.success("Código copiado!");
+      toast.success(t("shop.code_copied"));
     }
   };
 
@@ -406,7 +407,7 @@ export default function ShopPage() {
             className="overflow-hidden"
           >
             <div className="bg-card rounded-xl border border-border/30 p-4 space-y-3 luxury-shadow">
-              <h3 className="font-display text-sm font-semibold">Seu Carrinho</h3>
+              <h3 className="font-display text-sm font-semibold">{t("shop.your_cart")}</h3>
               {items.map((item) => (
                 <div key={item.wine.id} className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
@@ -438,7 +439,7 @@ export default function ShopPage() {
                 </div>
                 <button onClick={startVoucherFunnel} disabled={generating}
                   className="bg-gold text-gold-foreground px-4 py-2 rounded-xl text-sm font-medium hover:bg-gold/90 transition-colors disabled:opacity-50">
-                  {generating ? "Gerando..." : "Gerar Voucher 10% OFF"}
+                  {generating ? t("shop.generating") : t("shop.generate_voucher")}
                 </button>
               </div>
             </div>
@@ -458,23 +459,23 @@ export default function ShopPage() {
           ) : (
             <QrCode className="w-16 h-16 mx-auto text-gold mb-3" />
           )}
-          <p className="text-[11px] text-muted-foreground mb-1">Apresente no caixa</p>
+          <p className="text-[11px] text-muted-foreground mb-1">{t("shop.present_at_checkout")}</p>
           <p className="font-display text-2xl font-bold text-foreground tracking-wider">{voucher.code}</p>
-          <p className="text-sm text-muted-foreground mt-1">Total: {formatCurrency(discountedTotal, cur)}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("shop.total")}: {formatCurrency(discountedTotal, cur)}</p>
           
           {/* Expiration alert */}
           <div className="mt-3 flex items-center justify-center gap-1.5 bg-destructive/10 text-destructive rounded-lg px-3 py-2">
             <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="text-[11px] font-medium">Válido apenas hoje (expira às 23h59)</span>
+            <span className="text-[11px] font-medium">{t("shop.valid_today")}</span>
           </div>
 
           <div className="flex gap-2 mt-4 justify-center">
             <button onClick={copyCode} className="flex items-center gap-1.5 text-sm border border-border px-4 py-2 rounded-xl hover:bg-muted transition-colors">
-              <Copy className="w-3.5 h-3.5" /> Copiar
+              <Copy className="w-3.5 h-3.5" /> {t("shop.copy")}
             </button>
             <button onClick={() => { setVoucher(null); setQrDataUrl(null); clearCart(); setShowCart(false); }}
               className="text-sm bg-gold text-gold-foreground px-4 py-2 rounded-xl hover:bg-gold/90 transition-colors">
-              Nova compra
+              {t("shop.new_purchase")}
             </button>
           </div>
         </motion.div>
@@ -515,10 +516,10 @@ export default function ShopPage() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-              <h2 className="font-display text-sm font-semibold text-foreground">Seus Favoritos</h2>
+              <h2 className="font-display text-sm font-semibold text-foreground">{t("shop.your_favorites")}</h2>
             </div>
             <button onClick={() => setShowFavoritesOnly(true)} className="text-[11px] text-gold font-medium flex items-center gap-0.5">
-              Ver todos <ChevronRight className="w-3 h-3" />
+              {t("shop.see_all")} <ChevronRight className="w-3 h-3" />
             </button>
           </div>
           <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
@@ -548,7 +549,7 @@ export default function ShopPage() {
         <section>
           <div className="flex items-center gap-2 mb-4">
             <ShoppingBag className="w-4 h-4 text-gold" />
-            <h2 className="font-display text-sm font-semibold text-foreground">Descubra nossos rótulos</h2>
+            <h2 className="font-display text-sm font-semibold text-foreground">{t("shop.discover_wines")}</h2>
           </div>
 
           {/* Search bar */}
@@ -558,7 +559,7 @@ export default function ShopPage() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar vinhos..."
+                placeholder={t("shop.search_wines")}
                 className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-card border border-border/30 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold/20"
               />
               {search && (
@@ -591,7 +592,7 @@ export default function ShopPage() {
               }`}
             >
               <Heart className={`w-3.5 h-3.5 ${showFavoritesOnly ? "fill-red-400" : ""}`} />
-              Meus Favoritos ({favoriteWines.length})
+              {t("shop.my_favorites")} ({favoriteWines.length})
             </button>
           )}
 
@@ -642,7 +643,7 @@ export default function ShopPage() {
                   </div>
                   {activeFilterCount > 0 && (
                     <button onClick={() => { setSelectedType("Todos"); setSelectedPrice(0); setSelectedFlavor(null); setShowFavoritesOnly(false); }}
-                      className="text-[11px] text-gold font-medium hover:underline">Limpar filtros</button>
+                      className="text-[11px] text-gold font-medium hover:underline">{t("shop.clear_filters")}</button>
                   )}
                 </div>
               </motion.div>
@@ -651,7 +652,7 @@ export default function ShopPage() {
 
           {/* Results count */}
           <p className="text-[10px] text-muted-foreground mb-3">
-            {filteredWines.length} {filteredWines.length === 1 ? "vinho encontrado" : "vinhos encontrados"}
+            {filteredWines.length} {filteredWines.length === 1 ? t("shop.wine_found") : t("shop.wines_found")}
           </p>
 
           {/* Grid */}
@@ -661,12 +662,12 @@ export default function ShopPage() {
                 <ShopWineCard
                   key={wine.id}
                   wine={wine}
-                  onAdd={() => { addItem(wine); toast.success(`${wine.name} adicionado!`); }}
+                  onAdd={() => { addItem(wine); toast.success(`${wine.name} ${t("shop.added_to_cart")}`); }}
                   onDetail={() => setDetailWine(wine)}
                   isFavorite={isFavorite(wine.id)}
                   onToggleFavorite={() => {
                     toggleFavorite(wine.id);
-                    if (!isFavorite(wine.id)) toast.success("Adicionado aos favoritos! ❤️");
+                    if (!isFavorite(wine.id)) toast.success(t("shop.added_favorites"));
                   }}
                 />
               ))}
@@ -675,7 +676,7 @@ export default function ShopPage() {
 
           {filteredWines.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-8">
-              Nenhum vinho encontrado com esses filtros.
+              {t("shop.no_wines_found")}
             </p>
           )}
         </section>
