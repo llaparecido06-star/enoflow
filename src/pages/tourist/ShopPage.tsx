@@ -86,14 +86,13 @@ function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite }: {
 
         <div className="flex items-center justify-between pt-1">
           <div>
-            <span className="font-display text-sm font-bold text-gold">
+            <span className="text-[9px] text-muted-foreground line-through">
               {formatCurrencyShort(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}
             </span>
-            {wine.price_glass && (
-              <span className="text-[9px] text-muted-foreground ml-1">
-                Taça {formatCurrencyShort(Number(wine.price_glass), (window as any).__enoflow_currency || "BRL")}
-              </span>
-            )}
+            <span className="font-display text-sm font-bold text-gold ml-1">
+              {formatCurrencyShort(Math.round(Number(wine.price_bottle) * 0.9), (window as any).__enoflow_currency || "BRL")}
+            </span>
+            <span className="text-[8px] text-green-500 font-bold ml-0.5">-10%</span>
           </div>
           <button
             onClick={onAdd}
@@ -228,10 +227,9 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
           {/* Price + Add to cart */}
           <div className="flex items-center justify-between pt-3 border-t border-border/30">
             <div>
-              <span className="font-display text-xl font-bold text-gold">{formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}</span>
-              {wine.price_glass && (
-                <span className="text-[10px] text-muted-foreground ml-2">Taça {formatCurrencyShort(Number(wine.price_glass), (window as any).__enoflow_currency || "BRL")}</span>
-              )}
+              <span className="text-xs text-muted-foreground line-through">{formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}</span>
+              <span className="font-display text-xl font-bold text-gold ml-1">{formatCurrency(Math.round(Number(wine.price_bottle) * 0.9), (window as any).__enoflow_currency || "BRL")}</span>
+              <span className="text-[10px] text-green-500 font-bold ml-1">-10%</span>
             </div>
             <button
               onClick={() => { onAdd(); onClose(); }}
@@ -248,7 +246,7 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
 
 export default function ShopPage() {
   const { winery } = useOutletContext<{ winery: Winery }>();
-  const { lead } = useTouristAuth();
+  const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart();
   const { favorites, isFavorite, toggleFavorite } = useFavorites(lead?.id);
@@ -268,7 +266,6 @@ export default function ShopPage() {
   const [showNps, setShowNps] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [funnelStep, setFunnelStep] = useState<"profile" | null>(null);
-  const [funnelCompleted, setFunnelCompleted] = useState(false);
 
   // Handle wine added from profile recommendation
   useEffect(() => {
@@ -315,7 +312,8 @@ export default function ShopPage() {
   const activeFilterCount = (selectedType !== "Todos" ? 1 : 0) + (selectedPrice !== 0 ? 1 : 0) + (selectedFlavor ? 1 : 0) + (showFavoritesOnly ? 1 : 0);
 
   const startVoucherFunnel = () => {
-    if (funnelCompleted) {
+    // If lead already has birth_date saved, skip profile form
+    if (lead?.birth_date) {
       generateVoucher();
     } else {
       setFunnelStep("profile");
@@ -324,9 +322,8 @@ export default function ShopPage() {
 
   const handleProfileComplete = async (data: { birth_date?: string; income_class?: string; gender?: string }) => {
     try {
-      await invokeAuth("tourist-actions", { action: "update_profile", ...data });
+      await updateProfile(data);
     } catch {}
-    setFunnelCompleted(true);
     setFunnelStep(null);
     generateVoucher();
   };
@@ -497,9 +494,7 @@ export default function ShopPage() {
                 wineryColor={winery.primary_color}
                 onComplete={handleProfileComplete}
                 onSkip={() => {
-                  setFunnelCompleted(true);
                   setFunnelStep(null);
-                  generateVoucher();
                 }}
               />
             </div>

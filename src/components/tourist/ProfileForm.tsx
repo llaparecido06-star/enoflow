@@ -56,7 +56,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
       <div className="text-center">
         <h2 className="font-display text-base font-bold text-foreground">Quase lá! 🎉</h2>
         <p className="text-xs text-muted-foreground mt-1">
-          Complete seu perfil para receber ofertas personalizadas (opcional)
+          Preencha seus dados para liberar o voucher de desconto
         </p>
       </div>
 
@@ -127,16 +127,16 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
           onClick={onSkip}
           className="flex-1 px-4 py-3 rounded-xl text-sm border border-border hover:bg-secondary transition-colors"
         >
-          Pular
+          Voltar
         </button>
         <button
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={loading || !birthDate}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-primary-foreground transition-colors disabled:opacity-50"
           style={{ backgroundColor: wineryColor }}
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
-            <>Continuar <ArrowRight className="w-4 h-4" /></>
+            <>Gerar Voucher <ArrowRight className="w-4 h-4" /></>
           )}
         </button>
       </div>

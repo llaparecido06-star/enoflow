@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
       // Vouchers data
       const { data: allVouchers } = await supabase
         .from("vouchers")
-        .select("total, redeemed, created_at, user_id")
+        .select("total, redeemed, created_at, user_id, nps_score")
         .eq("winery_id", winery_id);
 
       const vouchersTotal = (allVouchers ?? []).length;
@@ -116,6 +116,13 @@ Deno.serve(async (req) => {
       const salesToday = (allVouchers ?? [])
         .filter(v => v.redeemed && v.created_at >= todayStr && v.created_at < tomorrowStr)
         .reduce((s, v) => s + Number(v.total || 0), 0);
+
+      // NPS calculation
+      const npsVouchers = (allVouchers ?? []).filter(v => v.nps_score !== null && v.nps_score !== undefined);
+      const npsCount = npsVouchers.length;
+      const npsAvg = npsCount > 0 ? npsVouchers.reduce((s, v) => s + Number(v.nps_score), 0) / npsCount : null;
+      const npsTodayVouchers = npsVouchers.filter(v => v.created_at >= todayStr && v.created_at < tomorrowStr);
+      const npsTodayCount = npsTodayVouchers.length;
       const conversionRate = leadsTotal && leadsTotal > 0
         ? ((vouchersRedeemed / leadsTotal) * 100).toFixed(1)
         : "0";
@@ -232,6 +239,9 @@ Deno.serve(async (req) => {
         top_wine_detail: topWineDetail,
         avg_satisfaction: avgSatisfaction,
         ratings_today: ratingsToday,
+        nps_avg: npsAvg,
+        nps_count: npsCount,
+        nps_today_count: npsTodayCount,
         weekly_chart: weeklyChart,
         bi_age: toChartArray(ageDist),
         bi_origin: toChartArray(originDist).slice(0, 10),

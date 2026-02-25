@@ -9,6 +9,9 @@ interface Lead {
   whatsapp: string;
   created_at: string;
   preferences_summary: string | null;
+  birth_date: string | null;
+  gender: string | null;
+  income_class: string | null;
 }
 
 interface TouristAuthContextType {
@@ -61,11 +64,18 @@ export function TouristAuthProvider({ children, wineryId }: { children: ReactNod
     localStorage.setItem(`lead_${wineryId}`, JSON.stringify(lead));
   }, []);
 
-  const updateProfile = useCallback(async (data: { birth_date?: string; income_class?: string; preferences_summary?: string }) => {
+  const updateProfile = useCallback(async (data: { birth_date?: string; income_class?: string; gender?: string; preferences_summary?: string }) => {
     const { invokeAuth } = await import("@/lib/auth-api");
     const res = await invokeAuth("tourist-actions", { action: "update_profile", ...data });
     if (res.error) throw res.error;
     if (res.data?.error) throw new Error(res.data.error);
+    // Update local lead data
+    setLead(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...data };
+      localStorage.setItem(`lead_${prev.winery_id}`, JSON.stringify(updated));
+      return updated;
+    });
   }, []);
 
   const logout = useCallback(() => {
