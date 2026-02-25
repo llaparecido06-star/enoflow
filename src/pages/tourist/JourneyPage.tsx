@@ -79,8 +79,8 @@ export default function JourneyPage() {
   const persona = useMemo(() => {
     if (navState?.persona) return navState.persona;
     if (!flavorProfile) return null;
-    return calculatePersona(flavorProfile.acidity, flavorProfile.body, flavorProfile.sweetness);
-  }, [navState?.persona, flavorProfile]);
+    return calculatePersona(flavorProfile.acidity, flavorProfile.body, flavorProfile.sweetness, t);
+  }, [navState?.persona, flavorProfile, t]);
 
   const recommendations = useMemo(() => {
     if (navState?.recommendations && navState.recommendations.length > 0) return navState.recommendations;

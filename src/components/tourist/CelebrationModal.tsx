@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Star, ShoppingBag, X, Wine as WineIcon, Sparkles } from "lucide-react";
 import type { Wine } from "@/hooks/useWinery";
 import { formatCurrencyShort } from "@/lib/currency";
+import { useI18n } from "@/lib/i18n";
 
 export interface WinePersona {
   key: string;
@@ -11,17 +12,17 @@ export interface WinePersona {
   description: string;
 }
 
-export function calculatePersona(avgAcidity: number, avgBody: number, avgSweetness: number): WinePersona {
+export function calculatePersona(avgAcidity: number, avgBody: number, avgSweetness: number, t: (k: string) => string): WinePersona {
   if (avgSweetness > 4) {
-    return { key: "sweet_tooth", label: "Amante de Doçura", emoji: "🍬", description: "Você aprecia vinhos com notas frutadas e aveludadas, com toques suaves e envolventes." };
+    return { key: "sweet_tooth", label: t("persona.sweet_tooth"), emoji: "🍬", description: t("persona.sweet_tooth_desc") };
   }
   if (avgBody > 4) {
-    return { key: "bold_intense", label: "Forte e Encorpado", emoji: "🦁", description: "Você prefere vinhos robustos com presença marcante e sabores intensos." };
+    return { key: "bold_intense", label: t("persona.bold_intense"), emoji: "🦁", description: t("persona.bold_intense_desc") };
   }
   if (avgAcidity > 4) {
-    return { key: "fresh_crisp", label: "Fresco e Vibrante", emoji: "🍋", description: "Você gosta de vinhos vibrantes com acidez refrescante e leveza." };
+    return { key: "fresh_crisp", label: t("persona.fresh_crisp"), emoji: "🍋", description: t("persona.fresh_crisp_desc") };
   }
-  return { key: "balanced_explorer", label: "Explorador Equilibrado", emoji: "⚖️", description: "Você aprecia vinhos harmoniosos e versáteis, com equilíbrio perfeito." };
+  return { key: "balanced_explorer", label: t("persona.balanced_explorer"), emoji: "⚖️", description: t("persona.balanced_explorer_desc") };
 }
 
 interface CelebrationModalProps {
@@ -63,10 +64,11 @@ function ConfettiEffect() {
 
 export default function CelebrationModal({ persona, recommendations, onClose, onAddToCart, onGoToShop, currency = "BRL" }: CelebrationModalProps) {
   const [showConfetti, setShowConfetti] = useState(true);
+  const { t } = useI18n();
 
   useEffect(() => {
-    const t = setTimeout(() => setShowConfetti(false), 4000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setShowConfetti(false), 4000);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -102,7 +104,7 @@ export default function CelebrationModal({ persona, recommendations, onClose, on
           <motion.div initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4 }}>
             <div className="flex items-center justify-center gap-2 mb-2">
               <Trophy className="w-4 h-4 text-gold" />
-              <span className="text-xs text-gold uppercase tracking-wider font-medium">Seu Perfil</span>
+              <span className="text-xs text-gold uppercase tracking-wider font-medium">{t("celebration.your_profile")}</span>
             </div>
             <h2 className="font-display text-2xl font-bold text-foreground mb-2">
               {persona.label}
@@ -124,7 +126,7 @@ export default function CelebrationModal({ persona, recommendations, onClose, on
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4 h-4 text-gold" />
               <h3 className="font-display text-sm font-semibold text-foreground">
-                🍷 Vinhos perfeitos para você
+                {t("celebration.perfect_wines")}
               </h3>
             </div>
 
@@ -143,7 +145,7 @@ export default function CelebrationModal({ persona, recommendations, onClose, on
                     <p className="text-[10px] text-muted-foreground">{wine.type}{wine.year ? ` · ${wine.year}` : ""}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-[9px] text-green-500 font-bold line-through decoration-muted-foreground/40">
+                    <p className="text-[9px] text-muted-foreground line-through">
                       {formatCurrencyShort(Number(wine.price_bottle), currency)}
                     </p>
                     <p className="font-display text-sm font-bold text-gold">
@@ -165,7 +167,7 @@ export default function CelebrationModal({ persona, recommendations, onClose, on
               className="w-full mt-4 py-3 rounded-xl bg-gold text-gold-foreground font-display text-sm font-semibold hover:bg-gold/90 transition-colors flex items-center justify-center gap-2"
             >
               <ShoppingBag className="w-4 h-4" />
-              Comprar com 10% OFF
+              {t("celebration.buy_with_discount")}
             </button>
           </motion.div>
         )}
@@ -173,7 +175,7 @@ export default function CelebrationModal({ persona, recommendations, onClose, on
         {recommendations.length === 0 && (
           <div className="px-6 pb-6 text-center">
             <p className="text-sm text-muted-foreground">
-              Visite nossa loja para encontrar vinhos ideais para seu perfil!
+              {t("celebration.visit_shop")}
             </p>
           </div>
         )}
