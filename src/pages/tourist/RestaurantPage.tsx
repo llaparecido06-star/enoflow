@@ -122,6 +122,7 @@ export default function RestaurantPage() {
 
   const restaurantWines = wines?.filter((w) => w.on_restaurant) ?? [];
   const allWines = wines ?? [];
+  const translatedWineNames = useContentTranslation(restaurantWines.map(w => w.name));
 
   const categories = useMemo(() => {
     const cats: Record<string, MenuItem[]> = {};
@@ -245,7 +246,7 @@ export default function RestaurantPage() {
                     <WineIcon className="w-4 h-4 text-wine-light" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-foreground truncate">{wine.name}</p>
+                    <p className="text-xs font-semibold text-foreground truncate">{translatedWineNames[restaurantWines.indexOf(wine)] || wine.name}</p>
                     <p className="text-[10px] text-muted-foreground">{wine.type}</p>
                   </div>
                 </div>

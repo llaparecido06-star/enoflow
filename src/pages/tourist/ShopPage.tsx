@@ -44,9 +44,9 @@ function SensoryStarsMini({ value }: { value: number }) {
   );
 }
 
-function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite }: {
+function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite, translatedName }: {
   wine: Wine; onAdd: () => void; onDetail: () => void;
-  isFavorite: boolean; onToggleFavorite: () => void;
+  isFavorite: boolean; onToggleFavorite: () => void; translatedName: string;
 }) {
   return (
     <motion.div
@@ -77,7 +77,7 @@ function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite }: {
 
       <div className="p-3 space-y-2">
         <h3 className="font-display text-xs font-semibold text-foreground leading-tight line-clamp-2 min-h-[2rem] cursor-pointer" onClick={onDetail}>
-          {wine.name}
+          {translatedName}
         </h3>
 
         <div className="flex items-center gap-1">
@@ -110,6 +110,7 @@ function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite }: {
 function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => void; onAdd: () => void }) {
   const harmonizationItems = wine.harmonization?.length ? wine.harmonization : [];
   const translatedDescription = useTranslatedText(wine.description);
+  const translatedName = useTranslatedText(wine.name);
   const translatedNotes = useContentTranslation(wine.aromatic_notes ?? []);
   const translatedHarmonization = useContentTranslation(harmonizationItems);
 
@@ -144,7 +145,7 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
           <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-wine/10 text-wine-light border border-wine/20 mb-2 inline-block">
             {wine.type}
           </span>
-          <h2 className="font-display text-xl font-bold text-foreground">{wine.name}</h2>
+          <h2 className="font-display text-xl font-bold text-foreground">{translatedName}</h2>
           <p className="text-[11px] text-muted-foreground mb-4">{wine.year && `${wine.year} · `}{wine.grape || ""}</p>
 
           {wine.description && (
@@ -287,6 +288,12 @@ export default function ShopPage() {
   const discountedTotal = total * discountMultiplier;
 
   const shopWines = wines?.filter((w) => w.on_shop) ?? [];
+  const translatedWineNames = useContentTranslation(shopWines.map(w => w.name));
+  const wineNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    shopWines.forEach((w, i) => { map[w.id] = translatedWineNames[i] || w.name; });
+    return map;
+  }, [shopWines, translatedWineNames]);
 
   const favoriteWines = useMemo(() => shopWines.filter(w => isFavorite(w.id)), [shopWines, favorites]);
 
@@ -666,6 +673,7 @@ export default function ShopPage() {
                 <ShopWineCard
                   key={wine.id}
                   wine={wine}
+                  translatedName={wineNameMap[wine.id] || wine.name}
                   onAdd={() => { addItem(wine); toast.success(`${wine.name} ${t("shop.added_to_cart")}`); }}
                   onDetail={() => setDetailWine(wine)}
                   isFavorite={isFavorite(wine.id)}

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Wine, Star, Heart, Grape, MapPin, Thermometer, Clock, User, FlaskConical } from "lucide-react";
 import type { Wine as WineType } from "@/hooks/useWinery";
 import { useI18n } from "@/lib/i18n";
-import { useContentTranslation } from "@/hooks/useContentTranslation";
+import { useContentTranslation, useTranslatedText } from "@/hooks/useContentTranslation";
 
 interface TastingCardProps {
   wine: WineType;
@@ -62,6 +62,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
     : defaultHarmonizations[wine.type] ?? [];
 
   const [translatedDesc] = useContentTranslation([wine.description]);
+  const translatedName = useTranslatedText(wine.name);
   const translatedNotes = useContentTranslation(wine.aromatic_notes ?? []);
   const translatedHarmonization = useContentTranslation(harmonizationItems);
 
@@ -127,7 +128,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
         <div className="px-5 -mt-5 relative z-10">
           <div className="flex items-start justify-between mb-1">
             <div className="flex-1 min-w-0">
-              <h2 className="font-display text-xl font-bold text-foreground leading-tight">{wine.name}</h2>
+              <h2 className="font-display text-xl font-bold text-foreground leading-tight">{translatedName}</h2>
               <p className="text-[11px] text-muted-foreground">
                 {wine.year && `${wine.year} · `}{wine.type}
               </p>
