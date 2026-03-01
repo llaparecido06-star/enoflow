@@ -49,7 +49,22 @@ function SensoryStars({ label, value }: { label: string; value: number }) {
 
 export default function TastingCard({ wine, isActive, onRate, isFavorite, onToggleFavorite, initialRatings, isLast, allRated, onFinish }: TastingCardProps) {
   const { t } = useI18n();
+
+  const defaultHarmonizations: Record<string, string[]> = {
+    Tinto: [t("harm.red_meat"), t("harm.aged_cheese"), t("harm.red_pasta"), t("harm.bbq")],
+    Branco: [t("harm.fish"), t("harm.seafood"), t("harm.fresh_salads"), t("harm.light_risotto")],
+    Rosé: [t("harm.grilled_salmon"), t("harm.mediterranean"), t("harm.fresh_seafood"), t("harm.appetizers")],
+    Espumante: [t("harm.canapes"), t("harm.red_fruit_desserts"), t("harm.fresh_seafood"), t("harm.appetizers")],
+  };
+
+  const harmonizationItems = wine.harmonization?.length
+    ? wine.harmonization
+    : defaultHarmonizations[wine.type] ?? [];
+
   const [translatedDesc] = useContentTranslation([wine.description]);
+  const translatedNotes = useContentTranslation(wine.aromatic_notes ?? []);
+  const translatedHarmonization = useContentTranslation(harmonizationItems);
+
   const [activeTab, setActiveTab] = useState<TabId>("sobre");
   const [acidity, setAcidity] = useState(initialRatings?.acidity ?? 3);
   const [body, setBody] = useState(initialRatings?.body ?? 3);
@@ -70,22 +85,11 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
     Espumante: "from-amber-900/40 via-amber-900/10 to-transparent",
   };
 
-  const defaultHarmonizations: Record<string, string[]> = {
-    Tinto: [t("harm.red_meat"), t("harm.aged_cheese"), t("harm.red_pasta"), t("harm.bbq")],
-    Branco: [t("harm.fish"), t("harm.seafood"), t("harm.fresh_salads"), t("harm.light_risotto")],
-    Rosé: [t("harm.grilled_salmon"), t("harm.mediterranean"), t("harm.fresh_seafood"), t("harm.appetizers")],
-    Espumante: [t("harm.canapes"), t("harm.red_fruit_desserts"), t("harm.fresh_seafood"), t("harm.appetizers")],
-  };
-
   const tabs: { id: TabId; label: string }[] = [
     { id: "sobre", label: t("wine.about") },
     { id: "ficha", label: t("wine.tech_sheet") },
     { id: "harmonizacao", label: t("wine.harmonization") },
   ];
-
-  const harmonizationItems = wine.harmonization?.length
-    ? wine.harmonization
-    : defaultHarmonizations[wine.type] ?? [];
 
   return (
     <motion.div
@@ -206,8 +210,8 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
                   <div className="bg-muted/30 rounded-xl p-4">
                     <span className="text-xs font-semibold text-foreground block mb-2">{t("wine.aromatic_notes")}</span>
                     <div className="flex flex-wrap gap-1.5">
-                      {wine.aromatic_notes.map((note: string) => (
-                        <span key={note} className="text-[11px] bg-card border border-border/30 rounded-full px-2.5 py-1 text-muted-foreground">
+                      {translatedNotes.map((note: string, i: number) => (
+                        <span key={i} className="text-[11px] bg-card border border-border/30 rounded-full px-2.5 py-1 text-muted-foreground">
                           {note}
                         </span>
                       ))}
@@ -226,8 +230,8 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               <motion.div key="harmonizacao" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
                 <p className="text-sm font-semibold text-foreground mb-4">{t("wine.harmonizes_with")}</p>
                 <div className="space-y-2.5">
-                  {harmonizationItems.map((item: string) => (
-                    <div key={item} className="flex items-center gap-3 bg-muted/30 rounded-xl px-4 py-3">
+                  {translatedHarmonization.map((item: string, i: number) => (
+                    <div key={i} className="flex items-center gap-3 bg-muted/30 rounded-xl px-4 py-3">
                       <div className="w-2 h-2 rounded-full bg-gold flex-shrink-0" />
                       <span className="text-sm text-foreground">{item}</span>
                     </div>
