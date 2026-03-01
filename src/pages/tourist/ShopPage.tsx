@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useOutletContext, useLocation } from "react-router-dom";
-import { useTranslatedText } from "@/hooks/useContentTranslation";
+import { useTranslatedText, useContentTranslation } from "@/hooks/useContentTranslation";
 import QRCode from "qrcode";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useTouristAuth } from "@/hooks/useTouristAuth";
@@ -110,6 +110,8 @@ function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite }: {
 function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => void; onAdd: () => void }) {
   const harmonizationItems = wine.harmonization?.length ? wine.harmonization : [];
   const translatedDescription = useTranslatedText(wine.description);
+  const translatedNotes = useContentTranslation(wine.aromatic_notes ?? []);
+  const translatedHarmonization = useContentTranslation(harmonizationItems);
 
   return (
     <motion.div
@@ -202,8 +204,8 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
             <div className="mb-4">
               <span className="text-xs font-semibold text-foreground block mb-2">Notas Aromáticas</span>
               <div className="flex flex-wrap gap-1.5">
-                {wine.aromatic_notes.map((note) => (
-                  <span key={note} className="text-[11px] bg-muted/50 border border-border/30 rounded-full px-2.5 py-1 text-muted-foreground">
+                {translatedNotes.map((note, i) => (
+                  <span key={i} className="text-[11px] bg-muted/50 border border-border/30 rounded-full px-2.5 py-1 text-muted-foreground">
                     {note}
                   </span>
                 ))}
@@ -216,8 +218,8 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
             <div className="mb-4">
               <span className="text-xs font-semibold text-foreground block mb-2">Harmonização</span>
               <div className="space-y-1.5">
-                {harmonizationItems.map((item) => (
-                  <div key={item} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
+                {translatedHarmonization.map((item, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-gold flex-shrink-0" />
                     <span className="text-[11px] text-foreground">{item}</span>
                   </div>
