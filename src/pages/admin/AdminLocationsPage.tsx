@@ -113,7 +113,7 @@ export default function AdminLocationsPage() {
 
   const buildQrUrl = (loc: CapturePoint) => {
     const base = `${window.location.origin}/app/${slug}`;
-    const params = new URLSearchParams({ category: loc.category, location: loc.name });
+    const params = new URLSearchParams({ category: loc.category, location: loc.name, cp: loc.id });
     return `${base}?${params.toString()}`;
   };
 

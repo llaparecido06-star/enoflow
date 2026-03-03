@@ -22,6 +22,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const searchParams = new URLSearchParams(location.search);
   const acqCategory = searchParams.get("category") || undefined;
   const acqLocation = searchParams.get("location") || undefined;
+  const capturePointId = searchParams.get("cp") || undefined;
 
   const moduleMap: Record<string, string> = { restaurant: "restaurant", shop: "shop" };
   useEffect(() => {
@@ -45,7 +46,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
         wineryName={winery.name}
         wineryColor={winery.primary_color}
         wineryLogo={winery.logo_url}
-        onLogin={(name, whatsapp, acceptedTerms) => login(name, whatsapp, winery.id, acceptedTerms, acqCategory, acqLocation)}
+        onLogin={(name, whatsapp, acceptedTerms) => login(name, whatsapp, winery.id, acceptedTerms, acqCategory, acqLocation, capturePointId)}
       />
     );
   }

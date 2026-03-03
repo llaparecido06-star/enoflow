@@ -87,6 +87,7 @@ export default function AdminDashboardPage() {
   const biAge: { name: string; value: number }[] = data?.bi_age ?? [];
   const biOrigin: { name: string; value: number }[] = data?.bi_origin ?? [];
   const biPrefs: { name: string; value: number }[] = data?.bi_preferences ?? [];
+  const biCapture: { name: string; value: number }[] = data?.bi_capture_points ?? [];
 
   return (
     <div>
@@ -134,15 +135,21 @@ export default function AdminDashboardPage() {
       )}
 
       {/* BI Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {/* Capture Points */}
+        <BiBarCard title="📍 Pontos de Captura (visitas)" data={biCapture} emptyMsg="Sem dados de visitas por QR" />
+
+        {/* Origin by Location */}
+        <BiBarCard title="Origem por Local" data={biOrigin} emptyMsg="Sem dados de origem" />
+      </div>
+
+      {/* BI Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Age Distribution */}
         <BiPieCard title="Faixa Etária" data={biAge} emptyMsg="Sem dados de idade" />
 
         {/* Preferences */}
         <BiBarCard title="Preferências" data={biPrefs} emptyMsg="Sem dados de preferências" />
-
-        {/* Origin by Location */}
-        <BiBarCard title="Origem por Local" data={biOrigin} emptyMsg="Sem dados de origem" />
       </div>
     </div>
   );
