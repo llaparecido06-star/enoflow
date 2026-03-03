@@ -100,6 +100,48 @@ export type Database = {
           },
         ]
       }
+      capture_history: {
+        Row: {
+          capture_category: string | null
+          capture_location: string | null
+          created_at: string
+          id: string
+          user_id: string
+          winery_id: string
+        }
+        Insert: {
+          capture_category?: string | null
+          capture_location?: string | null
+          created_at?: string
+          id?: string
+          user_id: string
+          winery_id: string
+        }
+        Update: {
+          capture_category?: string | null
+          capture_location?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string
+          winery_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capture_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capture_history_winery_id_fkey"
+            columns: ["winery_id"]
+            isOneToOne: false
+            referencedRelation: "wineries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capture_points: {
         Row: {
           category: string

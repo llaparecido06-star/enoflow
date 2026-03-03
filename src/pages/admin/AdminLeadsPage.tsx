@@ -8,6 +8,12 @@ import { formatCurrency } from "@/lib/currency";
 import { Users, Download, Phone, Calendar, MapPin, Search, ExternalLink, TrendingUp, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 
+interface CaptureEntry {
+  category: string | null;
+  location: string | null;
+  date: string;
+}
+
 interface Lead {
   id: string;
   name: string;
@@ -21,6 +27,7 @@ interface Lead {
   acquisition_location: string | null;
   ltv: number;
   voucher_count: number;
+  capture_history: CaptureEntry[];
 }
 
 const ORIGINS = ["Todos", "Restaurante", "Degustação", "Loja", "WiFi", "QR"];
@@ -259,10 +266,27 @@ export default function AdminLeadsPage() {
                       </a>
                     </td>
                      <td className="px-4 py-3">
-                       {lead.acquisition_location ? (
-                         <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                           <MapPin className="w-3 h-3 shrink-0" />
-                           <span className="truncate max-w-[120px]">{lead.acquisition_location}</span>
+                       {(lead.capture_history?.length > 0 || lead.acquisition_location) ? (
+                         <div className="space-y-0.5">
+                           {lead.capture_history?.length > 0 ? (
+                             lead.capture_history.slice(0, 2).map((c, i) => (
+                               <div key={i} className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                 <MapPin className="w-3 h-3 shrink-0" />
+                                 <span className="truncate max-w-[120px]">{c.location || c.category || "—"}</span>
+                                 <span className="text-[10px] text-muted-foreground/60">
+                                   {new Date(c.date).toLocaleDateString("pt-BR")}
+                                 </span>
+                               </div>
+                             ))
+                           ) : (
+                             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                               <MapPin className="w-3 h-3 shrink-0" />
+                               <span className="truncate max-w-[120px]">{lead.acquisition_location}</span>
+                             </div>
+                           )}
+                           {(lead.capture_history?.length ?? 0) > 2 && (
+                             <span className="text-[10px] text-primary">+{lead.capture_history.length - 2} visitas</span>
+                           )}
                          </div>
                        ) : (
                          <span className="text-xs text-muted-foreground/50">—</span>

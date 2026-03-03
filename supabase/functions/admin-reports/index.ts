@@ -222,6 +222,18 @@ Deno.serve(async (req) => {
         }
       }
 
+      // ─── BI: Capture points distribution ───
+      const { data: captureData } = await supabase
+        .from("capture_history")
+        .select("capture_category, capture_location, created_at")
+        .eq("winery_id", winery_id);
+
+      const captureDist: Record<string, number> = {};
+      for (const c of captureData ?? []) {
+        const label = c.capture_location || c.capture_category || "Direto";
+        captureDist[label] = (captureDist[label] || 0) + 1;
+      }
+
       const toChartArray = (map: Record<string, number>) =>
         Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
 
@@ -246,6 +258,7 @@ Deno.serve(async (req) => {
         bi_age: toChartArray(ageDist),
         bi_origin: toChartArray(originDist).slice(0, 10),
         bi_preferences: toChartArray(prefDist).slice(0, 10),
+        bi_capture_points: toChartArray(captureDist).slice(0, 10),
       });
     }
 
