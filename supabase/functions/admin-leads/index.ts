@@ -91,10 +91,31 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Fetch capture history
+    let captureMap: Record<string, { category: string | null; location: string | null; date: string }[]> = {};
+    if (leadIds.length > 0) {
+      const { data: captures } = await supabase
+        .from("capture_history")
+        .select("user_id, capture_category, capture_location, created_at")
+        .eq("winery_id", winery_id)
+        .in("user_id", leadIds)
+        .order("created_at", { ascending: false });
+
+      for (const c of captures ?? []) {
+        if (!captureMap[c.user_id]) captureMap[c.user_id] = [];
+        captureMap[c.user_id].push({
+          category: c.capture_category,
+          location: c.capture_location,
+          date: c.created_at,
+        });
+      }
+    }
+
     const enrichedLeads = (leads ?? []).map(l => ({
       ...l,
       ltv: ltvMap[l.id]?.total ?? 0,
       voucher_count: ltvMap[l.id]?.count ?? 0,
+      capture_history: captureMap[l.id] ?? [],
     }));
 
     return json({ success: true, leads: enrichedLeads });

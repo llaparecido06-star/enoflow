@@ -235,6 +235,16 @@ Deno.serve(async (req) => {
         lead = { ...existing, accepted_terms: true, lgpd_consent_date: new Date().toISOString() };
       }
 
+      // Log capture point history
+      if (acquisition_category || acquisition_location) {
+        await supabase.from("capture_history").insert({
+          user_id: lead!.id,
+          winery_id: lead!.winery_id,
+          capture_category: acquisition_category || null,
+          capture_location: acquisition_location || null,
+        }).then(() => {});
+      }
+
       const token = await signJwt(
         { sub: lead!.id, winery_id: lead!.winery_id, type: "tourist" },
         secret, 604800
