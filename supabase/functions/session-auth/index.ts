@@ -194,7 +194,7 @@ Deno.serve(async (req) => {
 
     // ─── TOURIST LOGIN ───────────────────────────────────
     if (type === "tourist") {
-      const { name, whatsapp, winery_id, acquisition_category, acquisition_location } = body;
+      const { name, whatsapp, winery_id, acquisition_category, acquisition_location, capture_point_id } = body;
       if (!whatsapp || !winery_id) return json({ error: "whatsapp and winery_id required" }, 400);
 
       // Check winery status
@@ -236,12 +236,13 @@ Deno.serve(async (req) => {
       }
 
       // Log capture point history
-      if (acquisition_category || acquisition_location) {
+      if (acquisition_category || acquisition_location || capture_point_id) {
         await supabase.from("capture_history").insert({
           user_id: lead!.id,
           winery_id: lead!.winery_id,
           capture_category: acquisition_category || null,
           capture_location: acquisition_location || null,
+          capture_point_id: capture_point_id || null,
         }).then(() => {});
       }
 

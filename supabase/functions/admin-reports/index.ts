@@ -225,12 +225,22 @@ Deno.serve(async (req) => {
       // ─── BI: Capture points distribution ───
       const { data: captureData } = await supabase
         .from("capture_history")
-        .select("capture_category, capture_location, created_at")
+        .select("capture_category, capture_location, capture_point_id, created_at")
         .eq("winery_id", winery_id);
+
+      // Get capture point names for better labels
+      const { data: capturePoints } = await supabase
+        .from("capture_points")
+        .select("id, name, category")
+        .eq("winery_id", winery_id);
+      const cpMap: Record<string, string> = {};
+      for (const cp of capturePoints ?? []) { cpMap[cp.id] = cp.name; }
 
       const captureDist: Record<string, number> = {};
       for (const c of captureData ?? []) {
-        const label = c.capture_location || c.capture_category || "Direto";
+        const label = (c.capture_point_id && cpMap[c.capture_point_id]) 
+          ? cpMap[c.capture_point_id] 
+          : c.capture_location || c.capture_category || "Direto";
         captureDist[label] = (captureDist[label] || 0) + 1;
       }
 

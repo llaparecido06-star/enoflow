@@ -17,7 +17,7 @@ interface Lead {
 interface TouristAuthContextType {
   lead: Lead | null;
   isAuthenticated: boolean;
-  login: (name: string, whatsapp: string, wineryId: string, acceptedTerms?: boolean, acquisitionCategory?: string, acquisitionLocation?: string) => Promise<void>;
+  login: (name: string, whatsapp: string, wineryId: string, acceptedTerms?: boolean, acquisitionCategory?: string, acquisitionLocation?: string, capturePointId?: string) => Promise<void>;
   updateProfile: (data: { birth_date?: string; income_class?: string; preferences_summary?: string }) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
@@ -45,12 +45,13 @@ export function TouristAuthProvider({ children, wineryId }: { children: ReactNod
     setIsLoading(false);
   }, [wineryId]);
 
-  const login = useCallback(async (name: string, whatsapp: string, wineryId: string, acceptedTerms = false, acquisitionCategory?: string, acquisitionLocation?: string) => {
+  const login = useCallback(async (name: string, whatsapp: string, wineryId: string, acceptedTerms = false, acquisitionCategory?: string, acquisitionLocation?: string, capturePointId?: string) => {
     const res = await supabase.functions.invoke("session-auth", {
       body: {
         type: "tourist", name, whatsapp, winery_id: wineryId, accepted_terms: acceptedTerms,
         acquisition_category: acquisitionCategory || undefined,
         acquisition_location: acquisitionLocation || undefined,
+        capture_point_id: capturePointId || undefined,
       },
     });
 
