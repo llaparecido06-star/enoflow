@@ -47,14 +47,29 @@ Deno.serve(async (req) => {
 
     // ─── LIST ────────────────────────────────────────────
     if (!action || action === "list") {
-      const [locsRes, wineryRes] = await Promise.all([
+      const [locsRes, wineryRes, captureRes] = await Promise.all([
         supabase.from("capture_points").select("*").eq("winery_id", winery_id).order("created_at", { ascending: true }),
         supabase.from("wineries").select("max_locations, slug").eq("id", winery_id).single(),
+        supabase.from("capture_history").select("capture_point_id").eq("winery_id", winery_id),
       ]);
       if (locsRes.error) throw locsRes.error;
+
+      // Count visits per capture point
+      const visitCounts: Record<string, number> = {};
+      for (const c of captureRes.data ?? []) {
+        if (c.capture_point_id) {
+          visitCounts[c.capture_point_id] = (visitCounts[c.capture_point_id] || 0) + 1;
+        }
+      }
+
+      const locations = (locsRes.data ?? []).map(loc => ({
+        ...loc,
+        visit_count: visitCounts[loc.id] ?? 0,
+      }));
+
       return json({
         success: true,
-        locations: locsRes.data ?? [],
+        locations,
         max_locations: wineryRes.data?.max_locations ?? 5,
         slug: wineryRes.data?.slug ?? "",
       });

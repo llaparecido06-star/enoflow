@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
-import { MapPin, Plus, Pencil, Trash2, Loader2, QrCode, Copy, ExternalLink, Link as LinkIcon } from "lucide-react";
+import { MapPin, Plus, Pencil, Trash2, Loader2, QrCode, Copy, ExternalLink, Link as LinkIcon, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,7 @@ interface CapturePoint {
   category: string;
   redirect_url: string | null;
   created_at: string;
+  visit_count: number;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -165,19 +166,23 @@ export default function AdminLocationsPage() {
           {locations.map(loc => (
             <div key={loc.id} className="bg-card rounded-xl border border-border p-4">
               <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-foreground truncate">{loc.name}</h3>
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${categoryColors[loc.category] || categoryColors.other}`}>
-                      {categoryLabels[loc.category] || loc.category}
-                    </span>
-                  </div>
-                  {loc.redirect_url && (
-                    <a href={loc.redirect_url} target="_blank" rel="noopener" className="text-xs text-primary flex items-center gap-1 hover:underline truncate">
-                      <LinkIcon className="w-3 h-3 shrink-0" /> {loc.redirect_url}
-                    </a>
-                  )}
-                </div>
+                 <div className="flex-1 min-w-0">
+                   <div className="flex items-center gap-2 mb-1">
+                     <h3 className="font-semibold text-foreground truncate">{loc.name}</h3>
+                     <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${categoryColors[loc.category] || categoryColors.other}`}>
+                       {categoryLabels[loc.category] || loc.category}
+                     </span>
+                     <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
+                       <Eye className="w-3 h-3" />
+                       {loc.visit_count} {loc.visit_count === 1 ? "visita" : "visitas"}
+                     </span>
+                   </div>
+                   {loc.redirect_url && (
+                     <a href={loc.redirect_url} target="_blank" rel="noopener" className="text-xs text-primary flex items-center gap-1 hover:underline truncate">
+                       <LinkIcon className="w-3 h-3 shrink-0" /> {loc.redirect_url}
+                     </a>
+                   )}
+                 </div>
                 <div className="flex items-center gap-1 ml-2">
                   <button onClick={() => setQrTarget(loc)} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="QR Code">
                     <QrCode className="w-4 h-4 text-primary" />
