@@ -5,16 +5,18 @@ import { TouristAuthProvider, useTouristAuth } from "@/hooks/useTouristAuth";
 import { I18nProvider, useI18n, LanguageSelector } from "@/lib/i18n";
 import BottomNav from "@/components/tourist/BottomNav";
 import WhatsAppLogin from "@/components/tourist/WhatsAppLogin";
+import QuizSommelier from "@/components/tourist/QuizSommelier";
 import { Loader2, LogOut, Wine } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
-  const { isAuthenticated, lead, login, logout } = useTouristAuth();
+  const { isAuthenticated, lead, login, logout, updateProfile } = useTouristAuth();
   const { t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
   const enabledModules: string[] = winery.enabled_modules ?? ["tasting", "restaurant", "shop"];
+  const [showQuiz, setShowQuiz] = useState(false);
 
   // Read acquisition params from URL
   const searchParams = new URLSearchParams(location.search);
@@ -30,6 +32,13 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
     }
   }, [location.pathname, enabledModules]);
 
+  // Show quiz right after first login (no preferences yet)
+  useEffect(() => {
+    if (isAuthenticated && lead && !lead.preferences_summary) {
+      setShowQuiz(true);
+    }
+  }, [isAuthenticated, lead?.id]);
+
   if (!isAuthenticated) {
     return (
       <WhatsAppLogin
@@ -37,6 +46,21 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
         wineryColor={winery.primary_color}
         wineryLogo={winery.logo_url}
         onLogin={(name, whatsapp, acceptedTerms) => login(name, whatsapp, winery.id, acceptedTerms, acqCategory, acqLocation)}
+      />
+    );
+  }
+
+  if (showQuiz) {
+    return (
+      <QuizSommelier
+        wineryColor={winery.primary_color}
+        onComplete={async (preferences) => {
+          try {
+            await updateProfile({ preferences_summary: preferences });
+          } catch {}
+          setShowQuiz(false);
+        }}
+        onSkip={() => setShowQuiz(false)}
       />
     );
   }
