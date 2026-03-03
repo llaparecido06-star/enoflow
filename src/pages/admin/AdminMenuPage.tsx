@@ -3,20 +3,29 @@ import { useOutletContext } from "react-router-dom";
 import { useWines, type Winery } from "@/hooks/useWinery";
 import { useMenuItems, type MenuItem } from "@/hooks/useMenuItems";
 import type { AdminUser } from "@/hooks/useAdminAuth";
-import { UtensilsCrossed, Plus, Pencil, Trash2, Wine } from "lucide-react";
+import { UtensilsCrossed, Plus, Pencil, Trash2, Wine, MapPin } from "lucide-react";
 import MenuItemFormModal from "@/components/admin/MenuItemFormModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 export default function AdminMenuPage() {
   const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
   const { data: menuItems } = useMenuItems(winery.id);
   const { data: wines } = useWines(winery.id);
+  const { data: locations = [] } = useQuery<{ id: string; name: string; category: string }[]>({
+    queryKey: ["capture-points", winery.id],
+    queryFn: async () => {
+      const res = await invokeAuth("admin-locations", { action: "list" });
+      if (res.error) throw res.error;
+      return (res.data?.locations ?? []).filter((l: any) => l.category === "restaurant");
+    },
+  });
   const [formItem, setFormItem] = useState<MenuItem | null | undefined>(undefined);
   const [deleteItem, setDeleteItem] = useState<MenuItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [locationFilter, setLocationFilter] = useState<string>("all");
   const qc = useQueryClient();
 
   const handleDelete = async () => {
@@ -37,9 +46,16 @@ export default function AdminMenuPage() {
   };
 
   const wineMap = new Map((wines ?? []).map((w) => [w.id, w]));
+  const locMap = new Map(locations.map((l) => [l.id, l.name]));
 
-  // Group by category
-  const grouped = (menuItems ?? []).reduce<Record<string, MenuItem[]>>((acc, item) => {
+  // Filter by location then group by category
+  const filteredItems = (menuItems ?? []).filter(item => {
+    if (locationFilter === "all") return true;
+    if (locationFilter === "none") return !item.capture_point_id;
+    return item.capture_point_id === locationFilter;
+  });
+
+  const grouped = filteredItems.reduce<Record<string, MenuItem[]>>((acc, item) => {
     (acc[item.category] ??= []).push(item);
     return acc;
   }, {});
@@ -56,6 +72,26 @@ export default function AdminMenuPage() {
           <Plus className="w-4 h-4" /> Novo item
         </button>
       </div>
+
+      {/* Location filter */}
+      {locations.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 mb-4 scrollbar-hide">
+          <button onClick={() => setLocationFilter("all")}
+            className={`whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${locationFilter === "all" ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-secondary"}`}>
+            Todas
+          </button>
+          {locations.map(loc => (
+            <button key={loc.id} onClick={() => setLocationFilter(loc.id)}
+              className={`whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1 ${locationFilter === loc.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-secondary"}`}>
+              <MapPin className="w-3 h-3" /> {loc.name}
+            </button>
+          ))}
+          <button onClick={() => setLocationFilter("none")}
+            className={`whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${locationFilter === "none" ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-secondary"}`}>
+            Sem local
+          </button>
+        </div>
+      )}
 
       {/* Card layout grouped by category */}
       <div className="space-y-5">
@@ -76,7 +112,15 @@ export default function AdminMenuPage() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-foreground truncate">{item.name}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-semibold text-foreground truncate">{item.name}</h4>
+                          {item.capture_point_id && locMap.get(item.capture_point_id) && (
+                            <span className="text-[9px] font-medium bg-secondary text-muted-foreground px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0">
+                              <MapPin className="w-2.5 h-2.5" />
+                              {locMap.get(item.capture_point_id)}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[11px] text-muted-foreground">R$ {Number(item.price).toFixed(2)}</p>
                         {suggestedWine && (
                           <div className="flex items-center gap-1 mt-1">
@@ -114,6 +158,7 @@ export default function AdminMenuPage() {
           adminId={admin.id}
           item={formItem}
           wines={wines ?? []}
+          locations={locations}
           onClose={() => setFormItem(undefined)}
         />
       )}

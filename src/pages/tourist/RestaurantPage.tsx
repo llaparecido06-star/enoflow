@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useLocation } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useMenuItems, type MenuItem } from "@/hooks/useMenuItems";
 import { useContentTranslation } from "@/hooks/useContentTranslation";
@@ -114,7 +114,17 @@ export default function RestaurantPage() {
   const { winery } = useOutletContext<{ winery: Winery }>();
   const { t } = useI18n();
   const { data: wines } = useWines(winery.id);
-  const { data: menuItems } = useMenuItems(winery.id);
+  const { data: allMenuItems } = useMenuItems(winery.id);
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const capturePointId = searchParams.get("cp");
+
+  // Filter menu items: show items for this capture point + items with no capture point
+  const menuItems = useMemo(() => {
+    if (!allMenuItems) return [];
+    if (!capturePointId) return allMenuItems;
+    return allMenuItems.filter(item => !item.capture_point_id || item.capture_point_id === capturePointId);
+  }, [allMenuItems, capturePointId]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [sommelierDish, setSommelierDish] = useState<MenuItem | null>(null);
   const [recommendations, setRecommendations] = useState<SommelierRecommendation[]>([]);

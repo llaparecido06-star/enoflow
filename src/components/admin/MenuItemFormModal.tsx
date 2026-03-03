@@ -7,17 +7,24 @@ import type { MenuItem } from "@/hooks/useMenuItems";
 import type { Wine } from "@/hooks/useWinery";
 import ImageUploadField from "./ImageUploadField";
 
+interface CapturePoint {
+  id: string;
+  name: string;
+  category: string;
+}
+
 interface MenuItemFormModalProps {
   wineryId: string;
   adminId: string;
   item?: MenuItem | null;
   wines: Wine[];
+  locations: CapturePoint[];
   onClose: () => void;
 }
 
 const defaultCategories = ["Entradas", "Pratos Principais", "Sobremesas", "Bebidas"];
 
-export default function MenuItemFormModal({ wineryId, adminId, item, wines, onClose }: MenuItemFormModalProps) {
+export default function MenuItemFormModal({ wineryId, adminId, item, wines, locations, onClose }: MenuItemFormModalProps) {
   const qc = useQueryClient();
   const isEdit = !!item;
   const [loading, setLoading] = useState(false);
@@ -28,6 +35,7 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, onCl
     description: item?.description ?? "",
     suggested_wine_id: item?.suggested_wine_id ?? "",
     image_url: item?.image_url ?? "",
+    capture_point_id: item?.capture_point_id ?? "",
   });
 
   const set = (key: string, val: unknown) => setForm((f) => ({ ...f, [key]: val }));
@@ -46,6 +54,7 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, onCl
         description: form.description.trim() || null,
         suggested_wine_id: form.suggested_wine_id || null,
         image_url: form.image_url || null,
+        capture_point_id: form.capture_point_id || null,
       };
 
       const body = isEdit
@@ -119,6 +128,18 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, onCl
                 <option key={w.id} value={w.id}>{w.name} ({w.type})</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">Unidade / Local</label>
+            <select value={form.capture_point_id} onChange={(e) => set("capture_point_id", e.target.value)}
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20">
+              <option value="">Todas as unidades</option>
+              {locations.map((loc) => (
+                <option key={loc.id} value={loc.id}>{loc.name}</option>
+              ))}
+            </select>
+            <p className="text-[10px] text-muted-foreground mt-1">Selecione em qual unidade este prato estará disponível</p>
           </div>
         </div>
 

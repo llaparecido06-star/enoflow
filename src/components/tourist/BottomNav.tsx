@@ -12,6 +12,8 @@ export default function BottomNav({ slug, enabledModules }: BottomNavProps) {
   const { t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
+  const searchParams = new URLSearchParams(location.search);
+  const cpParam = searchParams.get("cp");
   const basePath = `/app/${slug}`;
 
   const allTabs = [
@@ -32,7 +34,7 @@ export default function BottomNav({ slug, enabledModules }: BottomNavProps) {
           return (
             <button
               key={tab.id}
-              onClick={() => navigate(basePath + tab.path)}
+              onClick={() => navigate(basePath + tab.path + (cpParam ? `?cp=${cpParam}` : ""))}
               className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 transition-colors duration-300"
             >
               {isActive && (
