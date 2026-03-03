@@ -113,6 +113,7 @@ export interface ValidatedMenuItemData {
   description: string | null;
   image_url: string | null;
   suggested_wine_id: string | null;
+  capture_point_id: string | null;
 }
 
 export function validateMenuItemData(d: Record<string, unknown>): { data?: ValidatedMenuItemData; error?: string } {
@@ -127,6 +128,7 @@ export function validateMenuItemData(d: Record<string, unknown>): { data?: Valid
       description: optStr(d.description, 500),
       image_url: optStr(d.image_url, 500),
       suggested_wine_id: isUUID(d.suggested_wine_id) ? d.suggested_wine_id : null,
+      capture_point_id: isUUID(d.capture_point_id) ? d.capture_point_id : null,
     },
   };
 }
