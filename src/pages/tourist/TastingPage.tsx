@@ -5,7 +5,7 @@ import { useTouristAuth } from "@/hooks/useTouristAuth";
 import { useFavorites } from "@/hooks/useFavorites";
 import TastingCard from "@/components/tourist/TastingCard";
 import TastingWelcome from "@/components/tourist/TastingWelcome";
-import QuizSommelier from "@/components/tourist/QuizSommelier";
+
 
 import { calculatePersona } from "@/components/tourist/CelebrationModal";
 import { motion, AnimatePresence } from "framer-motion";
@@ -36,7 +36,7 @@ function saveProgress(leadId: string, wineryId: string, index: number, ratings: 
 export default function TastingPage() {
   const { winery } = useOutletContext<{ winery: Winery; lead: Tables<"users_leads"> }>();
   const { t } = useI18n();
-  const { lead, updateProfile } = useTouristAuth();
+  const { lead } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { data: packages } = useTastingPackages(winery.id);
   const { isFavorite, toggleFavorite } = useFavorites(lead?.id);
@@ -50,7 +50,7 @@ export default function TastingPage() {
   const [currentIndex, setCurrentIndex] = useState(saved?.index ?? 0);
   const [showWelcome, setShowWelcome] = useState(!saved || saved.ratings.length === 0);
   const [localRatings, setLocalRatings] = useState<RatingEntry[]>(saved?.ratings ?? []);
-  const [showQuiz, setShowQuiz] = useState(false);
+  
   
 
   // Determine tasting wines based on selected package
@@ -104,23 +104,7 @@ export default function TastingPage() {
   const handleStartTasting = useCallback((packageId?: string) => {
     setSelectedPackageId(packageId);
     setShowWelcome(false);
-    // Check if quiz was already done (preferences_summary exists)
-    const hasPrefs = lead?.preferences_summary;
-    if (!hasPrefs) {
-      setShowQuiz(true);
-    }
-  }, [lead]);
-
-  const handleQuizComplete = async (preferences: string) => {
-    try {
-      await updateProfile({ preferences_summary: preferences });
-    } catch {}
-    setShowQuiz(false);
-  };
-
-  const handleQuizSkip = () => {
-    setShowQuiz(false);
-  };
+  }, []);
 
   const handleRatingSubmit = async (wine: Wine, ratings: { acidity: number; body: number; sweetness: number }) => {
     if (!lead) return;
@@ -196,16 +180,6 @@ export default function TastingPage() {
     );
   }
 
-  // Quiz Sommelier screen
-  if (showQuiz) {
-    return (
-      <QuizSommelier
-        wineryColor={winery.primary_color}
-        onComplete={handleQuizComplete}
-        onSkip={handleQuizSkip}
-      />
-    );
-  }
 
 
 

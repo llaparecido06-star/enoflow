@@ -76,22 +76,49 @@ export default function JourneyPage() {
     return { acidity: avg("stars_acidity"), body: avg("stars_body"), sweetness: avg("stars_sweetness") };
   }, [ratings]);
 
+  // Parse quiz preferences into sensory hints
+  const quizProfile = useMemo(() => {
+    if (!lead?.preferences_summary) return null;
+    const prefs = lead.preferences_summary.toLowerCase();
+    let bodyHint = 3, acidityHint = 3, sweetnessHint = 3;
+    if (prefs.includes("encorpado")) bodyHint = 5;
+    else if (prefs.includes("médio")) bodyHint = 3;
+    else if (prefs.includes("leve")) bodyHint = 1;
+    if (prefs.includes("doce")) sweetnessHint = 5;
+    else if (prefs.includes("suave")) sweetnessHint = 4;
+    else if (prefs.includes("meio-seco")) sweetnessHint = 2;
+    else if (prefs.includes("seco")) sweetnessHint = 1;
+    return { acidity: acidityHint, body: bodyHint, sweetness: sweetnessHint };
+  }, [lead?.preferences_summary]);
+
+  // Merge tasting ratings (70%) + quiz preferences (30%) for recommendations
+  const combinedProfile = useMemo(() => {
+    if (flavorProfile && quizProfile) {
+      return {
+        acidity: flavorProfile.acidity * 0.7 + quizProfile.acidity * 0.3,
+        body: flavorProfile.body * 0.7 + quizProfile.body * 0.3,
+        sweetness: flavorProfile.sweetness * 0.7 + quizProfile.sweetness * 0.3,
+      };
+    }
+    return flavorProfile || quizProfile;
+  }, [flavorProfile, quizProfile]);
+
   const persona = useMemo(() => {
     if (navState?.persona) return navState.persona;
-    if (!flavorProfile) return null;
-    return calculatePersona(flavorProfile.acidity, flavorProfile.body, flavorProfile.sweetness, t);
-  }, [navState?.persona, flavorProfile, t]);
+    if (!combinedProfile) return null;
+    return calculatePersona(combinedProfile.acidity, combinedProfile.body, combinedProfile.sweetness, t);
+  }, [navState?.persona, combinedProfile, t]);
 
   const recommendations = useMemo(() => {
     if (navState?.recommendations && navState.recommendations.length > 0) return navState.recommendations;
-    if (!flavorProfile || !wines) return [];
+    if (!combinedProfile || !wines) return [];
     return wines
       .filter(w => !w.on_tasting && w.on_shop)
-      .map(w => ({ wine: w, score: Math.abs(w.sensory_acidity - flavorProfile.acidity) + Math.abs(w.sensory_body - flavorProfile.body) + Math.abs(w.sensory_sweetness - flavorProfile.sweetness) }))
+      .map(w => ({ wine: w, score: Math.abs(w.sensory_acidity - combinedProfile.acidity) + Math.abs(w.sensory_body - combinedProfile.body) + Math.abs(w.sensory_sweetness - combinedProfile.sweetness) }))
       .sort((a, b) => a.score - b.score)
       .slice(0, 3)
       .map(r => r.wine);
-  }, [navState?.recommendations, wines, flavorProfile]);
+  }, [navState?.recommendations, wines, combinedProfile]);
 
   const ratedWines = useMemo(() => {
     return ratings.map(r => {

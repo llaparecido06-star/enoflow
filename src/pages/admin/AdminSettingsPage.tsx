@@ -160,7 +160,7 @@ export default function AdminSettingsPage() {
             type="text"
             value={voucherCode}
             onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-            placeholder={`Ex: #${winery.slug.split("-").pop()?.toUpperCase().slice(0, 5) ?? "CODE"}-${Math.floor(Math.random() * 90 + 10)}`}
+            placeholder="Ex: #LUCAS-4827"
             className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono"
           />
           <button
