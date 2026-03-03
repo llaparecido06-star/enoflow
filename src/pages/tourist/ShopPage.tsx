@@ -343,9 +343,9 @@ export default function ShopPage() {
   const generateVoucher = async () => {
     if (!lead) return;
     setGenerating(true);
-    const slug = winery.slug.toUpperCase().slice(0, 4);
-    const num = Math.floor(Math.random() * 100);
-    const code = `#${slug}-${String(num).padStart(2, "0")}`;
+    const firstName = lead.name.split(" ")[0].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const num = Math.floor(Math.random() * 9000 + 1000);
+    const code = `#${firstName}-${num}`;
     try {
       const { data, error } = await invokeAuth("tourist-actions", {
         action: "create_voucher",

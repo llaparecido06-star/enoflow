@@ -6,7 +6,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import TastingCard from "@/components/tourist/TastingCard";
 import TastingWelcome from "@/components/tourist/TastingWelcome";
 import QuizSommelier from "@/components/tourist/QuizSommelier";
-import ProfileForm from "@/components/tourist/ProfileForm";
+
 import { calculatePersona } from "@/components/tourist/CelebrationModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronLeft, ChevronRight, Wine as WineIcon, LogOut } from "lucide-react";
@@ -51,7 +51,7 @@ export default function TastingPage() {
   const [showWelcome, setShowWelcome] = useState(!saved || saved.ratings.length === 0);
   const [localRatings, setLocalRatings] = useState<RatingEntry[]>(saved?.ratings ?? []);
   const [showQuiz, setShowQuiz] = useState(false);
-  const [showProfileForm, setShowProfileForm] = useState(false);
+  
 
   // Determine tasting wines based on selected package
   const tastingWines = useMemo(() => {
@@ -136,9 +136,6 @@ export default function TastingPage() {
     }
   };
 
-  // Store finish data for after profile form
-  const [finishData, setFinishData] = useState<{ persona: any; recs: Wine[] } | null>(null);
-
   const handleFinishTasting = async () => {
     if (!lead || localRatings.length === 0) return;
 
@@ -160,33 +157,9 @@ export default function TastingPage() {
       await invokeAuth("tourist-actions", { action: "save_persona", persona_key: persona.key, persona_label: persona.label });
     } catch {}
 
-    // Show profile form before navigating (if birth_date not set)
-    if (!lead.preferences_summary || !finishData) {
-      setFinishData({ persona, recs });
-      setShowProfileForm(true);
-      return;
-    }
-
-    navigateToJourney(persona, recs);
-  };
-
-  const navigateToJourney = (persona: any, recs: Wine[]) => {
     navigate(`/app/${winery.slug}/journey`, {
       state: { persona, recommendations: recs, justFinished: true },
     });
-  };
-
-  const handleProfileComplete = async (data: { birth_date?: string; income_class?: string }) => {
-    try {
-      await updateProfile(data);
-    } catch {}
-    setShowProfileForm(false);
-    if (finishData) navigateToJourney(finishData.persona, finishData.recs);
-  };
-
-  const handleProfileSkip = () => {
-    setShowProfileForm(false);
-    if (finishData) navigateToJourney(finishData.persona, finishData.recs);
   };
 
   const handleToggleFavorite = (wineId: string) => {
@@ -234,18 +207,8 @@ export default function TastingPage() {
     );
   }
 
-  // Profile form (before finishing)
-  if (showProfileForm) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <ProfileForm
-          wineryColor={winery.primary_color}
-          onComplete={handleProfileComplete}
-          onSkip={handleProfileSkip}
-        />
-      </div>
-    );
-  }
+
+
 
   return (
     <div className="space-y-6">
