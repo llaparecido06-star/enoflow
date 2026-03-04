@@ -497,6 +497,7 @@ export type Database = {
           aging: string | null
           alcohol_content: string | null
           aromatic_notes: string[] | null
+          capture_point_id: string | null
           created_at: string
           description: string | null
           enologist: string | null
@@ -523,6 +524,7 @@ export type Database = {
           aging?: string | null
           alcohol_content?: string | null
           aromatic_notes?: string[] | null
+          capture_point_id?: string | null
           created_at?: string
           description?: string | null
           enologist?: string | null
@@ -549,6 +551,7 @@ export type Database = {
           aging?: string | null
           alcohol_content?: string | null
           aromatic_notes?: string[] | null
+          capture_point_id?: string | null
           created_at?: string
           description?: string | null
           enologist?: string | null
@@ -572,6 +575,13 @@ export type Database = {
           year?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "wines_capture_point_id_fkey"
+            columns: ["capture_point_id"]
+            isOneToOne: false
+            referencedRelation: "capture_points"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "wines_winery_id_fkey"
             columns: ["winery_id"]

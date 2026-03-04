@@ -70,6 +70,7 @@ export interface ValidatedWineData {
   on_restaurant: boolean;
   on_shop: boolean;
   image_url: string | null;
+  capture_point_id: string | null;
 }
 
 export function validateWineData(d: Record<string, unknown>): { data?: ValidatedWineData; error?: string } {
@@ -101,6 +102,7 @@ export function validateWineData(d: Record<string, unknown>): { data?: Validated
       on_restaurant: bool(d.on_restaurant),
       on_shop: bool(d.on_shop, true),
       image_url: optStr(d.image_url, 500),
+      capture_point_id: isUUID(d.capture_point_id) ? d.capture_point_id : null,
     },
   };
 }
