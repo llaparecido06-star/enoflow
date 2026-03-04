@@ -31,14 +31,25 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
   ];
 
   const handleSubmit = async () => {
-    if (!birthDate) {
+    // Validate date format DD/MM/YYYY
+    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const match = birthDate.match(dateRegex);
+    if (!match) {
+      toast.error(t("profile.birth_required"));
+      return;
+    }
+    const [, dd, mm, yyyy] = match;
+    const isoDate = `${yyyy}-${mm}-${dd}`;
+    // Basic validation
+    const parsed = new Date(isoDate);
+    if (isNaN(parsed.getTime()) || parsed > new Date() || parsed < new Date("1920-01-01")) {
       toast.error(t("profile.birth_required"));
       return;
     }
     setLoading(true);
     try {
       await onComplete({
-        birth_date: birthDate,
+        birth_date: isoDate,
         income_class: incomeClass || undefined,
         gender: gender || undefined,
       });
@@ -69,11 +80,18 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
           {t("profile.birth_date")} <span className="text-destructive">*</span>
         </label>
         <input
-          type="date"
+          type="text"
+          inputMode="numeric"
+          placeholder="DD/MM/AAAA"
           value={birthDate}
-          onChange={(e) => setBirthDate(e.target.value)}
-          max={new Date().toISOString().slice(0, 10)}
-          min="1920-01-01"
+          onChange={(e) => {
+            let v = e.target.value.replace(/\D/g, "");
+            if (v.length > 8) v = v.slice(0, 8);
+            if (v.length >= 5) v = v.slice(0, 2) + "/" + v.slice(2, 4) + "/" + v.slice(4);
+            else if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
+            setBirthDate(v);
+          }}
+          maxLength={10}
           className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
       </div>

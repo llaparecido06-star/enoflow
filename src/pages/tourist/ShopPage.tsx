@@ -368,9 +368,12 @@ export default function ShopPage() {
   const handleProfileComplete = async (data: { birth_date?: string; income_class?: string; gender?: string }) => {
     try {
       await updateProfile(data);
-    } catch {}
-    setFunnelStep(null);
-    generateVoucher();
+      setFunnelStep(null);
+      await generateVoucher();
+    } catch (err) {
+      console.error("Profile/voucher error:", err);
+      toast.error("Erro ao gerar voucher. Tente novamente.");
+    }
   };
 
   const generateVoucher = async () => {
