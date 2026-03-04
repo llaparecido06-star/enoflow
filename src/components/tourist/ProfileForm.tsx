@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Calendar, Wallet, ArrowRight, Loader2, Users } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, Wallet, ArrowRight, Loader2, Users, AlertTriangle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 
