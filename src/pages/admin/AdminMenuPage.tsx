@@ -51,8 +51,8 @@ export default function AdminMenuPage() {
   // Filter by location then group by category
   const filteredItems = (menuItems ?? []).filter(item => {
     if (locationFilter === "all") return true;
-    if (locationFilter === "none") return !item.capture_point_id;
-    return item.capture_point_id === locationFilter;
+    if (locationFilter === "none") return !item.capture_point_ids || item.capture_point_ids.length === 0;
+    return item.capture_point_ids?.includes(locationFilter);
   });
 
   const grouped = filteredItems.reduce<Record<string, MenuItem[]>>((acc, item) => {
@@ -114,11 +114,15 @@ export default function AdminMenuPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h4 className="text-sm font-semibold text-foreground truncate">{item.name}</h4>
-                          {item.capture_point_id && locMap.get(item.capture_point_id) && (
-                            <span className="text-[9px] font-medium bg-secondary text-muted-foreground px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0">
-                              <MapPin className="w-2.5 h-2.5" />
-                              {locMap.get(item.capture_point_id)}
-                            </span>
+                          {item.capture_point_ids && item.capture_point_ids.length > 0 && (
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {item.capture_point_ids.map(cpId => locMap.get(cpId) && (
+                                <span key={cpId} className="text-[9px] font-medium bg-secondary text-muted-foreground px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shrink-0">
+                                  <MapPin className="w-2.5 h-2.5" />
+                                  {locMap.get(cpId)}
+                                </span>
+                              ))}
+                            </div>
                           )}
                         </div>
                         <p className="text-[11px] text-muted-foreground">R$ {Number(item.price).toFixed(2)}</p>

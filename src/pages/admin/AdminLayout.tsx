@@ -1,7 +1,7 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
-import { Wine, Package, BarChart3, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin } from "lucide-react";
+import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin } from "lucide-react";
 import { useEffect } from "react";
 
 const navItems = [
@@ -10,7 +10,6 @@ const navItems = [
   { id: "packages", label: "Pacotes", icon: Package, path: "/packages", minRole: "manager" as AdminRole },
   { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", minRole: "manager" as AdminRole },
   { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "owner" as AdminRole },
-  { id: "reports", label: "Relatórios", icon: BarChart3, path: "/reports", minRole: "owner" as AdminRole },
   { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", minRole: "owner" as AdminRole },
   { id: "locations", label: "Locais", icon: MapPin, path: "/locations", minRole: "manager" as AdminRole },
   { id: "training", label: "Treinamento", icon: Rocket, path: "/training", minRole: "staff" as AdminRole },

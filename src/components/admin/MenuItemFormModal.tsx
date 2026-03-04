@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Check } from "lucide-react";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -35,10 +35,19 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, loca
     description: item?.description ?? "",
     suggested_wine_id: item?.suggested_wine_id ?? "",
     image_url: item?.image_url ?? "",
-    capture_point_id: item?.capture_point_id ?? "",
+    capture_point_ids: item?.capture_point_ids ?? [] as string[],
   });
 
   const set = (key: string, val: unknown) => setForm((f) => ({ ...f, [key]: val }));
+
+  const toggleCapturePoint = (id: string) => {
+    setForm((f) => ({
+      ...f,
+      capture_point_ids: f.capture_point_ids.includes(id)
+        ? f.capture_point_ids.filter((cpId) => cpId !== id)
+        : [...f.capture_point_ids, id],
+    }));
+  };
 
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.price) {
@@ -54,7 +63,7 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, loca
         description: form.description.trim() || null,
         suggested_wine_id: form.suggested_wine_id || null,
         image_url: form.image_url || null,
-        capture_point_id: form.capture_point_id || null,
+        capture_point_ids: form.capture_point_ids,
       };
 
       const body = isEdit
@@ -83,7 +92,6 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, loca
         </div>
 
         <div className="p-4 space-y-4">
-          {/* Image Upload */}
           <ImageUploadField
             label="Foto do Prato"
             currentUrl={form.image_url || null}
@@ -130,17 +138,40 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, loca
             </select>
           </div>
 
-          <div>
-            <label className="text-xs text-muted-foreground block mb-1">Unidade / Local</label>
-            <select value={form.capture_point_id} onChange={(e) => set("capture_point_id", e.target.value)}
-              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20">
-              <option value="">Todas as unidades</option>
-              {locations.map((loc) => (
-                <option key={loc.id} value={loc.id}>{loc.name}</option>
-              ))}
-            </select>
-            <p className="text-[10px] text-muted-foreground mt-1">Selecione em qual unidade este prato estará disponível</p>
-          </div>
+          {locations.length > 0 && (
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Unidades / Locais</label>
+              <div className="space-y-1.5 mt-1">
+                {locations.map((loc) => {
+                  const isSelected = form.capture_point_ids.includes(loc.id);
+                  return (
+                    <button
+                      key={loc.id}
+                      type="button"
+                      onClick={() => toggleCapturePoint(loc.id)}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border text-sm transition-colors text-left ${
+                        isSelected
+                          ? "border-primary bg-primary/5 text-foreground"
+                          : "border-border text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
+                        isSelected ? "bg-primary border-primary" : "border-border"
+                      }`}>
+                        {isSelected && <Check className="w-3 h-3 text-primary-foreground" />}
+                      </div>
+                      {loc.name}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1.5">
+                {form.capture_point_ids.length === 0
+                  ? "Nenhum selecionado = disponível em todas as unidades"
+                  : `Disponível em ${form.capture_point_ids.length} unidade(s)`}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="p-4 border-t border-border flex gap-2 justify-end">

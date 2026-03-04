@@ -123,7 +123,7 @@ export default function RestaurantPage() {
   const menuItems = useMemo(() => {
     if (!allMenuItems) return [];
     if (!capturePointId) return allMenuItems;
-    return allMenuItems.filter(item => !item.capture_point_id || item.capture_point_id === capturePointId);
+    return allMenuItems.filter(item => !item.capture_point_ids || item.capture_point_ids.length === 0 || item.capture_point_ids.includes(capturePointId));
   }, [allMenuItems, capturePointId]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [sommelierDish, setSommelierDish] = useState<MenuItem | null>(null);
