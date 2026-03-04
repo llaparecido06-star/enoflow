@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
 import { invokeAuth } from "@/lib/auth-api";
-import { Upload, FileSpreadsheet, FileText, Sparkles, Loader2, Check, Wine, UtensilsCrossed, Package } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Upload, FileSpreadsheet, FileText, Sparkles, Loader2, Check, Wine, UtensilsCrossed, Package, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,12 @@ interface WineryOption {
   id: string;
   name: string;
   slug: string;
+}
+
+interface CapturePointOption {
+  id: string;
+  name: string;
+  category: string;
 }
 
 const importTypes = [
@@ -31,6 +38,9 @@ export default function MasterImportPage() {
   const [aiProcessing, setAiProcessing] = useState(false);
   const [parsedItems, setParsedItems] = useState<Record<string, unknown>[]>([]);
   const [rawText, setRawText] = useState("");
+  const [capturePoints, setCapturePoints] = useState<CapturePointOption[]>([]);
+  const [selectedCapturePoint, setSelectedCapturePoint] = useState("");
+  const [loadingCPs, setLoadingCPs] = useState(false);
   const [result, setResult] = useState<{ success: boolean; count: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +53,20 @@ export default function MasterImportPage() {
     };
     fetch();
   }, [admin.id]);
+
+  // Fetch capture points when winery changes
+  useEffect(() => {
+    if (!wineryId) { setCapturePoints([]); return; }
+    const fetchCPs = async () => {
+      setLoadingCPs(true);
+      try {
+        const { data } = await supabase.from("capture_points").select("id, name, category").eq("winery_id", wineryId);
+        setCapturePoints(data ?? []);
+      } catch {} finally { setLoadingCPs(false); }
+    };
+    fetchCPs();
+    setSelectedCapturePoint("");
+  }, [wineryId]);
 
   const parseCSV = (text: string): Record<string, string>[] => {
     const lines = text.trim().split("\n");
@@ -127,6 +151,7 @@ export default function MasterImportPage() {
           winery_id: wineryId,
           import_type: importType,
           items: parsedItems,
+          capture_point_id: (selectedCapturePoint && selectedCapturePoint !== "all") ? selectedCapturePoint : null,
       });
       if (res.data?.error) throw new Error(res.data.error);
       setResult({ success: true, count: res.data.inserted ?? 0 });
@@ -188,6 +213,29 @@ export default function MasterImportPage() {
           </div>
         </div>
       </div>
+
+      {/* Capture Point selector for menu/wines */}
+      {(importType === "menu" || importType === "wines") && capturePoints.length > 0 && (
+        <div className="mb-6">
+          <Label className="flex items-center gap-1.5 mb-1.5">
+            <MapPin className="w-3.5 h-3.5" /> Ponto de Captura (Unidade)
+          </Label>
+          <Select value={selectedCapturePoint} onValueChange={setSelectedCapturePoint}>
+            <SelectTrigger><SelectValue placeholder="Todas as unidades (sem filtro)" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as unidades</SelectItem>
+              {capturePoints
+                .filter(cp => importType === "menu" ? cp.category === "restaurant" : true)
+                .map(cp => (
+                  <SelectItem key={cp.id} value={cp.id}>{cp.name} ({cp.category})</SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            {importType === "menu" ? "Vincular todos os pratos importados a este restaurante" : "Vincular todos os vinhos importados a esta unidade"}
+          </p>
+        </div>
+      )}
 
       {/* Upload Area */}
       <div className="bg-card rounded-xl border border-border p-6 mb-6">
