@@ -53,17 +53,19 @@ export default function QuizSommelier({ wineryColor, onComplete, onSkip }: QuizS
 
   const handleAnswer = (value: string) => {
     setSelectedValue(value);
-    setTimeout(() => {
-      const next = [...answers, value];
-      setAnswers(next);
-      setSelectedValue(null);
-      if (step < questions.length - 1) {
+    const next = [...answers, value];
+    if (step < questions.length - 1) {
+      setTimeout(() => {
+        setAnswers(next);
+        setSelectedValue(null);
         setDirection(1);
         setStep(step + 1);
-      } else {
-        onComplete(next.join(", "));
-      }
-    }, 400);
+      }, 300);
+    } else {
+      // Last question: complete immediately to avoid delay
+      setSelectedValue(null);
+      onComplete(next.join(", "));
+    }
   };
 
   const q = questions[step];
