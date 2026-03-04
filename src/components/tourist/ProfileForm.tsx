@@ -70,11 +70,12 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
     setLoading(true);
     setSubmitError("");
     try {
-      await onComplete({
+      const completed = await onComplete({
         birth_date: isoDate,
         income_class: incomeClass || undefined,
         gender: gender || undefined,
       });
+      if (completed === false) throw new Error("voucher_generation_failed");
     } catch {
       setSubmitError("Não foi possível gerar o voucher. Verifique sua conexão e tente novamente.");
     } finally {
