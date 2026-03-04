@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Calendar, Wallet, ArrowRight, Loader2, Users } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Calendar, Wallet, ArrowRight, Loader2, Users, AlertTriangle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 
@@ -17,6 +17,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
   const [gender, setGender] = useState("");
   const [loading, setLoading] = useState(false);
   const [dateError, setDateError] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const incomeOptions = [
     { label: t("profile.income_up_to_3k"), value: "ate_3k" },
@@ -67,6 +68,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
     }
 
     setLoading(true);
+    setSubmitError("");
     try {
       await onComplete({
         birth_date: isoDate,
@@ -74,10 +76,15 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
         gender: gender || undefined,
       });
     } catch {
-      toast.error(t("profile.save_error"));
+      setSubmitError("Não foi possível gerar o voucher. Verifique sua conexão e tente novamente.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    setSubmitError("");
+    handleSubmit();
   };
 
   return (
@@ -172,6 +179,31 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
           ))}
         </div>
       </div>
+
+      {/* Inline error with retry */}
+      <AnimatePresence>
+        {submitError && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3"
+          >
+            <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-[11px] text-destructive font-medium">{submitError}</p>
+              <button
+                onClick={handleRetry}
+                disabled={loading}
+                className="flex items-center gap-1 mt-1.5 text-[11px] font-semibold text-destructive hover:underline"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Tentar novamente
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="flex gap-2 pt-1">
         <button
