@@ -31,21 +31,38 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
     { label: t("profile.prefer_not_say"), value: "nao_informar" },
   ];
 
+  const validateBirthDate = (value: string): { isoDate: string | null; error: string } => {
+    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+    const match = value.match(dateRegex);
+    if (!match) return { isoDate: null, error: "Formato inválido. Use DD/MM/AAAA." };
+
+    const [, dd, mm, yyyy] = match;
+    const day = Number(dd);
+    const month = Number(mm);
+    const year = Number(yyyy);
+
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    const validExactDate =
+      parsed.getUTCFullYear() === year &&
+      parsed.getUTCMonth() === month - 1 &&
+      parsed.getUTCDate() === day;
+
+    const today = new Date();
+    const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+
+    if (!validExactDate || parsed.getTime() > todayUtc || year < 1920) {
+      return { isoDate: null, error: "Data inválida. Verifique dia, mês e ano." };
+    }
+
+    return { isoDate: `${yyyy}-${mm}-${dd}`, error: "" };
+  };
+
   const handleSubmit = async () => {
     if (dateError) return;
 
-    const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-    const match = birthDate.match(dateRegex);
-    if (!match) {
-      setDateError("Formato inválido. Use DD/MM/AAAA.");
-      return;
-    }
-
-    const [, dd, mm, yyyy] = match;
-    const isoDate = `${yyyy}-${mm}-${dd}`;
-    const parsed = new Date(isoDate);
-    if (isNaN(parsed.getTime()) || parsed > new Date() || parsed < new Date("1920-01-01")) {
-      setDateError("Data inválida. Verifique dia, mês e ano.");
+    const { isoDate, error } = validateBirthDate(birthDate);
+    if (!isoDate) {
+      setDateError(error);
       return;
     }
 
@@ -94,17 +111,8 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
             else if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
             setBirthDate(v);
             if (v.length === 10) {
-              const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-              if (m) {
-                const d = new Date(`${m[3]}-${m[2]}-${m[1]}`);
-                if (isNaN(d.getTime()) || d > new Date() || d < new Date("1920-01-01")) {
-                  setDateError("Data inválida. Verifique dia, mês e ano.");
-                } else {
-                  setDateError("");
-                }
-              } else {
-                setDateError("Formato inválido. Use DD/MM/AAAA.");
-              }
+              const { error } = validateBirthDate(v);
+              setDateError(error);
             } else {
               setDateError("");
             }
