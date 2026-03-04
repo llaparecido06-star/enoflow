@@ -17,6 +17,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
   const [gender, setGender] = useState("");
   const [loading, setLoading] = useState(false);
   const [dateError, setDateError] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   const incomeOptions = [
     { label: t("profile.income_up_to_3k"), value: "ate_3k" },
