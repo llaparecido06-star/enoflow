@@ -276,9 +276,23 @@ export default function ShopPage() {
   const [funnelStep, setFunnelStep] = useState<"profile" | null>(null);
   const [voucherRedeemed, setVoucherRedeemed] = useState(false);
 
-  // Realtime: listen for voucher redemption by admin
+  // Realtime + fallback polling: listen for voucher redemption by admin
   useEffect(() => {
     if (!voucher?.id) return;
+
+    let active = true;
+    const checkRedeemed = async () => {
+      const { data } = await supabase
+        .from("vouchers")
+        .select("redeemed")
+        .eq("id", voucher.id)
+        .maybeSingle();
+
+      if (active && data?.redeemed === true) {
+        setVoucherRedeemed(true);
+      }
+    };
+
     const channel = supabase
       .channel(`voucher-${voucher.id}`)
       .on(
@@ -296,7 +310,15 @@ export default function ShopPage() {
         }
       )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    const interval = window.setInterval(checkRedeemed, 2000);
+    checkRedeemed();
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [voucher?.id]);
 
   // Handle wine added from profile recommendation
@@ -372,6 +394,7 @@ export default function ShopPage() {
       await generateVoucher();
     } catch (err) {
       console.error("Profile/voucher error:", err);
+      setFunnelStep(null);
       toast.error("Erro ao gerar voucher. Tente novamente.");
     }
   };

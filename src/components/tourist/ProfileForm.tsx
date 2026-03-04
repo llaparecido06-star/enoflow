@@ -32,21 +32,23 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
   ];
 
   const handleSubmit = async () => {
-    // Validate date format DD/MM/YYYY
+    if (dateError) return;
+
     const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
     const match = birthDate.match(dateRegex);
     if (!match) {
-      toast.error(t("profile.birth_required"));
+      setDateError("Formato inválido. Use DD/MM/AAAA.");
       return;
     }
+
     const [, dd, mm, yyyy] = match;
     const isoDate = `${yyyy}-${mm}-${dd}`;
-    // Basic validation
     const parsed = new Date(isoDate);
     if (isNaN(parsed.getTime()) || parsed > new Date() || parsed < new Date("1920-01-01")) {
-      toast.error(t("profile.birth_required"));
+      setDateError("Data inválida. Verifique dia, mês e ano.");
       return;
     }
+
     setLoading(true);
     try {
       await onComplete({
@@ -172,8 +174,8 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
         </button>
         <button
           onClick={handleSubmit}
-          disabled={loading || !birthDate}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-primary-foreground transition-colors disabled:opacity-50"
+          disabled={loading || !birthDate || birthDate.length !== 10 || !!dateError}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-primary-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: wineryColor }}
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
