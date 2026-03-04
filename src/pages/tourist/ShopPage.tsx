@@ -9,7 +9,9 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { formatCurrency, formatCurrencyShort } from "@/lib/currency";
 import NpsModal from "@/components/tourist/NpsModal";
 import ProfileForm from "@/components/tourist/ProfileForm";
+import VoucherRedeemedModal from "@/components/tourist/VoucherRedeemedModal";
 import { useI18n } from "@/lib/i18n";
+import { supabase } from "@/integrations/supabase/client";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -272,6 +274,30 @@ export default function ShopPage() {
   const [showNps, setShowNps] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [funnelStep, setFunnelStep] = useState<"profile" | null>(null);
+  const [voucherRedeemed, setVoucherRedeemed] = useState(false);
+
+  // Realtime: listen for voucher redemption by admin
+  useEffect(() => {
+    if (!voucher?.id) return;
+    const channel = supabase
+      .channel(`voucher-${voucher.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "vouchers",
+          filter: `id=eq.${voucher.id}`,
+        },
+        (payload) => {
+          if (payload.new && (payload.new as any).redeemed === true) {
+            setVoucherRedeemed(true);
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [voucher?.id]);
 
   // Handle wine added from profile recommendation
   useEffect(() => {
@@ -525,6 +551,23 @@ export default function ShopPage() {
       <AnimatePresence>
         {showNps && (
           <NpsModal onSubmit={handleNpsSubmit} onSkip={() => setShowNps(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* Voucher Redeemed Modal */}
+      <AnimatePresence>
+        {voucherRedeemed && (
+          <VoucherRedeemedModal
+            total={discountedTotal}
+            currency={cur}
+            onClose={() => {
+              setVoucherRedeemed(false);
+              setVoucher(null);
+              setQrDataUrl(null);
+              clearCart();
+              setShowCart(false);
+            }}
+          />
         )}
       </AnimatePresence>
 
