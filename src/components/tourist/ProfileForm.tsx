@@ -111,17 +111,8 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
             else if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
             setBirthDate(v);
             if (v.length === 10) {
-              const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-              if (m) {
-                const d = new Date(`${m[3]}-${m[2]}-${m[1]}`);
-                if (isNaN(d.getTime()) || d > new Date() || d < new Date("1920-01-01")) {
-                  setDateError("Data inválida. Verifique dia, mês e ano.");
-                } else {
-                  setDateError("");
-                }
-              } else {
-                setDateError("Formato inválido. Use DD/MM/AAAA.");
-              }
+              const { error } = validateBirthDate(v);
+              setDateError(error);
             } else {
               setDateError("");
             }

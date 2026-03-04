@@ -400,8 +400,8 @@ export default function ShopPage() {
     }
   };
 
-  const generateVoucher = async () => {
-    if (!lead) return;
+  const generateVoucher = async (): Promise<boolean> => {
+    if (!lead) return false;
     setGenerating(true);
     const firstName = lead.name.split(" ")[0].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const num = Math.floor(Math.random() * 9000 + 1000);
@@ -421,9 +421,10 @@ export default function ShopPage() {
         const qrUrl = await QRCode.toDataURL(code, { width: 200, margin: 2, color: { dark: "#000000", light: "#ffffff" } });
         setQrDataUrl(qrUrl);
       } catch {}
-      // NPS now triggers after voucher redeemed modal closes
+      return true;
     } catch {
       toast.error(t("shop.voucher_error"));
+      return false;
     } finally {
       setGenerating(false);
     }
