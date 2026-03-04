@@ -286,7 +286,7 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: bulk_import ─────────────────────────────
     if (action === "bulk_import") {
-      const { winery_id, import_type, items } = body;
+      const { winery_id, import_type, items, capture_point_id } = body;
       if (!isUUID(winery_id) || !import_type || !items || !Array.isArray(items)) {
         return json({ error: "winery_id, import_type, items[] required" }, 400);
       }
@@ -296,6 +296,7 @@ Deno.serve(async (req) => {
       const { data: winery } = await supabase.from("wineries").select("id").eq("id", winery_id).single();
       if (!winery) return json({ error: "Vinícola não encontrada" }, 404);
 
+      const cpId = isUUID(capture_point_id) ? capture_point_id : null;
       let insertedCount = 0;
 
       if (import_type === "wines") {
@@ -312,12 +313,14 @@ Deno.serve(async (req) => {
           sensory_body: intRange(item.sensory_body, 1, 5, 3),
           sensory_sweetness: intRange(item.sensory_sweetness, 1, 5, 3),
           on_tasting: bool(item.on_tasting), on_restaurant: bool(item.on_restaurant), on_shop: bool(item.on_shop, true),
+          capture_point_id: cpId,
         })).filter(r => r.name);
         if (rows.length > 0) { const { error } = await supabase.from("wines").insert(rows); if (error) throw error; insertedCount = rows.length; }
       } else if (import_type === "menu") {
         const rows = items.map((item: Record<string, unknown>) => ({
           winery_id, name: str(item.name, 200), category: str(item.category || "Outros", 100),
           price: num(item.price, 0, 999999), description: optStr(item.description, 500),
+          capture_point_id: cpId,
         })).filter(r => r.name);
         if (rows.length > 0) { const { error } = await supabase.from("menu_items").insert(rows); if (error) throw error; insertedCount = rows.length; }
       } else if (import_type === "packages") {
