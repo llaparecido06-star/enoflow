@@ -6,10 +6,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Wine } from "@/hooks/useWinery";
 import ImageUploadField from "./ImageUploadField";
 
+interface CapturePointOption {
+  id: string;
+  name: string;
+  category: string;
+}
+
 interface WineFormModalProps {
   wineryId: string;
   adminId: string;
   wine?: Wine | null;
+  locations?: CapturePointOption[];
   onClose: () => void;
 }
 
@@ -31,7 +38,7 @@ function SensoryStarInput({ label, value, onChange }: { label: string; value: nu
   );
 }
 
-export default function WineFormModal({ wineryId, adminId, wine, onClose }: WineFormModalProps) {
+export default function WineFormModal({ wineryId, adminId, wine, locations = [], onClose }: WineFormModalProps) {
   const qc = useQueryClient();
   const isEdit = !!wine;
   const [loading, setLoading] = useState(false);
@@ -57,6 +64,7 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
     year: wine?.year?.toString() ?? "",
     aromatic_notes: wine?.aromatic_notes?.join(", ") ?? "",
     harmonization: wine?.harmonization?.join(", ") ?? "",
+    capture_point_id: (wine as any)?.capture_point_id ?? "",
   });
 
   const set = (key: string, val: unknown) => setForm((f) => ({ ...f, [key]: val }));
@@ -85,6 +93,7 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
         on_tasting: form.on_tasting,
         on_restaurant: form.on_restaurant,
         on_shop: form.on_shop,
+        capture_point_id: form.capture_point_id || null,
         grape: form.grape.trim() || null,
         region: form.region.trim() || null,
         alcohol_content: form.alcohol_content.trim() || null,
@@ -241,6 +250,18 @@ export default function WineFormModal({ wineryId, adminId, wine, onClose }: Wine
               <SensoryStarInput label="Doçura" value={form.sensory_sweetness} onChange={(v) => set("sensory_sweetness", v)} />
             </div>
           </div>
+
+          {/* Location / Unit */}
+          {locations.length > 0 && (
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Unidade / Local</label>
+              <select value={form.capture_point_id} onChange={(e) => set("capture_point_id", e.target.value)}
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20">
+                <option value="">Todas as unidades</option>
+                {locations.map((loc) => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
+              </select>
+            </div>
+          )}
 
           {/* Availability toggles */}
           <div className="flex gap-4">

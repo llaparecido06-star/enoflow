@@ -2,17 +2,26 @@ import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
-import { Wine as WineIcon, Plus, Pencil, Trash2 } from "lucide-react";
+import { Wine as WineIcon, Plus, Pencil, Trash2, MapPin } from "lucide-react";
 import WineFormModal from "@/components/admin/WineFormModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 export default function AdminWinesPage() {
   const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
   const { data: wines } = useWines(winery.id);
+  const { data: locations = [] } = useQuery<{ id: string; name: string; category: string }[]>({
+    queryKey: ["capture-points", winery.id],
+    queryFn: async () => {
+      const res = await invokeAuth("admin-locations", { action: "list" });
+      if (res.error) throw res.error;
+      return res.data?.locations ?? [];
+    },
+  });
   const [formWine, setFormWine] = useState<Wine | null | undefined>(undefined);
+  const [locationFilter, setLocationFilter] = useState<string>("all");
   const [deleteWine, setDeleteWine] = useState<Wine | null>(null);
   const [deleting, setDeleting] = useState(false);
   const qc = useQueryClient();
@@ -47,9 +56,33 @@ export default function AdminWinesPage() {
         </button>
       </div>
 
+      {/* Location filter */}
+      {locations.length > 0 && (
+        <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
+          <button onClick={() => setLocationFilter("all")}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${locationFilter === "all" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}>
+            Todas
+          </button>
+          <button onClick={() => setLocationFilter("none")}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${locationFilter === "none" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}>
+            Sem unidade
+          </button>
+          {locations.map((loc) => (
+            <button key={loc.id} onClick={() => setLocationFilter(loc.id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${locationFilter === loc.id ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}>
+              <MapPin className="w-3 h-3" /> {loc.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Card layout for mobile-friendly display */}
       <div className="space-y-3">
-        {wines?.map((wine) => (
+        {wines?.filter((w) => {
+          if (locationFilter === "all") return true;
+          if (locationFilter === "none") return !(w as any).capture_point_id;
+          return (w as any).capture_point_id === locationFilter;
+        }).map((wine) => (
           <div key={wine.id} className="bg-card rounded-xl border border-border p-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -62,6 +95,12 @@ export default function AdminWinesPage() {
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-foreground truncate">{wine.name}</h3>
                 <p className="text-[11px] text-muted-foreground">{wine.type} · R$ {Number(wine.price_bottle).toFixed(2)}</p>
+                {(wine as any).capture_point_id && (
+                  <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground bg-secondary rounded-full px-2 py-0.5">
+                    <MapPin className="w-2.5 h-2.5" />
+                    {locations.find(l => l.id === (wine as any).capture_point_id)?.name ?? "Unidade"}
+                  </span>
+                )}
                 <div className="flex items-center gap-3 mt-1.5">
                   {[
                     { label: "Deg", active: wine.on_tasting },
@@ -95,7 +134,7 @@ export default function AdminWinesPage() {
       </div>
 
       {formWine !== undefined && (
-        <WineFormModal wineryId={winery.id} adminId={admin.id} wine={formWine} onClose={() => setFormWine(undefined)} />
+        <WineFormModal wineryId={winery.id} adminId={admin.id} wine={formWine} locations={locations} onClose={() => setFormWine(undefined)} />
       )}
 
       {deleteWine && (

@@ -1,0 +1,1 @@
+ALTER TABLE public.wines ADD COLUMN capture_point_id uuid REFERENCES public.capture_points(id) ON DELETE SET NULL DEFAULT NULL;

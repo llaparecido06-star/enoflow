@@ -287,7 +287,14 @@ export default function ShopPage() {
   const discountMultiplier = discountApplied ? 0.9 : 1;
   const discountedTotal = total * discountMultiplier;
 
-  const shopWines = wines?.filter((w) => w.on_shop) ?? [];
+  const searchParams = new URLSearchParams(location.search);
+  const capturePointId = searchParams.get("cp");
+
+  const shopWines = useMemo(() => {
+    const all = wines?.filter((w) => w.on_shop) ?? [];
+    if (!capturePointId) return all;
+    return all.filter(w => !(w as any).capture_point_id || (w as any).capture_point_id === capturePointId);
+  }, [wines, capturePointId]);
   const translatedWineNames = useContentTranslation(shopWines.map(w => w.name));
   const wineNameMap = useMemo(() => {
     const map: Record<string, string> = {};

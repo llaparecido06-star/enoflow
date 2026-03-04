@@ -2,7 +2,7 @@ import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
 import { Wine, Package, BarChart3, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin } from "lucide-react";
-import ThemeToggle from "@/components/ThemeToggle";
+import { useEffect } from "react";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "", minRole: "owner" as AdminRole },
@@ -18,6 +18,12 @@ const navItems = [
 ];
 
 export default function AdminLayout() {
+  // Force light mode in admin
+  useEffect(() => {
+    document.documentElement.classList.remove("dark");
+    return () => {};
+  }, []);
+
   const { slug } = useParams<{ slug: string }>();
   const { data: winery, isLoading } = useWinery(slug ?? "");
   const location = useLocation();
@@ -122,12 +128,11 @@ export default function AdminLayout() {
             );
           })}
         </nav>
-        <div className="p-3 border-t border-sidebar-border flex items-center justify-between">
+        <div className="p-3 border-t border-sidebar-border">
           <button onClick={() => { logout(); navigate("/admin/login"); }} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive/80 hover:bg-destructive/10 transition-colors">
             <LogOut className="w-4 h-4" />
             Sair
           </button>
-          <ThemeToggle />
         </div>
       </aside>
 
