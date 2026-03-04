@@ -387,16 +387,19 @@ export default function ShopPage() {
     }
   };
 
-  const handleProfileComplete = async (data: { birth_date?: string; income_class?: string; gender?: string }) => {
+  const handleProfileComplete = async (data: { birth_date?: string; income_class?: string; gender?: string }): Promise<boolean> => {
     try {
       await updateProfile(data);
       const voucherCreated = await generateVoucher();
-      if (voucherCreated) {
-        setFunnelStep(null);
+      if (!voucherCreated) {
+        throw new Error("voucher_generation_failed");
       }
+      setFunnelStep(null);
+      return true;
     } catch (err) {
       console.error("Profile/voucher error:", err);
       toast.error("Erro ao gerar voucher. Tente novamente.");
+      return false;
     }
   };
 
