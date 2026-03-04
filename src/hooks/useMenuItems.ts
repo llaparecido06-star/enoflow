@@ -10,7 +10,7 @@ export interface MenuItem {
   description: string | null;
   suggested_wine_id: string | null;
   image_url: string | null;
-  capture_point_id: string | null;
+  capture_point_ids: string[];
   created_at: string;
 }
 

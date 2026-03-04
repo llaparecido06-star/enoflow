@@ -320,7 +320,7 @@ Deno.serve(async (req) => {
         const rows = items.map((item: Record<string, unknown>) => ({
           winery_id, name: str(item.name, 200), category: str(item.category || "Outros", 100),
           price: num(item.price, 0, 999999), description: optStr(item.description, 500),
-          capture_point_id: cpId,
+          capture_point_ids: cpId ? [cpId] : [],
         })).filter(r => r.name);
         if (rows.length > 0) { const { error } = await supabase.from("menu_items").insert(rows); if (error) throw error; insertedCount = rows.length; }
       } else if (import_type === "packages") {

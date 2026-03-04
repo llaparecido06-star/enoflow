@@ -189,7 +189,7 @@ export type Database = {
       }
       menu_items: {
         Row: {
-          capture_point_id: string | null
+          capture_point_ids: string[]
           category: string
           created_at: string
           description: string | null
@@ -201,7 +201,7 @@ export type Database = {
           winery_id: string
         }
         Insert: {
-          capture_point_id?: string | null
+          capture_point_ids?: string[]
           category: string
           created_at?: string
           description?: string | null
@@ -213,7 +213,7 @@ export type Database = {
           winery_id: string
         }
         Update: {
-          capture_point_id?: string | null
+          capture_point_ids?: string[]
           category?: string
           created_at?: string
           description?: string | null
@@ -225,13 +225,6 @@ export type Database = {
           winery_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "menu_items_capture_point_id_fkey"
-            columns: ["capture_point_id"]
-            isOneToOne: false
-            referencedRelation: "capture_points"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "menu_items_suggested_wine_id_fkey"
             columns: ["suggested_wine_id"]
