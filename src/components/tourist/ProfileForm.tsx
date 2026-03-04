@@ -16,6 +16,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
   const [incomeClass, setIncomeClass] = useState("");
   const [gender, setGender] = useState("");
   const [loading, setLoading] = useState(false);
+  const [dateError, setDateError] = useState("");
 
   const incomeOptions = [
     { label: t("profile.income_up_to_3k"), value: "ate_3k" },
@@ -90,10 +91,30 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
             if (v.length >= 5) v = v.slice(0, 2) + "/" + v.slice(2, 4) + "/" + v.slice(4);
             else if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
             setBirthDate(v);
+            if (v.length === 10) {
+              const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+              if (m) {
+                const d = new Date(`${m[3]}-${m[2]}-${m[1]}`);
+                if (isNaN(d.getTime()) || d > new Date() || d < new Date("1920-01-01")) {
+                  setDateError("Data inválida. Verifique dia, mês e ano.");
+                } else {
+                  setDateError("");
+                }
+              } else {
+                setDateError("Formato inválido. Use DD/MM/AAAA.");
+              }
+            } else {
+              setDateError("");
+            }
           }}
           maxLength={10}
-          className="w-full px-3 py-2.5 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className={`w-full px-3 py-2.5 bg-background border rounded-xl text-sm focus:outline-none focus:ring-2 transition-colors ${
+            dateError ? "border-destructive focus:ring-destructive/20" : "border-border focus:ring-primary/20"
+          }`}
         />
+        {dateError && (
+          <p className="text-[11px] text-destructive mt-1">{dateError}</p>
+        )}
       </div>
 
       {/* Gender */}
