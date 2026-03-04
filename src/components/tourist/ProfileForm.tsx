@@ -6,7 +6,7 @@ import { useI18n } from "@/lib/i18n";
 
 interface ProfileFormProps {
   wineryColor: string;
-  onComplete: (data: { birth_date?: string; income_class?: string; gender?: string }) => Promise<void>;
+  onComplete: (data: { birth_date?: string; income_class?: string; gender?: string }) => Promise<boolean | void>;
   onSkip: () => void;
 }
 
