@@ -592,8 +592,7 @@ export default function ShopPage() {
               setQrDataUrl(null);
               clearCart();
               setShowCart(false);
-              // Show NPS 10s after closing the redeemed modal
-              setTimeout(() => setShowNps(true), 10000);
+              setShowNps(true);
             }}
           />
         )}
