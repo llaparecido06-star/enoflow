@@ -420,7 +420,7 @@ export default function ShopPage() {
         const qrUrl = await QRCode.toDataURL(code, { width: 200, margin: 2, color: { dark: "#000000", light: "#ffffff" } });
         setQrDataUrl(qrUrl);
       } catch {}
-      setTimeout(() => setShowNps(true), 5000);
+      // NPS now triggers after voucher redeemed modal closes
     } catch {
       toast.error(t("shop.voucher_error"));
     } finally {
@@ -592,6 +592,8 @@ export default function ShopPage() {
               setQrDataUrl(null);
               clearCart();
               setShowCart(false);
+              // Show NPS 10s after closing the redeemed modal
+              setTimeout(() => setShowNps(true), 10000);
             }}
           />
         )}
