@@ -180,6 +180,31 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
         </div>
       </div>
 
+      {/* Inline error with retry */}
+      <AnimatePresence>
+        {submitError && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            className="flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3"
+          >
+            <AlertTriangle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-[11px] text-destructive font-medium">{submitError}</p>
+              <button
+                onClick={handleRetry}
+                disabled={loading}
+                className="flex items-center gap-1 mt-1.5 text-[11px] font-semibold text-destructive hover:underline"
+              >
+                <RotateCcw className="w-3 h-3" />
+                Tentar novamente
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex gap-2 pt-1">
         <button
           onClick={onSkip}
