@@ -68,6 +68,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
     }
 
     setLoading(true);
+    setSubmitError("");
     try {
       await onComplete({
         birth_date: isoDate,
@@ -75,10 +76,15 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
         gender: gender || undefined,
       });
     } catch {
-      toast.error(t("profile.save_error"));
+      setSubmitError("Não foi possível gerar o voucher. Verifique sua conexão e tente novamente.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    setSubmitError("");
+    handleSubmit();
   };
 
   return (
