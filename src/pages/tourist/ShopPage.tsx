@@ -158,12 +158,12 @@ function WineDetailModal({ wine, onClose, onAdd, t }: { wine: Wine; onClose: () 
 
           {/* Sensory stars */}
           <div className="bg-muted/30 rounded-xl p-4 mb-4">
-            <span className="text-xs font-semibold text-foreground block mb-2">✨ Perfil Sensorial</span>
+            <span className="text-xs font-semibold text-foreground block mb-2">{t("wine.sensory_profile")}</span>
             <div className="space-y-1.5">
               {[
-                { label: "Corpo", value: wine.sensory_body },
-                { label: "Acidez", value: wine.sensory_acidity },
-                { label: "Doçura", value: wine.sensory_sweetness },
+                { label: t("wine.body"), value: wine.sensory_body },
+                { label: t("wine.acidity"), value: wine.sensory_acidity },
+                { label: t("wine.sweetness"), value: wine.sensory_sweetness },
               ].map(s => (
                 <div key={s.label} className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{s.label}</span>
