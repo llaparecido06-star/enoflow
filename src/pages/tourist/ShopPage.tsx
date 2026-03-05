@@ -782,7 +782,8 @@ export default function ShopPage() {
           <WineDetailModal
             wine={detailWine}
             onClose={() => setDetailWine(null)}
-            onAdd={() => { addItem(detailWine); toast.success(`${detailWine.name} adicionado!`); }}
+            onAdd={() => { addItem(detailWine); toast.success(`${detailWine.name} ${t("shop.added_to_cart")}`); }}
+            t={t}
           />
         )}
       </AnimatePresence>
