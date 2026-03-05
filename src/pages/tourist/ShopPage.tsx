@@ -205,7 +205,7 @@ function WineDetailModal({ wine, onClose, onAdd, t }: { wine: Wine; onClose: () 
           {/* Aromatic notes */}
           {wine.aromatic_notes && wine.aromatic_notes.length > 0 && (
             <div className="mb-4">
-              <span className="text-xs font-semibold text-foreground block mb-2">Notas Aromáticas</span>
+              <span className="text-xs font-semibold text-foreground block mb-2">{t("wine.aromatic_notes")}</span>
               <div className="flex flex-wrap gap-1.5">
                 {translatedNotes.map((note, i) => (
                   <span key={i} className="text-[11px] bg-muted/50 border border-border/30 rounded-full px-2.5 py-1 text-muted-foreground">
