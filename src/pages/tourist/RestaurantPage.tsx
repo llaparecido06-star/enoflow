@@ -3,6 +3,7 @@ import { useOutletContext, useLocation } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useMenuItems, type MenuItem } from "@/hooks/useMenuItems";
 import { useContentTranslation } from "@/hooks/useContentTranslation";
+import { formatCurrency, formatCurrencyShort } from "@/lib/currency";
 import { motion, AnimatePresence } from "framer-motion";
 import { UtensilsCrossed, Wine as WineIcon, Sparkles, Search, Loader2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
