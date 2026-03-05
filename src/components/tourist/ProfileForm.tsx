@@ -77,7 +77,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
       });
       if (completed === false) throw new Error("voucher_generation_failed");
     } catch {
-      setSubmitError("Não foi possível gerar o voucher. Verifique sua conexão e tente novamente.");
+      setSubmitError(t("profile.voucher_error"));
     } finally {
       setLoading(false);
     }

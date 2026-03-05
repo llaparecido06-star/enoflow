@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, ArrowRight, PartyPopper } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
+import { useI18n } from "@/lib/i18n";
 import Confetti from "./Confetti";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function VoucherRedeemedModal({ total, currency, onClose }: Props) {
+  const { t } = useI18n();
   const [step, setStep] = useState<"confirmed" | "payment">("confirmed");
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function VoucherRedeemedModal({ total, currency, onClose }: Props
               transition={{ delay: 0.4 }}
               className="font-display text-2xl font-bold text-foreground mb-2"
             >
-              Compra confirmada! ✅
+              {t("redeemed.confirmed")}
             </motion.h2>
             <motion.p
               initial={{ y: 20, opacity: 0 }}
@@ -57,7 +59,7 @@ export default function VoucherRedeemedModal({ total, currency, onClose }: Props
               transition={{ delay: 0.6 }}
               className="text-sm text-muted-foreground"
             >
-              Seu voucher foi validado com sucesso
+              {t("redeemed.validated")}
             </motion.p>
           </motion.div>
         ) : (
@@ -78,13 +80,13 @@ export default function VoucherRedeemedModal({ total, currency, onClose }: Props
               <ArrowRight className="w-8 h-8 text-gold" />
             </motion.div>
             <h2 className="font-display text-xl font-bold text-foreground mb-2">
-              Dirija-se ao caixa
+              {t("redeemed.go_to_checkout")}
             </h2>
             <p className="text-sm text-muted-foreground mb-4">
-              Efetue o pagamento diretamente no caixa
+              {t("redeemed.pay_at_checkout")}
             </p>
             <div className="bg-muted/30 rounded-xl p-4 mb-6">
-              <p className="text-[11px] text-muted-foreground mb-1">Total a pagar</p>
+              <p className="text-[11px] text-muted-foreground mb-1">{t("redeemed.total_to_pay")}</p>
               <p className="font-display text-2xl font-bold text-gold">
                 {formatCurrency(total, currency)}
               </p>
@@ -93,7 +95,7 @@ export default function VoucherRedeemedModal({ total, currency, onClose }: Props
               onClick={onClose}
               className="w-full bg-gold text-gold-foreground py-3 rounded-xl text-sm font-medium hover:bg-gold/90 transition-colors"
             >
-              Entendi
+              {t("redeemed.understood")}
             </button>
           </motion.div>
         )}
