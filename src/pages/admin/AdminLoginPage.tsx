@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <img src={enoflowLogo} alt="EnoFlow" className="w-40 h-40 mx-auto mb-3 object-contain" />
+          <img src={enoflowLogo} alt="EnoFlow" className="w-56 h-56 mx-auto mb-3 object-contain" />
           <p className="text-sm text-muted-foreground">
             {showForgot ? "Recuperar acesso" : "Acesse seu painel"}
           </p>
