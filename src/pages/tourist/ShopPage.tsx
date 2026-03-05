@@ -109,7 +109,7 @@ function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite, tra
   );
 }
 
-function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => void; onAdd: () => void }) {
+function WineDetailModal({ wine, onClose, onAdd, t }: { wine: Wine; onClose: () => void; onAdd: () => void; t: (k: string) => string }) {
   const harmonizationItems = wine.harmonization?.length ? wine.harmonization : [];
   const translatedDescription = useTranslatedText(wine.description);
   const translatedName = useTranslatedText(wine.name);
