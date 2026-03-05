@@ -4,6 +4,7 @@ import { Wine, Package } from "lucide-react";
 import tastingBg from "@/assets/tasting-welcome-bg.jpg";
 import type { TastingPackage } from "@/hooks/useWinery";
 import { useI18n } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/currency";
 
 interface TastingWelcomeProps {
   wineryName: string;
