@@ -62,9 +62,13 @@ export default function AdminLayout() {
     );
   }
 
+  useEffect(() => {
+    if (!admin && !isLoading && !authLoading) {
+      navigate("/admin/login", { replace: true });
+    }
+  }, [admin, isLoading, authLoading, navigate]);
+
   if (!admin) {
-    // Redirect to SSO login
-    navigate("/admin/login", { replace: true });
     return null;
   }
 
