@@ -219,7 +219,7 @@ function WineDetailModal({ wine, onClose, onAdd, t }: { wine: Wine; onClose: () 
           {/* Harmonization */}
           {harmonizationItems.length > 0 && (
             <div className="mb-4">
-              <span className="text-xs font-semibold text-foreground block mb-2">Harmonização</span>
+              <span className="text-xs font-semibold text-foreground block mb-2">{t("wine.harmonization")}</span>
               <div className="space-y-1.5">
                 {translatedHarmonization.map((item, i) => (
                   <div key={i} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
