@@ -76,10 +76,14 @@ export default function AdminLayout() {
 
   const currentPath = location.pathname;
   const isBasePath = currentPath === basePath || currentPath === basePath + "/";
-  if (isBasePath && !hasPermission("owner" as AdminRole) && visibleNav.length > 0) {
-    const defaultItem = visibleNav.find(n => n.id === "settings") ?? visibleNav[0];
-    navigate(basePath + defaultItem.path, { replace: true });
-  }
+  useEffect(() => {
+    const currentPathNow = window.location.pathname;
+    const isBase = currentPathNow === basePath || currentPathNow === basePath + "/";
+    if (isBase && !hasPermission("owner" as AdminRole) && visibleNav.length > 0) {
+      const defaultItem = visibleNav.find(n => n.id === "settings") ?? visibleNav[0];
+      navigate(basePath + defaultItem.path, { replace: true });
+    }
+  }, [location.pathname, basePath, hasPermission, visibleNav, navigate]);
 
   const activeItem = visibleNav.find((n) => location.pathname === basePath + n.path)?.id ?? visibleNav[0]?.id;
 

@@ -77,7 +77,7 @@ export default function TastingWelcome({ wineryName, wineryLogo, wineCount, onSt
                   <Package className={`w-4 h-4 ${selectedPkg === pkg.id ? "text-gold" : "text-white/40"}`} />
                   <span className={`text-sm font-medium ${selectedPkg === pkg.id ? "text-gold" : "text-white/80"}`}>{pkg.name}</span>
                   <span className={`text-xs ml-auto ${selectedPkg === pkg.id ? "text-gold/80" : "text-white/40"}`}>
-                    R$ {Number(pkg.price).toFixed(2)}
+                    {formatCurrency(Number(pkg.price), (window as any).__enoflow_currency || "BRL")}
                   </span>
                 </div>
                 {pkg.description && <p className="text-[10px] text-white/40 mt-1 ml-6">{pkg.description}</p>}

@@ -223,7 +223,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
 
                 <div className="flex items-baseline justify-between mt-4 pt-3 border-t border-border/30">
                   <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{t("wine.value")}</span>
-                  <span className="font-display text-xl font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(2)}</span>
+                  <span className="font-display text-xl font-bold text-gold">{formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}</span>
                 </div>
               </motion.div>
             )}

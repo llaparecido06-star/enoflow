@@ -262,9 +262,9 @@ export default function RestaurantPage() {
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-display font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(0)}</p>
+                  <p className="text-sm font-display font-bold text-gold">{formatCurrencyShort(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}</p>
                   {wine.price_glass && (
-                    <p className="text-[10px] text-muted-foreground">{t("restaurant.glass")} R$ {Number(wine.price_glass).toFixed(0)}</p>
+                    <p className="text-[10px] text-muted-foreground">{t("restaurant.glass")} {formatCurrencyShort(Number(wine.price_glass), (window as any).__enoflow_currency || "BRL")}</p>
                   )}
                 </div>
               </motion.div>
