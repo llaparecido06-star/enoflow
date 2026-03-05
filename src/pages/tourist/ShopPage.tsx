@@ -466,7 +466,7 @@ export default function ShopPage() {
         >
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-4 h-4" />
-            <span className="text-sm font-medium">{items.length} {items.length === 1 ? "item" : "itens"}</span>
+            <span className="text-sm font-medium">{items.length} {items.length === 1 ? t("shop.item") : t("shop.items")}</span>
           </div>
           <span className="font-display font-bold">{formatCurrency(discountedTotal, cur)}{discountApplied && " (-10%)"}</span>
         </motion.button>
