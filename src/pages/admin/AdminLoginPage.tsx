@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Mail, Loader2, Wine, ArrowLeft } from "lucide-react";
+import { Lock, Mail, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { setSessionToken } from "@/lib/auth-api";
+import enoflowLogo from "@/assets/enoflow-logo.png";
 
 const ADMIN_STORAGE_KEY = "smartsommelier_admin";
 const MASTER_STORAGE_KEY = "smartsommelier_master";
@@ -49,9 +50,7 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <Wine className="w-7 h-7 text-primary" />
-          </div>
+          <img src={enoflowLogo} alt="EnoFlow" className="w-24 h-24 mx-auto mb-2 object-contain" />
           <h1 className="font-display text-xl font-bold text-foreground">EnoFlow</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {showForgot ? "Recuperar acesso" : "Acesse seu painel"}
