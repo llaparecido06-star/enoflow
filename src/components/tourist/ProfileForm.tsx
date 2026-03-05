@@ -220,7 +220,7 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
                 className="flex items-center gap-1 mt-1.5 text-[11px] font-semibold text-destructive hover:underline"
               >
                 <RotateCcw className="w-3 h-3" />
-                Tentar novamente
+                {t("profile.retry")}
               </button>
             </div>
           </motion.div>
