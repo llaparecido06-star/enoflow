@@ -91,8 +91,8 @@ function SommelierPanel({
                   <p className="text-xs text-muted-foreground leading-relaxed">{rec.reason}</p>
                   {wine && (
                     <p className="text-xs font-medium text-gold mt-2">
-                      R$ {Number(wine.price_bottle).toFixed(2)}
-                      {wine.price_glass && ` · ${t("restaurant.glass")} R$ ${Number(wine.price_glass).toFixed(2)}`}
+                      {formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}
+                      {wine.price_glass && ` · ${t("restaurant.glass")} ${formatCurrency(Number(wine.price_glass), (window as any).__enoflow_currency || "BRL")}`}
                     </p>
                   )}
                 </motion.div>
