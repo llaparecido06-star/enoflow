@@ -2,7 +2,7 @@ import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
 import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "", minRole: "owner" as AdminRole },
@@ -17,19 +17,41 @@ const navItems = [
 ];
 
 export default function AdminLayout() {
-  // Force light mode in admin
-  useEffect(() => {
-    document.documentElement.classList.remove("dark");
-    return () => {};
-  }, []);
-
   const { slug } = useParams<{ slug: string }>();
   const { data: winery, isLoading } = useWinery(slug ?? "");
   const location = useLocation();
   const navigate = useNavigate();
   const basePath = `/admin/${slug}`;
 
-  const { admin, loading: authLoading, login, logout, hasPermission } = useAdminAuth(winery?.id ?? "");
+  const { admin, loading: authLoading, logout, hasPermission } = useAdminAuth(winery?.id ?? "");
+
+  // Force light mode in admin
+  useEffect(() => {
+    document.documentElement.classList.remove("dark");
+  }, []);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !authLoading && !admin) {
+      navigate("/admin/login", { replace: true });
+    }
+  }, [admin, isLoading, authLoading, navigate]);
+
+  const visibleNav = useMemo(
+    () => navItems.filter((n) => hasPermission(n.minRole)),
+    [hasPermission]
+  );
+
+  // Redirect staff/manager to default page
+  useEffect(() => {
+    if (!admin || isLoading || authLoading) return;
+    const currentPathNow = location.pathname;
+    const isBase = currentPathNow === basePath || currentPathNow === basePath + "/";
+    if (isBase && !hasPermission("owner" as AdminRole) && visibleNav.length > 0) {
+      const defaultItem = visibleNav.find(n => n.id === "settings") ?? visibleNav[0];
+      navigate(basePath + defaultItem.path, { replace: true });
+    }
+  }, [location.pathname, basePath, hasPermission, visibleNav, navigate, admin, isLoading, authLoading]);
 
   if (isLoading || authLoading) {
     return (
@@ -62,28 +84,9 @@ export default function AdminLayout() {
     );
   }
 
-  useEffect(() => {
-    if (!admin && !isLoading && !authLoading) {
-      navigate("/admin/login", { replace: true });
-    }
-  }, [admin, isLoading, authLoading, navigate]);
-
   if (!admin) {
     return null;
   }
-
-  const visibleNav = navItems.filter((n) => hasPermission(n.minRole));
-
-  const currentPath = location.pathname;
-  const isBasePath = currentPath === basePath || currentPath === basePath + "/";
-  useEffect(() => {
-    const currentPathNow = window.location.pathname;
-    const isBase = currentPathNow === basePath || currentPathNow === basePath + "/";
-    if (isBase && !hasPermission("owner" as AdminRole) && visibleNav.length > 0) {
-      const defaultItem = visibleNav.find(n => n.id === "settings") ?? visibleNav[0];
-      navigate(basePath + defaultItem.path, { replace: true });
-    }
-  }, [location.pathname, basePath, hasPermission, visibleNav, navigate]);
 
   const activeItem = visibleNav.find((n) => location.pathname === basePath + n.path)?.id ?? visibleNav[0]?.id;
 
