@@ -180,15 +180,15 @@ function WineDetailModal({ wine, onClose, onAdd, t }: { wine: Wine; onClose: () 
           {/* Ficha Técnica */}
           {(wine.grape || wine.region || wine.alcohol_content || wine.serving_temp || wine.aging || wine.enologist) && (
             <div className="mb-4">
-              <span className="text-xs font-semibold text-foreground block mb-2">Ficha Técnica</span>
+              <span className="text-xs font-semibold text-foreground block mb-2">{t("wine.tech_sheet")}</span>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { icon: Grape, label: "Uva", value: wine.grape },
-                  { icon: MapPin, label: "Região", value: wine.region },
-                  { icon: FlaskConical, label: "Teor", value: wine.alcohol_content },
-                  { icon: Thermometer, label: "Servir", value: wine.serving_temp },
-                  { icon: Clock, label: "Envelhecimento", value: wine.aging },
-                  { icon: User, label: "Enólogo", value: wine.enologist },
+                  { icon: Grape, label: t("wine.grape"), value: wine.grape },
+                  { icon: MapPin, label: t("wine.region"), value: wine.region },
+                  { icon: FlaskConical, label: t("wine.alcohol"), value: wine.alcohol_content },
+                  { icon: Thermometer, label: t("wine.serving_temp"), value: wine.serving_temp },
+                  { icon: Clock, label: t("wine.aging"), value: wine.aging },
+                  { icon: User, label: t("wine.enologist"), value: wine.enologist },
                 ].filter(i => i.value).map(item => (
                   <div key={item.label} className="bg-muted/30 rounded-lg p-2.5">
                     <div className="flex items-center gap-1 mb-0.5">
