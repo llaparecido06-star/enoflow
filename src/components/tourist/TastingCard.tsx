@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wine, Star, Heart, Grape, MapPin, Thermometer, Clock, User, FlaskConical } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 import type { Wine as WineType } from "@/hooks/useWinery";
 import { useI18n } from "@/lib/i18n";
 import { useContentTranslation, useTranslatedText } from "@/hooks/useContentTranslation";
