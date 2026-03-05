@@ -242,7 +242,7 @@ function WineDetailModal({ wine, onClose, onAdd, t }: { wine: Wine; onClose: () 
               onClick={() => { onAdd(); onClose(); }}
               className="bg-gold text-gold-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gold/90 transition-colors flex items-center gap-2"
             >
-              <Plus className="w-4 h-4" /> Carrinho
+              <Plus className="w-4 h-4" /> {t("shop.cart")}
             </button>
           </div>
         </div>
