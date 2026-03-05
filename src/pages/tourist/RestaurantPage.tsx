@@ -30,7 +30,7 @@ function MenuItemCard({
           {translatedDesc && <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{translatedDesc}</p>}
         </div>
         <span className="font-display text-base font-bold text-gold whitespace-nowrap">
-          R$ {Number(item.price).toFixed(0)}
+          {formatCurrencyShort(Number(item.price), (window as any).__enoflow_currency || "BRL")}
         </span>
       </div>
       {suggestedWine && (
