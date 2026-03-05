@@ -92,8 +92,29 @@ export default function ProfileForm({ wineryColor, onComplete, onSkip }: Profile
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card rounded-2xl border border-border p-6 space-y-5"
+      className="bg-card rounded-2xl border border-border p-6 space-y-5 relative overflow-hidden"
     >
+      {/* Full overlay spinner during voucher generation */}
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-3 bg-card/95 backdrop-blur-sm rounded-2xl"
+          >
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full border-4 border-muted" />
+              <div
+                className="absolute inset-0 w-12 h-12 rounded-full border-4 border-t-transparent animate-spin"
+                style={{ borderColor: `${wineryColor} transparent transparent transparent` }}
+              />
+            </div>
+            <p className="text-sm font-medium text-foreground">{t("profile.generating_voucher") || "Gerando seu voucher..."}</p>
+            <p className="text-xs text-muted-foreground">{t("profile.please_wait") || "Aguarde um momento"}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="text-center">
         <h2 className="font-display text-base font-bold text-foreground">{t("profile.almost_there")}</h2>
         <p className="text-xs text-muted-foreground mt-1">
