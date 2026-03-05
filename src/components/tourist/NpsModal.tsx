@@ -30,7 +30,7 @@ export default function NpsModal({ onSubmit, onSkip }: NpsModalProps) {
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="bg-card w-full max-w-sm mx-4 rounded-2xl border border-border/30 p-6 luxury-shadow"
+        className="bg-card w-full max-w-sm mx-4 rounded-2xl border border-border/30 p-6 luxury-shadow relative"
       >
         <button onClick={onSkip} className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-muted">
           <X className="w-4 h-4 text-muted-foreground" />

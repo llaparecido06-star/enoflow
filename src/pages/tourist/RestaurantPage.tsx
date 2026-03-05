@@ -3,6 +3,7 @@ import { useOutletContext, useLocation } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useMenuItems, type MenuItem } from "@/hooks/useMenuItems";
 import { useContentTranslation } from "@/hooks/useContentTranslation";
+import { formatCurrency, formatCurrencyShort } from "@/lib/currency";
 import { motion, AnimatePresence } from "framer-motion";
 import { UtensilsCrossed, Wine as WineIcon, Sparkles, Search, Loader2, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
@@ -30,7 +31,7 @@ function MenuItemCard({
           {translatedDesc && <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{translatedDesc}</p>}
         </div>
         <span className="font-display text-base font-bold text-gold whitespace-nowrap">
-          R$ {Number(item.price).toFixed(0)}
+          {formatCurrencyShort(Number(item.price), (window as any).__enoflow_currency || "BRL")}
         </span>
       </div>
       {suggestedWine && (
@@ -90,8 +91,8 @@ function SommelierPanel({
                   <p className="text-xs text-muted-foreground leading-relaxed">{rec.reason}</p>
                   {wine && (
                     <p className="text-xs font-medium text-gold mt-2">
-                      R$ {Number(wine.price_bottle).toFixed(2)}
-                      {wine.price_glass && ` · ${t("restaurant.glass")} R$ ${Number(wine.price_glass).toFixed(2)}`}
+                      {formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}
+                      {wine.price_glass && ` · ${t("restaurant.glass")} ${formatCurrency(Number(wine.price_glass), (window as any).__enoflow_currency || "BRL")}`}
                     </p>
                   )}
                 </motion.div>
@@ -261,9 +262,9 @@ export default function RestaurantPage() {
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-display font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(0)}</p>
+                  <p className="text-sm font-display font-bold text-gold">{formatCurrencyShort(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}</p>
                   {wine.price_glass && (
-                    <p className="text-[10px] text-muted-foreground">{t("restaurant.glass")} R$ {Number(wine.price_glass).toFixed(0)}</p>
+                    <p className="text-[10px] text-muted-foreground">{t("restaurant.glass")} {formatCurrencyShort(Number(wine.price_glass), (window as any).__enoflow_currency || "BRL")}</p>
                   )}
                 </div>
               </motion.div>

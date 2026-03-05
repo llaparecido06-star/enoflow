@@ -109,7 +109,7 @@ function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite, tra
   );
 }
 
-function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => void; onAdd: () => void }) {
+function WineDetailModal({ wine, onClose, onAdd, t }: { wine: Wine; onClose: () => void; onAdd: () => void; t: (k: string) => string }) {
   const harmonizationItems = wine.harmonization?.length ? wine.harmonization : [];
   const translatedDescription = useTranslatedText(wine.description);
   const translatedName = useTranslatedText(wine.name);
@@ -158,12 +158,12 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
 
           {/* Sensory stars */}
           <div className="bg-muted/30 rounded-xl p-4 mb-4">
-            <span className="text-xs font-semibold text-foreground block mb-2">✨ Perfil Sensorial</span>
+            <span className="text-xs font-semibold text-foreground block mb-2">{t("wine.sensory_profile")}</span>
             <div className="space-y-1.5">
               {[
-                { label: "Corpo", value: wine.sensory_body },
-                { label: "Acidez", value: wine.sensory_acidity },
-                { label: "Doçura", value: wine.sensory_sweetness },
+                { label: t("wine.body"), value: wine.sensory_body },
+                { label: t("wine.acidity"), value: wine.sensory_acidity },
+                { label: t("wine.sweetness"), value: wine.sensory_sweetness },
               ].map(s => (
                 <div key={s.label} className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{s.label}</span>
@@ -180,15 +180,15 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
           {/* Ficha Técnica */}
           {(wine.grape || wine.region || wine.alcohol_content || wine.serving_temp || wine.aging || wine.enologist) && (
             <div className="mb-4">
-              <span className="text-xs font-semibold text-foreground block mb-2">Ficha Técnica</span>
+              <span className="text-xs font-semibold text-foreground block mb-2">{t("wine.tech_sheet")}</span>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { icon: Grape, label: "Uva", value: wine.grape },
-                  { icon: MapPin, label: "Região", value: wine.region },
-                  { icon: FlaskConical, label: "Teor", value: wine.alcohol_content },
-                  { icon: Thermometer, label: "Servir", value: wine.serving_temp },
-                  { icon: Clock, label: "Envelhecimento", value: wine.aging },
-                  { icon: User, label: "Enólogo", value: wine.enologist },
+                  { icon: Grape, label: t("wine.grape"), value: wine.grape },
+                  { icon: MapPin, label: t("wine.region"), value: wine.region },
+                  { icon: FlaskConical, label: t("wine.alcohol"), value: wine.alcohol_content },
+                  { icon: Thermometer, label: t("wine.serving_temp"), value: wine.serving_temp },
+                  { icon: Clock, label: t("wine.aging"), value: wine.aging },
+                  { icon: User, label: t("wine.enologist"), value: wine.enologist },
                 ].filter(i => i.value).map(item => (
                   <div key={item.label} className="bg-muted/30 rounded-lg p-2.5">
                     <div className="flex items-center gap-1 mb-0.5">
@@ -205,7 +205,7 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
           {/* Aromatic notes */}
           {wine.aromatic_notes && wine.aromatic_notes.length > 0 && (
             <div className="mb-4">
-              <span className="text-xs font-semibold text-foreground block mb-2">Notas Aromáticas</span>
+              <span className="text-xs font-semibold text-foreground block mb-2">{t("wine.aromatic_notes")}</span>
               <div className="flex flex-wrap gap-1.5">
                 {translatedNotes.map((note, i) => (
                   <span key={i} className="text-[11px] bg-muted/50 border border-border/30 rounded-full px-2.5 py-1 text-muted-foreground">
@@ -219,7 +219,7 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
           {/* Harmonization */}
           {harmonizationItems.length > 0 && (
             <div className="mb-4">
-              <span className="text-xs font-semibold text-foreground block mb-2">Harmonização</span>
+              <span className="text-xs font-semibold text-foreground block mb-2">{t("wine.harmonization")}</span>
               <div className="space-y-1.5">
                 {translatedHarmonization.map((item, i) => (
                   <div key={i} className="flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
@@ -242,7 +242,7 @@ function WineDetailModal({ wine, onClose, onAdd }: { wine: Wine; onClose: () => 
               onClick={() => { onAdd(); onClose(); }}
               className="bg-gold text-gold-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gold/90 transition-colors flex items-center gap-2"
             >
-              <Plus className="w-4 h-4" /> Carrinho
+              <Plus className="w-4 h-4" /> {t("shop.cart")}
             </button>
           </div>
         </div>
@@ -466,7 +466,7 @@ export default function ShopPage() {
         >
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-4 h-4" />
-            <span className="text-sm font-medium">{items.length} {items.length === 1 ? "item" : "itens"}</span>
+            <span className="text-sm font-medium">{items.length} {items.length === 1 ? t("shop.item") : t("shop.items")}</span>
           </div>
           <span className="font-display font-bold">{formatCurrency(discountedTotal, cur)}{discountApplied && " (-10%)"}</span>
         </motion.button>
@@ -782,7 +782,8 @@ export default function ShopPage() {
           <WineDetailModal
             wine={detailWine}
             onClose={() => setDetailWine(null)}
-            onAdd={() => { addItem(detailWine); toast.success(`${detailWine.name} adicionado!`); }}
+            onAdd={() => { addItem(detailWine); toast.success(`${detailWine.name} ${t("shop.added_to_cart")}`); }}
+            t={t}
           />
         )}
       </AnimatePresence>

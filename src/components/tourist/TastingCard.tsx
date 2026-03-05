@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wine, Star, Heart, Grape, MapPin, Thermometer, Clock, User, FlaskConical } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 import type { Wine as WineType } from "@/hooks/useWinery";
 import { useI18n } from "@/lib/i18n";
 import { useContentTranslation, useTranslatedText } from "@/hooks/useContentTranslation";
@@ -181,7 +182,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
                 </div>
                 <div className="flex items-baseline justify-between">
                   <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{t("wine.value")}</span>
-                  <span className="font-display text-xl font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(2)}</span>
+                  <span className="font-display text-xl font-bold text-gold">{formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}</span>
                 </div>
               </motion.div>
             )}
@@ -222,7 +223,7 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
 
                 <div className="flex items-baseline justify-between mt-4 pt-3 border-t border-border/30">
                   <span className="text-[11px] text-muted-foreground uppercase tracking-wider">{t("wine.value")}</span>
-                  <span className="font-display text-xl font-bold text-gold">R$ {Number(wine.price_bottle).toFixed(2)}</span>
+                  <span className="font-display text-xl font-bold text-gold">{formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}</span>
                 </div>
               </motion.div>
             )}
