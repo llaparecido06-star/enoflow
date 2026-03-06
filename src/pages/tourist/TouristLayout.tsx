@@ -17,12 +17,15 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const navigate = useNavigate();
   const enabledModules: string[] = winery.enabled_modules ?? ["tasting", "restaurant", "shop"];
   const [showQuiz, setShowQuiz] = useState(false);
+  const [pendingRedirectCategory, setPendingRedirectCategory] = useState<string | null>(null);
 
   // Read acquisition params from URL
   const searchParams = new URLSearchParams(location.search);
   const acqCategory = searchParams.get("category") || undefined;
   const acqLocation = searchParams.get("location") || undefined;
   const capturePointId = searchParams.get("cp") || undefined;
+
+  const categoryToPath: Record<string, string> = { restaurant: "/restaurant", shop: "/shop", tasting: "" };
 
   const moduleMap: Record<string, string> = { restaurant: "restaurant", shop: "shop" };
   useEffect(() => {
@@ -37,8 +40,18 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   useEffect(() => {
     if (isAuthenticated && lead && !lead.preferences_summary) {
       setShowQuiz(true);
+    } else if (isAuthenticated && pendingRedirectCategory !== null) {
+      // No quiz needed, redirect immediately
+      navigateToCategory(pendingRedirectCategory);
+      setPendingRedirectCategory(null);
     }
   }, [isAuthenticated, lead?.id]);
+
+  const navigateToCategory = (category: string | null) => {
+    const path = categoryToPath[category || ""] ?? "";
+    const cpQuery = capturePointId ? `?cp=${capturePointId}` : "";
+    navigate(`/app/${slug}${path}${cpQuery}`, { replace: true });
+  };
 
   if (!isAuthenticated) {
     return (
@@ -46,7 +59,10 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
         wineryName={winery.name}
         wineryColor={winery.primary_color}
         wineryLogo={winery.logo_url}
-        onLogin={(name, whatsapp, acceptedTerms) => login(name, whatsapp, winery.id, acceptedTerms, acqCategory, acqLocation, capturePointId)}
+        onLogin={async (name, whatsapp, acceptedTerms) => {
+          const captureCategory = await login(name, whatsapp, winery.id, acceptedTerms, acqCategory, acqLocation, capturePointId);
+          setPendingRedirectCategory(captureCategory);
+        }}
       />
     );
   }
@@ -60,8 +76,18 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
             await updateProfile({ preferences_summary: preferences });
           } catch {}
           setShowQuiz(false);
+          if (pendingRedirectCategory !== null) {
+            navigateToCategory(pendingRedirectCategory);
+            setPendingRedirectCategory(null);
+          }
         }}
-        onSkip={() => setShowQuiz(false)}
+        onSkip={() => {
+          setShowQuiz(false);
+          if (pendingRedirectCategory !== null) {
+            navigateToCategory(pendingRedirectCategory);
+            setPendingRedirectCategory(null);
+          }
+        }}
       />
     );
   }

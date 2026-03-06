@@ -17,7 +17,7 @@ interface Lead {
 interface TouristAuthContextType {
   lead: Lead | null;
   isAuthenticated: boolean;
-  login: (name: string, whatsapp: string, wineryId: string, acceptedTerms?: boolean, acquisitionCategory?: string, acquisitionLocation?: string, capturePointId?: string) => Promise<void>;
+  login: (name: string, whatsapp: string, wineryId: string, acceptedTerms?: boolean, acquisitionCategory?: string, acquisitionLocation?: string, capturePointId?: string) => Promise<string | null>;
   updateProfile: (data: { birth_date?: string; income_class?: string; preferences_summary?: string }) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
@@ -45,7 +45,7 @@ export function TouristAuthProvider({ children, wineryId }: { children: ReactNod
     setIsLoading(false);
   }, [wineryId]);
 
-  const login = useCallback(async (name: string, whatsapp: string, wineryId: string, acceptedTerms = false, acquisitionCategory?: string, acquisitionLocation?: string, capturePointId?: string) => {
+  const login = useCallback(async (name: string, whatsapp: string, wineryId: string, acceptedTerms = false, acquisitionCategory?: string, acquisitionLocation?: string, capturePointId?: string): Promise<string | null> => {
     const res = await supabase.functions.invoke("session-auth", {
       body: {
         type: "tourist", name, whatsapp, winery_id: wineryId, accepted_terms: acceptedTerms,
@@ -63,6 +63,7 @@ export function TouristAuthProvider({ children, wineryId }: { children: ReactNod
     const lead = res.data.lead as Lead;
     setLead(lead);
     localStorage.setItem(`lead_${wineryId}`, JSON.stringify(lead));
+    return res.data.capture_category || null;
   }, []);
 
   const updateProfile = useCallback(async (data: { birth_date?: string; income_class?: string; gender?: string; preferences_summary?: string }) => {
