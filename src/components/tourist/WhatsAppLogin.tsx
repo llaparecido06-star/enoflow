@@ -47,10 +47,12 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
     setStep("phone");
   };
 
+  const phoneDigits = phone.replace(/\D/g, "");
+  const isPhoneValid = phoneDigits.length === selectedCountry.digits;
+
   const handleLogin = async () => {
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length < 7) {
-      toast.error(t("login.phone_invalid"));
+    if (!isPhoneValid) {
+      toast.error(`${t("login.phone_invalid")} (${selectedCountry.digits} ${t("login.digits_required") || "dígitos"})`);
       return;
     }
     if (!acceptedTerms) {
