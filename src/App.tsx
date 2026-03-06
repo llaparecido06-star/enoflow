@@ -34,13 +34,7 @@ const queryClient = new QueryClient();
 
 const App = () => {
   if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("smartsommelier_theme");
-    const prefersDark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
-    if (prefersDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    document.documentElement.classList.remove("dark");
   }
 
   return (
