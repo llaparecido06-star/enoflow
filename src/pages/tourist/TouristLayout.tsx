@@ -43,13 +43,22 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
     }
   }, [isAuthenticated, lead?.id]);
 
+  const navigateToCategory = (category: string | null) => {
+    const path = categoryToPath[category || ""] ?? "";
+    const cpQuery = capturePointId ? `?cp=${capturePointId}` : "";
+    navigate(`/app/${slug}${path}${cpQuery}`, { replace: true });
+  };
+
   if (!isAuthenticated) {
     return (
       <WhatsAppLogin
         wineryName={winery.name}
         wineryColor={winery.primary_color}
         wineryLogo={winery.logo_url}
-        onLogin={(name, whatsapp, acceptedTerms) => login(name, whatsapp, winery.id, acceptedTerms, acqCategory, acqLocation, capturePointId)}
+        onLogin={async (name, whatsapp, acceptedTerms) => {
+          const captureCategory = await login(name, whatsapp, winery.id, acceptedTerms, acqCategory, acqLocation, capturePointId);
+          setPendingRedirectCategory(captureCategory);
+        }}
       />
     );
   }
