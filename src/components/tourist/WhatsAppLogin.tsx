@@ -12,19 +12,19 @@ interface WhatsAppLoginProps {
 }
 
 const countryCodes = [
-  { code: "+55", flag: "🇧🇷", name: "Brasil", placeholder: "(99) 99999-9999" },
-  { code: "+1", flag: "🇺🇸", name: "USA", placeholder: "(555) 123-4567" },
-  { code: "+54", flag: "🇦🇷", name: "Argentina", placeholder: "11 1234-5678" },
-  { code: "+56", flag: "🇨🇱", name: "Chile", placeholder: "9 1234 5678" },
-  { code: "+598", flag: "🇺🇾", name: "Uruguay", placeholder: "99 123 456" },
-  { code: "+351", flag: "🇵🇹", name: "Portugal", placeholder: "912 345 678" },
-  { code: "+34", flag: "🇪🇸", name: "España", placeholder: "612 34 56 78" },
-  { code: "+33", flag: "🇫🇷", name: "France", placeholder: "06 12 34 56 78" },
-  { code: "+39", flag: "🇮🇹", name: "Italia", placeholder: "312 345 6789" },
-  { code: "+49", flag: "🇩🇪", name: "Deutschland", placeholder: "151 1234 5678" },
-  { code: "+44", flag: "🇬🇧", name: "UK", placeholder: "7911 123456" },
-  { code: "+81", flag: "🇯🇵", name: "Japan", placeholder: "90-1234-5678" },
-  { code: "+86", flag: "🇨🇳", name: "China", placeholder: "131 2345 6789" },
+  { code: "+55", flag: "🇧🇷", name: "Brasil", placeholder: "(99) 99999-9999", digits: 11 },
+  { code: "+1", flag: "🇺🇸", name: "USA", placeholder: "(555) 123-4567", digits: 10 },
+  { code: "+54", flag: "🇦🇷", name: "Argentina", placeholder: "11 1234-5678", digits: 10 },
+  { code: "+56", flag: "🇨🇱", name: "Chile", placeholder: "9 1234 5678", digits: 9 },
+  { code: "+598", flag: "🇺🇾", name: "Uruguay", placeholder: "99 123 456", digits: 8 },
+  { code: "+351", flag: "🇵🇹", name: "Portugal", placeholder: "912 345 678", digits: 9 },
+  { code: "+34", flag: "🇪🇸", name: "España", placeholder: "612 34 56 78", digits: 9 },
+  { code: "+33", flag: "🇫🇷", name: "France", placeholder: "06 12 34 56 78", digits: 10 },
+  { code: "+39", flag: "🇮🇹", name: "Italia", placeholder: "312 345 6789", digits: 10 },
+  { code: "+49", flag: "🇩🇪", name: "Deutschland", placeholder: "151 1234 5678", digits: 11 },
+  { code: "+44", flag: "🇬🇧", name: "UK", placeholder: "7911 123456", digits: 10 },
+  { code: "+81", flag: "🇯🇵", name: "Japan", placeholder: "90-1234-5678", digits: 10 },
+  { code: "+86", flag: "🇨🇳", name: "China", placeholder: "131 2345 6789", digits: 11 },
 ];
 
 export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onLogin }: WhatsAppLoginProps) {
@@ -47,10 +47,12 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
     setStep("phone");
   };
 
+  const phoneDigits = phone.replace(/\D/g, "");
+  const isPhoneValid = phoneDigits.length === selectedCountry.digits;
+
   const handleLogin = async () => {
-    const digits = phone.replace(/\D/g, "");
-    if (digits.length < 7) {
-      toast.error(t("login.phone_invalid"));
+    if (!isPhoneValid) {
+      toast.error(`${t("login.phone_invalid")} (${selectedCountry.digits} ${t("login.digits_required") || "dígitos"})`);
       return;
     }
     if (!acceptedTerms) {
@@ -59,7 +61,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
     }
     setLoading(true);
     try {
-      const fullNumber = countryCode.replace("+", "") + digits;
+      const fullNumber = countryCode.replace("+", "") + phoneDigits;
       await onLogin(name.trim(), fullNumber, true);
       toast.success(t("login.welcome"));
     } catch {
@@ -162,6 +164,11 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
                   autoFocus
                 />
               </div>
+              {phoneDigits.length > 0 && (
+                <p className={`text-xs mt-1 ${isPhoneValid ? 'text-green-600' : 'text-muted-foreground'}`}>
+                  {phoneDigits.length}/{selectedCountry.digits} dígitos
+                </p>
+              )}
             </div>
 
             <div className="flex gap-2">
@@ -173,7 +180,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
               </button>
               <button
                 onClick={handleLogin}
-                disabled={loading}
+                disabled={loading || !isPhoneValid}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-primary-foreground transition-colors disabled:opacity-50"
                 style={{ backgroundColor: wineryColor }}
               >
