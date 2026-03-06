@@ -40,6 +40,10 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   useEffect(() => {
     if (isAuthenticated && lead && !lead.preferences_summary) {
       setShowQuiz(true);
+    } else if (isAuthenticated && pendingRedirectCategory !== null) {
+      // No quiz needed, redirect immediately
+      navigateToCategory(pendingRedirectCategory);
+      setPendingRedirectCategory(null);
     }
   }, [isAuthenticated, lead?.id]);
 
@@ -72,8 +76,18 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
             await updateProfile({ preferences_summary: preferences });
           } catch {}
           setShowQuiz(false);
+          if (pendingRedirectCategory !== null) {
+            navigateToCategory(pendingRedirectCategory);
+            setPendingRedirectCategory(null);
+          }
         }}
-        onSkip={() => setShowQuiz(false)}
+        onSkip={() => {
+          setShowQuiz(false);
+          if (pendingRedirectCategory !== null) {
+            navigateToCategory(pendingRedirectCategory);
+            setPendingRedirectCategory(null);
+          }
+        }}
       />
     );
   }
