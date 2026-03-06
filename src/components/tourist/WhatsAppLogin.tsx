@@ -172,10 +172,15 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
                   type="tel"
                   placeholder={selectedCountry.placeholder}
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/[^\d\s\-()]/g, ""))}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    const masked = applyMask(raw, selectedCountry.mask);
+                    setPhone(masked);
+                  }}
                   onKeyDown={(e) => e.key === "Enter" && handleLogin()}
                   className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   autoFocus
+                  maxLength={selectedCountry.mask.length}
                 />
               </div>
               {phoneDigits.length > 0 && (
