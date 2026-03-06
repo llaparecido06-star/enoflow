@@ -236,6 +236,11 @@ Deno.serve(async (req) => {
       }
 
       // Log capture point history
+      let captureCategory: string | null = null;
+      if (capture_point_id) {
+        const { data: cp } = await supabase.from("capture_points").select("category").eq("id", capture_point_id).maybeSingle();
+        captureCategory = cp?.category || null;
+      }
       if (acquisition_category || acquisition_location || capture_point_id) {
         await supabase.from("capture_history").insert({
           user_id: lead!.id,
@@ -250,7 +255,7 @@ Deno.serve(async (req) => {
         { sub: lead!.id, winery_id: lead!.winery_id, type: "tourist" },
         secret, 604800
       );
-      return json({ success: true, lead, token });
+      return json({ success: true, lead, token, capture_category: captureCategory });
     }
 
     return json({ error: "Requisição inválida" }, 400);
