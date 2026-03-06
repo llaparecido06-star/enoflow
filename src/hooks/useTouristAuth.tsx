@@ -17,7 +17,7 @@ interface Lead {
 interface TouristAuthContextType {
   lead: Lead | null;
   isAuthenticated: boolean;
-  login: (name: string, whatsapp: string, wineryId: string, acceptedTerms?: boolean, acquisitionCategory?: string, acquisitionLocation?: string, capturePointId?: string) => Promise<void>;
+  login: (name: string, whatsapp: string, wineryId: string, acceptedTerms?: boolean, acquisitionCategory?: string, acquisitionLocation?: string, capturePointId?: string) => Promise<string | null>;
   updateProfile: (data: { birth_date?: string; income_class?: string; preferences_summary?: string }) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
