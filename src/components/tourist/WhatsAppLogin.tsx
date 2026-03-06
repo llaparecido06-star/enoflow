@@ -164,6 +164,11 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
                   autoFocus
                 />
               </div>
+              {phoneDigits.length > 0 && (
+                <p className={`text-xs mt-1 ${isPhoneValid ? 'text-green-600' : 'text-muted-foreground'}`}>
+                  {phoneDigits.length}/{selectedCountry.digits} dígitos
+                </p>
+              )}
             </div>
 
             <div className="flex gap-2">
@@ -175,7 +180,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
               </button>
               <button
                 onClick={handleLogin}
-                disabled={loading}
+                disabled={loading || !isPhoneValid}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-primary-foreground transition-colors disabled:opacity-50"
                 style={{ backgroundColor: wineryColor }}
               >
