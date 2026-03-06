@@ -61,7 +61,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
     }
     setLoading(true);
     try {
-      const fullNumber = countryCode.replace("+", "") + digits;
+      const fullNumber = countryCode.replace("+", "") + phoneDigits;
       await onLogin(name.trim(), fullNumber, true);
       toast.success(t("login.welcome"));
     } catch {
