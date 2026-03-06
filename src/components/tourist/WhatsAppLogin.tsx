@@ -153,7 +153,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
                     {countryCodes.map((c) => (
                       <button
                         key={c.code}
-                        onClick={() => { setCountryCode(c.code); setShowCountryPicker(false); }}
+                        onClick={() => { setCountryCode(c.code); setPhone(""); setShowCountryPicker(false); }}
                         className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary transition-colors ${
                           c.code === countryCode ? "bg-primary/5" : ""
                         }`}
