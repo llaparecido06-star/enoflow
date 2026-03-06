@@ -17,12 +17,15 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const navigate = useNavigate();
   const enabledModules: string[] = winery.enabled_modules ?? ["tasting", "restaurant", "shop"];
   const [showQuiz, setShowQuiz] = useState(false);
+  const [pendingRedirectCategory, setPendingRedirectCategory] = useState<string | null>(null);
 
   // Read acquisition params from URL
   const searchParams = new URLSearchParams(location.search);
   const acqCategory = searchParams.get("category") || undefined;
   const acqLocation = searchParams.get("location") || undefined;
   const capturePointId = searchParams.get("cp") || undefined;
+
+  const categoryToPath: Record<string, string> = { restaurant: "/restaurant", shop: "/shop", tasting: "" };
 
   const moduleMap: Record<string, string> = { restaurant: "restaurant", shop: "shop" };
   useEffect(() => {
