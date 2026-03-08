@@ -28,6 +28,7 @@ import MasterWineriesPage from "./pages/master/MasterWineriesPage";
 import MasterAdminsPage from "./pages/master/MasterAdminsPage";
 import MasterReportsPage from "./pages/master/MasterReportsPage";
 import MasterImportPage from "./pages/master/MasterImportPage";
+import MasterPlansPage from "./pages/master/MasterPlansPage";
 import PrivacyPage from "./pages/PrivacyPage";
 
 const queryClient = new QueryClient();
