@@ -281,6 +281,15 @@ export default function JourneyPage() {
         </motion.div>
       )}
 
+      {/* Voucher History */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Receipt className="w-4 h-4 text-gold" />
+          <h2 className="font-display text-sm font-semibold text-foreground">{t("journey.purchase_history")}</h2>
+        </div>
+        <VoucherHistory currency={winery.currency} />
+      </motion.div>
+
       {ratings.length === 0 && !persona && (
         <div className="text-center py-12">
           <WineIcon className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
