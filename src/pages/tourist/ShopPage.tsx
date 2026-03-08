@@ -365,6 +365,8 @@ export default function ShopPage() {
             onClose={() => setDetailWine(null)}
             onAdd={() => { addItem(detailWine); toast.success(`${detailWine.name} ${t("shop.added_to_cart")}`); }}
             t={t}
+            currency={cur}
+            winerySlug={winery.slug}
           />
         )}
       </AnimatePresence>
