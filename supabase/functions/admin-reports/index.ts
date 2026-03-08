@@ -127,8 +127,7 @@ Deno.serve(async (req) => {
         ? ((vouchersRedeemed / leadsTotal) * 100).toFixed(1)
         : "0";
 
-      // Top wine
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      // Top wine by sales (voucher items)
       const { data: wineryWines } = await supabase
         .from("wines").select("id, name").eq("winery_id", winery_id);
       const wineIds = (wineryWines ?? []).map(w => w.id);
@@ -136,35 +135,36 @@ Deno.serve(async (req) => {
       (wineryWines ?? []).forEach(w => { wineNameMap[w.id] = w.name; });
 
       let topWineName = null;
-      let topWineDetail = "Sem dados";
+      let topWineCount = 0;
       let avgSatisfaction = null;
       let ratingsToday = 0;
 
-      if (wineIds.length > 0) {
-        const { data: monthRatings } = await supabase
-          .from("ratings")
-          .select("wine_id, stars_acidity, stars_body, stars_sweetness")
-          .in("wine_id", wineIds)
-          .gte("created_at", thirtyDaysAgo);
-
-        if (monthRatings && monthRatings.length > 0) {
-          const wineScores: Record<string, { total: number; count: number }> = {};
-          monthRatings.forEach(r => {
-            const avg = (r.stars_acidity + r.stars_body + r.stars_sweetness) / 3;
-            if (!wineScores[r.wine_id]) wineScores[r.wine_id] = { total: 0, count: 0 };
-            wineScores[r.wine_id].total += avg;
-            wineScores[r.wine_id].count++;
-          });
-          let bestId = "", bestAvg = 0;
-          Object.entries(wineScores).forEach(([id, s]) => {
-            const avg = s.total / s.count;
-            if (avg > bestAvg) { bestAvg = avg; bestId = id; }
-          });
-          if (bestId) {
-            topWineName = wineNameMap[bestId] || "—";
-            topWineDetail = `${bestAvg.toFixed(1)}⭐ (${wineScores[bestId].count} aval.)`;
+      // Count per-wine sales from voucher items
+      const wineSalesCount: Record<string, number> = {};
+      for (const v of (allVouchers ?? []).filter(v => v.redeemed)) {
+        const items = Array.isArray(v.items) ? v.items : [];
+        for (const item of items) {
+          const wineId = (item as any)?.id || (item as any)?.wine?.id;
+          if (wineId && wineNameMap[wineId]) {
+            const qty = Number((item as any)?.quantity) || 1;
+            wineSalesCount[wineId] = (wineSalesCount[wineId] || 0) + qty;
           }
         }
+      }
+
+      // Find best seller
+      let bestSalesId = "";
+      let bestSales = 0;
+      Object.entries(wineSalesCount).forEach(([id, count]) => {
+        if (count > bestSales) { bestSales = count; bestSalesId = id; }
+      });
+      if (bestSalesId) {
+        topWineName = wineNameMap[bestSalesId] || "—";
+        topWineCount = bestSales;
+      }
+
+      if (wineIds.length > 0) {
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
         const { data: todayRatings } = await supabase
           .from("ratings")
