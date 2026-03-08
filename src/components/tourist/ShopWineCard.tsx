@@ -36,12 +36,15 @@ export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onTogg
         <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-background/30 backdrop-blur-md text-foreground border border-foreground/10">
           {wine.type}
         </span>
-        <button
-          onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-background/30 backdrop-blur-md border border-foreground/10"
-        >
-          <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-red-500 text-red-500" : "text-foreground/60"}`} />
-        </button>
+        <div className="absolute top-2 right-2 flex gap-1">
+          {winerySlug && <ShareWineButton wine={wine} winerySlug={winerySlug} currency={currency} />}
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+            className="p-1.5 rounded-full bg-background/30 backdrop-blur-md border border-foreground/10"
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-red-500 text-red-500" : "text-foreground/60"}`} />
+          </button>
+        </div>
       </div>
 
       <div className="p-3 space-y-2">
