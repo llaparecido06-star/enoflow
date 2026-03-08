@@ -286,6 +286,55 @@ export type Database = {
           },
         ]
       }
+      staff_login_activity: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          winery_id: string
+        }
+        Insert: {
+          action?: string
+          admin_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          winery_id: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          winery_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_login_activity_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_login_activity_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_login_activity_winery_id_fkey"
+            columns: ["winery_id"]
+            isOneToOne: false
+            referencedRelation: "wineries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           commission_rate: number
