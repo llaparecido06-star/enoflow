@@ -206,6 +206,13 @@ const translations: Record<Locale, Record<string, string>> = {
     "journey.empty_state": "Avalie vinhos na degustação para descobrir seu perfil e receber recomendações personalizadas!",
     "journey.consulting": "Consultando nosso Sommelier Digital...",
     "journey.added_with_discount": "adicionado com 10% OFF! 🎉",
+    "journey.purchase_history": "Histórico de Compras",
+    "journey.no_purchases": "Você ainda não fez nenhuma compra.",
+    "journey.redeemed": "Resgatado",
+    "journey.pending": "Pendente",
+    // Tasting empty state
+    "tasting.check_packages": "Confira os pacotes de degustação disponíveis abaixo.",
+    "tasting.available_packages": "Pacotes Disponíveis",
     // Celebration
     "celebration.your_profile": "Seu Perfil",
     "celebration.perfect_wines": "🍷 Vinhos perfeitos para você",
