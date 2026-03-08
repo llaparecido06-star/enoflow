@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useMasterAuth } from "@/hooks/useMasterAuth";
-import { BarChart3, Building2, Users, Loader2, LogOut, Shield, Upload, FileBarChart } from "lucide-react";
+import { BarChart3, Building2, Users, Loader2, LogOut, Shield, Upload, FileBarChart, CreditCard } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const navItems = [
