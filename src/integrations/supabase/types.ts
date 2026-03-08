@@ -286,6 +286,51 @@ export type Database = {
           },
         ]
       }
+      subscription_plans: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          enabled_modules: string[]
+          features: string[]
+          id: string
+          is_active: boolean
+          max_locations: number
+          max_staff: number | null
+          max_wines: number | null
+          name: string
+          plan_key: string
+          price: number
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          enabled_modules?: string[]
+          features?: string[]
+          id?: string
+          is_active?: boolean
+          max_locations?: number
+          max_staff?: number | null
+          max_wines?: number | null
+          name: string
+          plan_key: string
+          price?: number
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          enabled_modules?: string[]
+          features?: string[]
+          id?: string
+          is_active?: boolean
+          max_locations?: number
+          max_staff?: number | null
+          max_wines?: number | null
+          name?: string
+          plan_key?: string
+          price?: number
+        }
+        Relationships: []
+      }
       tasting_packages: {
         Row: {
           created_at: string

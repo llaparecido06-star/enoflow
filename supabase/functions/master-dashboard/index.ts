@@ -60,6 +60,64 @@ Deno.serve(async (req) => {
       return json({ error: "Acesso restrito a Master Admin" }, 403);
     }
 
+    // ─── ACTION: list_plans ─────────────────────────────
+    if (action === "list_plans") {
+      const { data, error } = await supabase
+        .from("subscription_plans")
+        .select("*")
+        .order("price", { ascending: true });
+      if (error) throw error;
+      return json({ success: true, plans: data ?? [] });
+    }
+
+    // ─── ACTION: create_plan ─────────────────────────────
+    if (action === "create_plan") {
+      const { name, plan_key, price, max_locations, max_wines, max_staff, commission_rate, enabled_modules, features } = body;
+      if (!name || !plan_key) return json({ error: "name and plan_key required" }, 400);
+      const { data: plan, error } = await supabase.from("subscription_plans").insert({
+        name: String(name).slice(0, 100),
+        plan_key: String(plan_key).toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 50),
+        price: Number(price) || 0,
+        max_locations: Number(max_locations) || 5,
+        max_wines: max_wines != null ? Number(max_wines) : null,
+        max_staff: max_staff != null ? Number(max_staff) : null,
+        commission_rate: Number(commission_rate) || 0,
+        enabled_modules: Array.isArray(enabled_modules) ? enabled_modules : ["tasting", "restaurant", "shop"],
+        features: Array.isArray(features) ? features.map((f: unknown) => String(f).slice(0, 200)) : [],
+      }).select().single();
+      if (error) throw error;
+      return json({ success: true, plan });
+    }
+
+    // ─── ACTION: update_plan_config ──────────────────────
+    if (action === "update_plan_config") {
+      const { plan_id, name, price, max_locations, max_wines, max_staff, commission_rate, enabled_modules, features, is_active } = body;
+      if (!plan_id) return json({ error: "plan_id required" }, 400);
+      const updates: Record<string, unknown> = {};
+      if (name !== undefined) updates.name = String(name).slice(0, 100);
+      if (price !== undefined) updates.price = Number(price) || 0;
+      if (max_locations !== undefined) updates.max_locations = Number(max_locations) || 5;
+      if (max_wines !== undefined) updates.max_wines = max_wines === null ? null : Number(max_wines);
+      if (max_staff !== undefined) updates.max_staff = max_staff === null ? null : Number(max_staff);
+      if (commission_rate !== undefined) updates.commission_rate = Number(commission_rate) || 0;
+      if (enabled_modules !== undefined) updates.enabled_modules = Array.isArray(enabled_modules) ? enabled_modules : ["tasting", "restaurant", "shop"];
+      if (features !== undefined) updates.features = Array.isArray(features) ? features.map((f: unknown) => String(f).slice(0, 200)) : [];
+      if (is_active !== undefined) updates.is_active = Boolean(is_active);
+      if (Object.keys(updates).length === 0) return json({ error: "Nothing to update" }, 400);
+      const { error } = await supabase.from("subscription_plans").update(updates).eq("id", plan_id);
+      if (error) throw error;
+      return json({ success: true });
+    }
+
+    // ─── ACTION: delete_plan ─────────────────────────────
+    if (action === "delete_plan") {
+      const { plan_id } = body;
+      if (!plan_id) return json({ error: "plan_id required" }, 400);
+      const { error } = await supabase.from("subscription_plans").delete().eq("id", plan_id);
+      if (error) throw error;
+      return json({ success: true });
+    }
+
     // ─── ACTION: update_plan ─────────────────────────────
     if (action === "update_plan") {
       const { winery_id, plan_level } = body;
