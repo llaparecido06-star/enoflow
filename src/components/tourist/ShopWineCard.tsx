@@ -13,9 +13,9 @@ function SensoryStarsMini({ value }: { value: number }) {
   );
 }
 
-export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite, translatedName }: {
+export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite, translatedName, currency = "BRL" }: {
   wine: Wine; onAdd: () => void; onDetail: () => void;
-  isFavorite: boolean; onToggleFavorite: () => void; translatedName: string;
+  isFavorite: boolean; onToggleFavorite: () => void; translatedName: string; currency?: string;
 }) {
   return (
     <motion.div
@@ -54,10 +54,10 @@ export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onTogg
         <div className="flex items-center justify-between pt-1">
           <div>
             <span className="text-[9px] text-muted-foreground line-through">
-              {formatCurrencyShort(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}
+              {formatCurrencyShort(Number(wine.price_bottle), currency)}
             </span>
             <span className="font-display text-sm font-bold text-gold ml-1">
-              {formatCurrencyShort(Math.round(Number(wine.price_bottle) * 0.9), (window as any).__enoflow_currency || "BRL")}
+              {formatCurrencyShort(Math.round(Number(wine.price_bottle) * 0.9), currency)}
             </span>
             <span className="text-[8px] text-green-500 font-bold ml-0.5">-10%</span>
           </div>

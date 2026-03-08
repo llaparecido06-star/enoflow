@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import type { Wine } from "./useWinery";
 
 export interface CartItem {
@@ -6,8 +6,29 @@ export interface CartItem {
   quantity: number;
 }
 
+const CART_STORAGE_KEY = "enoflow_cart";
+
+function loadCart(): CartItem[] {
+  try {
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return [];
+}
+
+function persistCart(items: CartItem[]) {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  } catch {}
+}
+
 export function useCart() {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(loadCart);
+
+  // Persist on every change
+  useEffect(() => {
+    persistCart(items);
+  }, [items]);
 
   const addItem = useCallback((wine: Wine) => {
     setItems((prev) => {
@@ -35,12 +56,15 @@ export function useCart() {
     );
   }, []);
 
-  const total = items.reduce(
-    (sum, i) => sum + i.wine.price_bottle * i.quantity,
-    0
+  const total = useMemo(
+    () => items.reduce((sum, i) => sum + i.wine.price_bottle * i.quantity, 0),
+    [items]
   );
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => {
+    setItems([]);
+    try { localStorage.removeItem(CART_STORAGE_KEY); } catch {}
+  }, []);
 
   return { items, addItem, removeItem, updateQuantity, total, clearCart };
 }
