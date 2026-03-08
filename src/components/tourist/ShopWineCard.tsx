@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Wine as WineIcon, Heart, Star, Plus } from "lucide-react";
 import { formatCurrencyShort } from "@/lib/currency";
+import ShareWineButton from "./ShareWineButton";
 import type { Wine } from "@/hooks/useWinery";
 
 function SensoryStarsMini({ value }: { value: number }) {
@@ -13,9 +14,9 @@ function SensoryStarsMini({ value }: { value: number }) {
   );
 }
 
-export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite, translatedName, currency = "BRL" }: {
+export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite, translatedName, currency = "BRL", winerySlug }: {
   wine: Wine; onAdd: () => void; onDetail: () => void;
-  isFavorite: boolean; onToggleFavorite: () => void; translatedName: string; currency?: string;
+  isFavorite: boolean; onToggleFavorite: () => void; translatedName: string; currency?: string; winerySlug?: string;
 }) {
   return (
     <motion.div
@@ -35,12 +36,15 @@ export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onTogg
         <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-background/30 backdrop-blur-md text-foreground border border-foreground/10">
           {wine.type}
         </span>
-        <button
-          onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-background/30 backdrop-blur-md border border-foreground/10"
-        >
-          <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-red-500 text-red-500" : "text-foreground/60"}`} />
-        </button>
+        <div className="absolute top-2 right-2 flex gap-1">
+          {winerySlug && <ShareWineButton wine={wine} winerySlug={winerySlug} currency={currency} />}
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+            className="p-1.5 rounded-full bg-background/30 backdrop-blur-md border border-foreground/10"
+          >
+            <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-red-500 text-red-500" : "text-foreground/60"}`} />
+          </button>
+        </div>
       </div>
 
       <div className="p-3 space-y-2">

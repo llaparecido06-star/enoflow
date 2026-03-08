@@ -7,8 +7,9 @@ import { invokeAuth } from "@/lib/auth-api";
 import { calculatePersona, type WinePersona } from "@/components/tourist/CelebrationModal";
 import { formatCurrencyShort, formatCurrency } from "@/lib/currency";
 import Confetti from "@/components/tourist/Confetti";
+import VoucherHistory from "@/components/tourist/VoucherHistory";
 import { motion } from "framer-motion";
-import { Star, Heart, Wine as WineIcon, Trophy, TrendingUp, Sparkles, Loader2, ShoppingBag, User } from "lucide-react";
+import { Star, Heart, Wine as WineIcon, Trophy, TrendingUp, Sparkles, Loader2, ShoppingBag, User, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 
@@ -279,6 +280,15 @@ export default function JourneyPage() {
           </div>
         </motion.div>
       )}
+
+      {/* Voucher History */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Receipt className="w-4 h-4 text-gold" />
+          <h2 className="font-display text-sm font-semibold text-foreground">{t("journey.purchase_history")}</h2>
+        </div>
+        <VoucherHistory currency={winery.currency} />
+      </motion.div>
 
       {ratings.length === 0 && !persona && (
         <div className="text-center py-12">

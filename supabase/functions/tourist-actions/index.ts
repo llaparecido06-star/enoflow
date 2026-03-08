@@ -191,6 +191,18 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
+    // ─── ACTION: get_vouchers ──────────────────────────
+    if (action === "get_vouchers") {
+      const { data, error } = await supabase
+        .from("vouchers")
+        .select("id, code, total, redeemed, nps_score, created_at, items")
+        .eq("user_id", user_id)
+        .eq("winery_id", winery_id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return json({ success: true, vouchers: data ?? [] });
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (error) {
     console.error("tourist-actions error:", error);

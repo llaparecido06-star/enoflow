@@ -125,6 +125,15 @@ Deno.serve(async (req) => {
         { sub: ssoResult.id, winery_id: ssoResult.winery_id, role: ssoResult.role, type: "admin", email: ssoResult.email, name: ssoResult.name },
         secret, 86400
       );
+
+      // Log login activity
+      await supabase.from("staff_login_activity").insert({
+        admin_id: ssoResult.id,
+        winery_id: ssoResult.winery_id,
+        action: "login",
+        metadata: { via: "sso", ip: clientIp },
+      }).then(() => {});
+
       return json({
         success: true,
         user: { id: ssoResult.id, winery_id: ssoResult.winery_id, email: ssoResult.email, name: ssoResult.name, role: ssoResult.role },
@@ -162,6 +171,15 @@ Deno.serve(async (req) => {
         { sub: result.id, winery_id: result.winery_id, role: result.role, type: "admin", email: result.email, name: result.name },
         secret, 86400
       );
+
+      // Log login activity
+      await supabase.from("staff_login_activity").insert({
+        admin_id: result.id,
+        winery_id: result.winery_id,
+        action: "login",
+        metadata: { via: "admin", ip: clientIp },
+      }).then(() => {});
+
       return json({
         success: true,
         user: { id: result.id, winery_id: result.winery_id, email: result.email, name: result.name, role: result.role },

@@ -15,6 +15,7 @@ import WineDetailModal from "@/components/tourist/WineDetailModal";
 import ShopFilters, { priceRanges, flavorProfiles } from "@/components/tourist/ShopFilters";
 import ShopCart from "@/components/tourist/ShopCart";
 import ShopVoucher from "@/components/tourist/ShopVoucher";
+import ShopSortSelect, { type SortOption } from "@/components/tourist/ShopSortSelect";
 import { WineGridSkeleton } from "@/components/tourist/WineCardSkeleton";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,7 +27,7 @@ import { invokeAuth } from "@/lib/auth-api";
 
 export default function ShopPage() {
   const { winery } = useOutletContext<{ winery: Winery }>();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart();
@@ -48,6 +49,7 @@ export default function ShopPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [funnelStep, setFunnelStep] = useState<"profile" | null>(null);
   const [voucherRedeemed, setVoucherRedeemed] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>("default");
 
   const discountMultiplier = discountApplied ? 0.9 : 1;
   const discountedTotal = total * discountMultiplier;
@@ -119,8 +121,13 @@ export default function ShopPage() {
         });
       }
     }
+    // Apply sorting
+    if (sortBy === "price_asc") result = [...result].sort((a, b) => a.price_bottle - b.price_bottle);
+    else if (sortBy === "price_desc") result = [...result].sort((a, b) => b.price_bottle - a.price_bottle);
+    else if (sortBy === "name_asc") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortBy === "name_desc") result = [...result].sort((a, b) => b.name.localeCompare(a.name));
     return result;
-  }, [shopWines, search, selectedType, selectedPrice, selectedFlavor, showFavoritesOnly, favorites]);
+  }, [shopWines, search, selectedType, selectedPrice, selectedFlavor, showFavoritesOnly, favorites, sortBy]);
 
   const activeFilterCount = (selectedType !== "Todos" ? 1 : 0) + (selectedPrice !== 0 ? 1 : 0) + (selectedFlavor ? 1 : 0) + (showFavoritesOnly ? 1 : 0);
 
@@ -310,9 +317,12 @@ export default function ShopPage() {
             t={t}
           />
 
-          <p className="text-[10px] text-muted-foreground mb-3">
-            {filteredWines.length} {filteredWines.length === 1 ? t("shop.wine_found") : t("shop.wines_found")}
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] text-muted-foreground">
+              {filteredWines.length} {filteredWines.length === 1 ? t("shop.wine_found") : t("shop.wines_found")}
+            </p>
+            <ShopSortSelect value={sortBy} onChange={setSortBy} locale={locale} />
+          </div>
 
           {!wines ? (
             <WineGridSkeleton count={6} />
@@ -326,6 +336,7 @@ export default function ShopPage() {
                       wine={wine}
                       translatedName={wineNameMap[wine.id] || wine.name}
                       currency={cur}
+                      winerySlug={winery.slug}
                       onAdd={() => { addItem(wine); toast.success(`${wine.name} ${t("shop.added_to_cart")}`); }}
                       onDetail={() => setDetailWine(wine)}
                       isFavorite={isFavorite(wine.id)}
@@ -354,6 +365,8 @@ export default function ShopPage() {
             onClose={() => setDetailWine(null)}
             onAdd={() => { addItem(detailWine); toast.success(`${detailWine.name} ${t("shop.added_to_cart")}`); }}
             t={t}
+            currency={cur}
+            winerySlug={winery.slug}
           />
         )}
       </AnimatePresence>

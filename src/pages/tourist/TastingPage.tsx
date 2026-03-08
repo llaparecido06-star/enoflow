@@ -166,17 +166,58 @@ export default function TastingPage() {
   const ratedCount = localRatings.filter(r => tastingWines.some(w => w.id === r.wineId)).length;
 
   // Welcome screen
-  if (showWelcome && tastingWines.length > 0 && localRatings.length === 0) {
+  if (showWelcome && localRatings.length === 0) {
+    if (tastingWines.length > 0) {
+      return (
+        <AnimatePresence>
+          <TastingWelcome
+            wineryName={winery.name}
+            wineryLogo={winery.logo_url}
+            wineCount={tastingWines.length}
+            onStart={handleStartTasting}
+            packages={packages}
+          />
+        </AnimatePresence>
+      );
+    }
+    // Empty tasting state - show available packages
     return (
-      <AnimatePresence>
-        <TastingWelcome
-          wineryName={winery.name}
-          wineryLogo={winery.logo_url}
-          wineCount={tastingWines.length}
-          onStart={handleStartTasting}
-          packages={packages}
-        />
-      </AnimatePresence>
+      <div className="space-y-6">
+        <div className="text-center py-8">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gold/10 flex items-center justify-center">
+            <WineIcon className="w-8 h-8 text-gold" />
+          </div>
+          <h2 className="font-display text-lg font-bold text-foreground mb-2">{t("tasting.cellar_preparing")}</h2>
+          <p className="text-sm text-muted-foreground">{t("tasting.check_packages")}</p>
+        </div>
+        {packages && packages.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-gold" />
+              {t("tasting.available_packages")}
+            </h3>
+            {packages.map((pkg) => (
+              <div key={pkg.id} className="bg-card rounded-xl border border-border/30 p-4 luxury-shadow">
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="text-sm font-semibold text-foreground">{pkg.name}</h4>
+                  <span className="text-xs font-bold text-gold">
+                    {pkg.wine_ids.length} {t("welcome.wines_label")}
+                  </span>
+                </div>
+                {pkg.description && (
+                  <p className="text-[11px] text-muted-foreground mb-2">{pkg.description}</p>
+                )}
+                <button
+                  onClick={() => handleStartTasting(pkg.id)}
+                  className="w-full py-2.5 rounded-xl bg-gold text-gold-foreground text-xs font-semibold hover:bg-gold/90 transition-colors"
+                >
+                  {t("welcome.start_tasting")}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     );
   }
 

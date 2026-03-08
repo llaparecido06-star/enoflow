@@ -12,9 +12,10 @@ interface TastingWelcomeProps {
   wineCount: number;
   onStart: (packageId?: string) => void;
   packages?: TastingPackage[];
+  currency?: string;
 }
 
-export default function TastingWelcome({ wineryName, wineryLogo, wineCount, onStart, packages }: TastingWelcomeProps) {
+export default function TastingWelcome({ wineryName, wineryLogo, wineCount, onStart, packages, currency = "BRL" }: TastingWelcomeProps) {
   const { t } = useI18n();
   const hasMultiplePackages = packages && packages.length > 1;
   const [selectedPkg, setSelectedPkg] = useState<string | undefined>(
@@ -77,7 +78,7 @@ export default function TastingWelcome({ wineryName, wineryLogo, wineCount, onSt
                   <Package className={`w-4 h-4 ${selectedPkg === pkg.id ? "text-gold" : "text-white/40"}`} />
                   <span className={`text-sm font-medium ${selectedPkg === pkg.id ? "text-gold" : "text-white/80"}`}>{pkg.name}</span>
                   <span className={`text-xs ml-auto ${selectedPkg === pkg.id ? "text-gold/80" : "text-white/40"}`}>
-                    {formatCurrency(Number(pkg.price), (window as any).__enoflow_currency || "BRL")}
+                    {formatCurrency(Number(pkg.price), currency)}
                   </span>
                 </div>
                 {pkg.description && <p className="text-[10px] text-white/40 mt-1 ml-6">{pkg.description}</p>}

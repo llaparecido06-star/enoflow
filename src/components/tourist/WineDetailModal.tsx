@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
 import { useTranslatedText, useContentTranslation } from "@/hooks/useContentTranslation";
 import { formatCurrency } from "@/lib/currency";
-import { Wine as WineIcon, X, Star, Plus, Grape, MapPin, Thermometer, Clock, User, FlaskConical } from "lucide-react";
+import { Wine as WineIcon, X, Star, Plus, Grape, MapPin, Thermometer, Clock, User, FlaskConical, Share2 } from "lucide-react";
+import ShareWineButton from "./ShareWineButton";
 import type { Wine } from "@/hooks/useWinery";
 
-export default function WineDetailModal({ wine, onClose, onAdd, t }: { wine: Wine; onClose: () => void; onAdd: () => void; t: (k: string) => string }) {
+export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "BRL", winerySlug }: { wine: Wine; onClose: () => void; onAdd: () => void; t: (k: string) => string; currency?: string; winerySlug?: string }) {
   const harmonizationItems = wine.harmonization?.length ? wine.harmonization : [];
   const translatedDescription = useTranslatedText(wine.description);
   const translatedName = useTranslatedText(wine.name);
@@ -129,16 +130,19 @@ export default function WineDetailModal({ wine, onClose, onAdd, t }: { wine: Win
           {/* Price + Add to cart */}
           <div className="flex items-center justify-between pt-3 border-t border-border/30">
             <div>
-              <span className="text-xs text-muted-foreground line-through">{formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}</span>
-              <span className="font-display text-xl font-bold text-gold ml-1">{formatCurrency(Math.round(Number(wine.price_bottle) * 0.9), (window as any).__enoflow_currency || "BRL")}</span>
+              <span className="text-xs text-muted-foreground line-through">{formatCurrency(Number(wine.price_bottle), currency)}</span>
+              <span className="font-display text-xl font-bold text-gold ml-1">{formatCurrency(Math.round(Number(wine.price_bottle) * 0.9), currency)}</span>
               <span className="text-[10px] text-green-500 font-bold ml-1">-10%</span>
             </div>
-            <button
+            <div className="flex items-center gap-2">
+              {winerySlug && <ShareWineButton wine={wine} winerySlug={winerySlug} currency={currency} className="p-2" />}
+              <button
               onClick={() => { onAdd(); onClose(); }}
               className="bg-gold text-gold-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gold/90 transition-colors flex items-center gap-2"
             >
               <Plus className="w-4 h-4" /> {t("shop.cart")}
             </button>
+            </div>
           </div>
         </div>
       </motion.div>
