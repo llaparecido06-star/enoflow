@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { useTranslatedText, useContentTranslation } from "@/hooks/useContentTranslation";
 import { formatCurrency } from "@/lib/currency";
-import { Wine as WineIcon, X, Star, Plus, Grape, MapPin, Thermometer, Clock, User, FlaskConical } from "lucide-react";
+import { Wine as WineIcon, X, Star, Plus, Grape, MapPin, Thermometer, Clock, User, FlaskConical, Share2 } from "lucide-react";
+import ShareWineButton from "./ShareWineButton";
 import type { Wine } from "@/hooks/useWinery";
 
 export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "BRL", winerySlug }: { wine: Wine; onClose: () => void; onAdd: () => void; t: (k: string) => string; currency?: string; winerySlug?: string }) {
