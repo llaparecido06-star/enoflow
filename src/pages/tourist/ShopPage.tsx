@@ -336,6 +336,7 @@ export default function ShopPage() {
                       wine={wine}
                       translatedName={wineNameMap[wine.id] || wine.name}
                       currency={cur}
+                      winerySlug={winery.slug}
                       onAdd={() => { addItem(wine); toast.success(`${wine.name} ${t("shop.added_to_cart")}`); }}
                       onDetail={() => setDetailWine(wine)}
                       isFavorite={isFavorite(wine.id)}
