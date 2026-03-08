@@ -13,9 +13,9 @@ function SensoryStarsMini({ value }: { value: number }) {
   );
 }
 
-export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite, translatedName }: {
+export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite, translatedName, currency = "BRL" }: {
   wine: Wine; onAdd: () => void; onDetail: () => void;
-  isFavorite: boolean; onToggleFavorite: () => void; translatedName: string;
+  isFavorite: boolean; onToggleFavorite: () => void; translatedName: string; currency?: string;
 }) {
   return (
     <motion.div
