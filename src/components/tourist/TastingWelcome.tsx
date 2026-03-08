@@ -15,7 +15,7 @@ interface TastingWelcomeProps {
   currency?: string;
 }
 
-export default function TastingWelcome({ wineryName, wineryLogo, wineCount, onStart, packages }: TastingWelcomeProps) {
+export default function TastingWelcome({ wineryName, wineryLogo, wineCount, onStart, packages, currency = "BRL" }: TastingWelcomeProps) {
   const { t } = useI18n();
   const hasMultiplePackages = packages && packages.length > 1;
   const [selectedPkg, setSelectedPkg] = useState<string | undefined>(
