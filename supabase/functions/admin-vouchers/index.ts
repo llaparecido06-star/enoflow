@@ -83,6 +83,14 @@ Deno.serve(async (req) => {
 
       if (updateErr) throw updateErr;
 
+      // Log voucher validation activity
+      await supabase.from("staff_login_activity").insert({
+        admin_id: admin_id,
+        winery_id: winery_id,
+        action: "voucher_validate",
+        metadata: { voucher_id: data.id, voucher_code: data.code, total: data.total },
+      }).then(() => {});
+
       return json({ success: true, voucher: { ...data, redeemed: true } });
     }
 

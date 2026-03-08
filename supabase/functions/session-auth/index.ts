@@ -171,6 +171,15 @@ Deno.serve(async (req) => {
         { sub: result.id, winery_id: result.winery_id, role: result.role, type: "admin", email: result.email, name: result.name },
         secret, 86400
       );
+
+      // Log login activity
+      await supabase.from("staff_login_activity").insert({
+        admin_id: result.id,
+        winery_id: result.winery_id,
+        action: "login",
+        metadata: { via: "admin", ip: clientIp },
+      }).then(() => {});
+
       return json({
         success: true,
         user: { id: result.id, winery_id: result.winery_id, email: result.email, name: result.name, role: result.role },
