@@ -179,20 +179,36 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Weekly chart
+      // Weekly chart - single query approach using already-fetched data
       const weeklyChart: { date: string; leads: number; sales: number }[] = [];
+      const sevenDaysAgo = new Date(now);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+      const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
+      
+      // Fetch all leads for the last 7 days in a single query
+      const { data: weekLeads } = await supabase
+        .from("users_leads")
+        .select("created_at")
+        .eq("winery_id", winery_id)
+        .gte("created_at", sevenDaysAgoStr);
+      
+      // Aggregate leads by day
+      const leadsPerDay: Record<string, number> = {};
+      for (const l of weekLeads ?? []) {
+        const d = l.created_at.slice(0, 10);
+        leadsPerDay[d] = (leadsPerDay[d] || 0) + 1;
+      }
+      
+      // Build chart from pre-fetched vouchers + aggregated leads
       for (let i = 6; i >= 0; i--) {
         const d = new Date(now); d.setDate(d.getDate() - i);
         const ds = d.toISOString().slice(0, 10);
         const nextD = new Date(d); nextD.setDate(nextD.getDate() + 1);
         const nds = nextD.toISOString().slice(0, 10);
-        const { count: lc } = await supabase
-          .from("users_leads").select("id", { count: "exact", head: true })
-          .eq("winery_id", winery_id).gte("created_at", ds).lt("created_at", nds);
         const daySales = (allVouchers ?? [])
           .filter(v => v.redeemed && v.created_at >= ds && v.created_at < nds)
           .reduce((s, v) => s + Number(v.total || 0), 0);
-        weeklyChart.push({ date: ds, leads: lc ?? 0, sales: daySales });
+        weeklyChart.push({ date: ds, leads: leadsPerDay[ds] ?? 0, sales: daySales });
       }
 
       // ─── BI: Age distribution ───
