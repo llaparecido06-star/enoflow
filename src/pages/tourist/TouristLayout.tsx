@@ -137,6 +137,23 @@ export default function TouristLayout() {
 
   useDynamicTheme(winery?.primary_color);
 
+  // Dynamic SEO meta tags
+  useEffect(() => {
+    if (!winery) return;
+    document.title = `${winery.name} — Experiência Digital | EnoFlow`;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    const desc = `Explore os vinhos de ${winery.name}. Degustação, cardápio e loja com desconto exclusivo.`;
+    if (metaDesc) {
+      metaDesc.setAttribute("content", desc);
+    } else {
+      const meta = document.createElement("meta");
+      meta.name = "description";
+      meta.content = desc;
+      document.head.appendChild(meta);
+    }
+    return () => { document.title = "EnoFlow"; };
+  }, [winery?.name]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
