@@ -130,11 +130,13 @@ export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "B
           {/* Price + Add to cart */}
           <div className="flex items-center justify-between pt-3 border-t border-border/30">
             <div>
-              <span className="text-xs text-muted-foreground line-through">{formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}</span>
-              <span className="font-display text-xl font-bold text-gold ml-1">{formatCurrency(Math.round(Number(wine.price_bottle) * 0.9), (window as any).__enoflow_currency || "BRL")}</span>
+              <span className="text-xs text-muted-foreground line-through">{formatCurrency(Number(wine.price_bottle), currency)}</span>
+              <span className="font-display text-xl font-bold text-gold ml-1">{formatCurrency(Math.round(Number(wine.price_bottle) * 0.9), currency)}</span>
               <span className="text-[10px] text-green-500 font-bold ml-1">-10%</span>
             </div>
-            <button
+            <div className="flex items-center gap-2">
+              {winerySlug && <ShareWineButton wine={wine} winerySlug={winerySlug} currency={currency} className="p-2" />}
+              <button
               onClick={() => { onAdd(); onClose(); }}
               className="bg-gold text-gold-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gold/90 transition-colors flex items-center gap-2"
             >
