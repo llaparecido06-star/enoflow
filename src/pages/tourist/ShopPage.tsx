@@ -27,7 +27,7 @@ import { invokeAuth } from "@/lib/auth-api";
 
 export default function ShopPage() {
   const { winery } = useOutletContext<{ winery: Winery }>();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart();
