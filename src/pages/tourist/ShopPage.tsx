@@ -317,9 +317,12 @@ export default function ShopPage() {
             t={t}
           />
 
-          <p className="text-[10px] text-muted-foreground mb-3">
-            {filteredWines.length} {filteredWines.length === 1 ? t("shop.wine_found") : t("shop.wines_found")}
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] text-muted-foreground">
+              {filteredWines.length} {filteredWines.length === 1 ? t("shop.wine_found") : t("shop.wines_found")}
+            </p>
+            <ShopSortSelect value={sortBy} onChange={setSortBy} locale={locale} />
+          </div>
 
           {!wines ? (
             <WineGridSkeleton count={6} />
