@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
         vouchers_redeemed: vouchersRedeemed,
         conversion_rate: conversionRate,
         top_wine_name: topWineName,
-        top_wine_detail: topWineDetail,
+        top_wine_count: topWineCount,
         avg_satisfaction: avgSatisfaction,
         ratings_today: ratingsToday,
         nps_avg: npsAvg,

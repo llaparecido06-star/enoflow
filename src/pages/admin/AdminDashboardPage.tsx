@@ -72,7 +72,7 @@ export default function AdminDashboardPage() {
     {
       label: "Vinho Campeão",
       value: data?.top_wine_name ?? "—",
-      sub: data?.top_wine_name ? "Mais vendido" : "Sem dados",
+      sub: data?.top_wine_name ? `${data?.top_wine_count ?? 0} vendas` : "Sem dados",
       icon: Wine, color: "text-primary", bg: "bg-primary/10",
     },
     {

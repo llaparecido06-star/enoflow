@@ -6,6 +6,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3, path: "" },
   { id: "wineries", label: "Vinícolas", icon: Building2, path: "/wineries" },
+  { id: "plans", label: "Planos", icon: CreditCard, path: "/plans" },
   { id: "admins", label: "Admins", icon: Users, path: "/admins" },
   { id: "reports", label: "Relatórios", icon: FileBarChart, path: "/reports" },
   { id: "import", label: "Importar", icon: Upload, path: "/import" },
