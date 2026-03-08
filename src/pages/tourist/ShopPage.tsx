@@ -49,6 +49,7 @@ export default function ShopPage() {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [funnelStep, setFunnelStep] = useState<"profile" | null>(null);
   const [voucherRedeemed, setVoucherRedeemed] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>("default");
 
   const discountMultiplier = discountApplied ? 0.9 : 1;
   const discountedTotal = total * discountMultiplier;
