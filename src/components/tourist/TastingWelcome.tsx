@@ -12,6 +12,7 @@ interface TastingWelcomeProps {
   wineCount: number;
   onStart: (packageId?: string) => void;
   packages?: TastingPackage[];
+  currency?: string;
 }
 
 export default function TastingWelcome({ wineryName, wineryLogo, wineCount, onStart, packages }: TastingWelcomeProps) {
