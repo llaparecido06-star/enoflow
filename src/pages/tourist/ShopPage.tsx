@@ -314,27 +314,34 @@ export default function ShopPage() {
             {filteredWines.length} {filteredWines.length === 1 ? t("shop.wine_found") : t("shop.wines_found")}
           </p>
 
-          <motion.div layout className="grid grid-cols-2 gap-3">
-            <AnimatePresence>
-              {filteredWines.map((wine) => (
-                <ShopWineCard
-                  key={wine.id}
-                  wine={wine}
-                  translatedName={wineNameMap[wine.id] || wine.name}
-                  onAdd={() => { addItem(wine); toast.success(`${wine.name} ${t("shop.added_to_cart")}`); }}
-                  onDetail={() => setDetailWine(wine)}
-                  isFavorite={isFavorite(wine.id)}
-                  onToggleFavorite={() => {
-                    toggleFavorite(wine.id);
-                    if (!isFavorite(wine.id)) toast.success(t("shop.added_favorites"));
-                  }}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          {!wines ? (
+            <WineGridSkeleton count={6} />
+          ) : (
+            <>
+              <motion.div layout className="grid grid-cols-2 gap-3">
+                <AnimatePresence>
+                  {filteredWines.map((wine) => (
+                    <ShopWineCard
+                      key={wine.id}
+                      wine={wine}
+                      translatedName={wineNameMap[wine.id] || wine.name}
+                      currency={cur}
+                      onAdd={() => { addItem(wine); toast.success(`${wine.name} ${t("shop.added_to_cart")}`); }}
+                      onDetail={() => setDetailWine(wine)}
+                      isFavorite={isFavorite(wine.id)}
+                      onToggleFavorite={() => {
+                        toggleFavorite(wine.id);
+                        if (!isFavorite(wine.id)) toast.success(t("shop.added_favorites"));
+                      }}
+                    />
+                  ))}
+                </AnimatePresence>
+              </motion.div>
 
-          {filteredWines.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-8">{t("shop.no_wines_found")}</p>
+              {filteredWines.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-8">{t("shop.no_wines_found")}</p>
+              )}
+            </>
           )}
         </section>
       )}
