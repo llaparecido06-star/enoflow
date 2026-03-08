@@ -15,6 +15,7 @@ import WineDetailModal from "@/components/tourist/WineDetailModal";
 import ShopFilters, { priceRanges, flavorProfiles } from "@/components/tourist/ShopFilters";
 import ShopCart from "@/components/tourist/ShopCart";
 import ShopVoucher from "@/components/tourist/ShopVoucher";
+import { WineGridSkeleton } from "@/components/tourist/WineCardSkeleton";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 
