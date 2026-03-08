@@ -121,8 +121,13 @@ export default function ShopPage() {
         });
       }
     }
+    // Apply sorting
+    if (sortBy === "price_asc") result = [...result].sort((a, b) => a.price_bottle - b.price_bottle);
+    else if (sortBy === "price_desc") result = [...result].sort((a, b) => b.price_bottle - a.price_bottle);
+    else if (sortBy === "name_asc") result = [...result].sort((a, b) => a.name.localeCompare(b.name));
+    else if (sortBy === "name_desc") result = [...result].sort((a, b) => b.name.localeCompare(a.name));
     return result;
-  }, [shopWines, search, selectedType, selectedPrice, selectedFlavor, showFavoritesOnly, favorites]);
+  }, [shopWines, search, selectedType, selectedPrice, selectedFlavor, showFavoritesOnly, favorites, sortBy]);
 
   const activeFilterCount = (selectedType !== "Todos" ? 1 : 0) + (selectedPrice !== 0 ? 1 : 0) + (selectedFlavor ? 1 : 0) + (showFavoritesOnly ? 1 : 0);
 
