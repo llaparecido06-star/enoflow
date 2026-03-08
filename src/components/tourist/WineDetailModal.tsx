@@ -142,6 +142,7 @@ export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "B
             >
               <Plus className="w-4 h-4" /> {t("shop.cart")}
             </button>
+            </div>
           </div>
         </div>
       </motion.div>
