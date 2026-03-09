@@ -12,10 +12,7 @@ Deno.serve(async (req) => {
       return json({ error: "Acesso restrito a Master Admin" }, 401);
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabase = createSupabaseAdmin();
 
     const admin_id = session.sub;
     const body = await req.json();
