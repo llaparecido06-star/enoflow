@@ -28,6 +28,9 @@ export default function AdminLayout() {
 
   const { admin, loading: authLoading, logout, hasPermission } = useAdminAuth(winery?.id ?? "");
 
+  // Real-time voucher redemption notifications for owners and managers
+  useVoucherNotifications(winery?.id, !!admin && hasPermission("manager"));
+
   // Force light mode in admin
   useEffect(() => {
     document.documentElement.classList.remove("dark");
