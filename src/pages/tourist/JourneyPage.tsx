@@ -37,7 +37,7 @@ function SensoryStars({ value, label }: { value: number; label: string }) {
 export default function JourneyPage() {
   const { winery } = useOutletContext<{ winery: Winery }>();
   const { t } = useI18n();
-  const { lead } = useTouristAuth();
+  const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { isFavorite } = useFavorites(lead?.id);
   const location = useLocation();
@@ -45,6 +45,7 @@ export default function JourneyPage() {
   const [ratings, setRatings] = useState<RatingData[]>([]);
   const [loadingRatings, setLoadingRatings] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
 
   const navState = location.state as { persona?: WinePersona; recommendations?: Wine[]; justFinished?: boolean } | null;
 
