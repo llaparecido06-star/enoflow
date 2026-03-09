@@ -386,7 +386,7 @@ export default function AdminSettingsPage() {
                         "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0",
                         i === 0 ? "bg-gold/20 text-gold" :
                         i === 1 ? "bg-muted text-muted-foreground" :
-                        i === 2 ? "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400" :
+                        i === 2 ? "bg-accent text-accent-foreground" :
                         "bg-muted/50 text-muted-foreground"
                       )}>
                         {i + 1}º
