@@ -159,8 +159,11 @@ export default function AdminSettingsPage() {
           <input
             type="text"
             value={voucherCode}
-            onChange={(e) => setVoucherCode(e.target.value.toUpperCase())}
-            placeholder="Ex: #LUCAS-4827"
+            onChange={(e) => {
+              let val = e.target.value.toUpperCase().replace(/^#+/, "");
+              setVoucherCode(val ? `#${val}` : "");
+            }}
+            placeholder="Ex: LUCAS-4827"
             className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 font-mono"
           />
           <button
