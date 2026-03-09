@@ -8,8 +8,9 @@ import { calculatePersona, type WinePersona } from "@/components/tourist/Celebra
 import { formatCurrencyShort, formatCurrency } from "@/lib/currency";
 import Confetti from "@/components/tourist/Confetti";
 import VoucherHistory from "@/components/tourist/VoucherHistory";
+import QuizSommelier from "@/components/tourist/QuizSommelier";
 import { motion } from "framer-motion";
-import { Star, Heart, Wine as WineIcon, Trophy, TrendingUp, Sparkles, Loader2, ShoppingBag, User, Receipt } from "lucide-react";
+import { Star, Heart, Wine as WineIcon, Trophy, TrendingUp, Sparkles, Loader2, ShoppingBag, User, Receipt, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 
