@@ -135,6 +135,30 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
+    // ─── ACTION: track_visit (capture point visit for returning users)
+    if (action === "track_visit") {
+      const { capture_point_id, capture_category, capture_location } = body;
+      if (!capture_point_id && !capture_category && !capture_location) {
+        return json({ error: "At least one capture param required" }, 400);
+      }
+
+      // Validate capture_point_id if provided
+      if (capture_point_id) {
+        const { data: cp } = await supabase.from("capture_points").select("id").eq("id", capture_point_id).maybeSingle();
+        if (!cp) return json({ error: "Invalid capture point" }, 400);
+      }
+
+      await supabase.from("capture_history").insert({
+        user_id,
+        winery_id,
+        capture_category: capture_category || null,
+        capture_location: capture_location || null,
+        capture_point_id: capture_point_id || null,
+      });
+
+      return json({ success: true });
+    }
+
     // ─── ACTION: get_vouchers
     if (action === "get_vouchers") {
       const { data, error } = await supabase
