@@ -1,32 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
-};
-
-const json = (data: unknown, status = 200) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-
-async function verifySession(req: Request): Promise<{ sub: string; role: string; winery_id: string; type: string } | null> {
-  try {
-    const token = req.headers.get("x-session-token");
-    if (!token) return null;
-    const [hB64, pB64, sB64] = token.split(".");
-    if (!hB64 || !pB64 || !sB64) return null;
-    const secret = Deno.env.get("JWT_SIGNING_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
-    const sig = Uint8Array.from(atob(sB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
-    const valid = await crypto.subtle.verify("HMAC", key, sig, new TextEncoder().encode(`${hB64}.${pB64}`));
-    if (!valid) return null;
-    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(pB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0))));
-    if (payload.exp && payload.exp < Date.now() / 1000) return null;
-    return payload;
-  } catch { return null; }
-}
+import { verifySession, json, corsHeaders, createSupabaseAdmin } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -39,16 +11,12 @@ Deno.serve(async (req) => {
       return json({ error: "Não autorizado" }, 401);
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
+    const supabase = createSupabaseAdmin();
     const winery_id = session.winery_id;
     const body = await req.json();
     const { action } = body;
 
-    // ─── LIST campaigns ──────────────────────────
+    // ─── LIST campaigns
     if (action === "list") {
       const { data, error } = await supabase
         .from("campaigns")
@@ -59,7 +27,7 @@ Deno.serve(async (req) => {
       return json({ campaigns: data ?? [] });
     }
 
-    // ─── CREATE campaign ─────────────────────────
+    // ─── CREATE campaign
     if (action === "create") {
       const { title, message, type, scheduled_at } = body;
       if (!title || !message) return json({ error: "title and message required" }, 400);
@@ -79,7 +47,7 @@ Deno.serve(async (req) => {
       return json({ success: true, campaign: data });
     }
 
-    // ─── UPDATE campaign ─────────────────────────
+    // ─── UPDATE campaign
     if (action === "update") {
       const { id, title, message, type, status, scheduled_at } = body;
       if (!id) return json({ error: "id required" }, 400);
@@ -105,7 +73,7 @@ Deno.serve(async (req) => {
       return json({ success: true, campaign: data });
     }
 
-    // ─── DELETE campaign ─────────────────────────
+    // ─── DELETE campaign
     if (action === "delete") {
       const { id } = body;
       if (!id) return json({ error: "id required" }, 400);
@@ -120,7 +88,7 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
-    // ─── GET LEADS for sending (with filters) ────
+    // ─── GET LEADS for sending (with filters)
     if (action === "get_leads") {
       const { filters } = body;
       let query = supabase
@@ -128,7 +96,6 @@ Deno.serve(async (req) => {
         .select("id, name, whatsapp, gender, income_class, preferences_summary, created_at")
         .eq("winery_id", winery_id);
 
-      // Apply filters
       if (filters) {
         if (filters.gender && ["masculino", "feminino", "nao_informar"].includes(filters.gender)) {
           query = query.eq("gender", filters.gender);
@@ -155,7 +122,7 @@ Deno.serve(async (req) => {
       return json({ leads: data ?? [] });
     }
 
-    // ─── MARK AS SENT ────────────────────────────
+    // ─── MARK AS SENT
     if (action === "mark_sent") {
       const { id, sent_count } = body;
       if (!id) return json({ error: "id required" }, 400);

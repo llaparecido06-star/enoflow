@@ -1,26 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
-};
-
-async function verifySession(req: Request): Promise<{ sub: string; role: string; winery_id: string; type: string } | null> {
-  try {
-    const token = req.headers.get("x-session-token");
-    if (!token) return null;
-    const [hB64, pB64, sB64] = token.split(".");
-    if (!hB64 || !pB64 || !sB64) return null;
-    const secret = Deno.env.get("JWT_SIGNING_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
-    const sig = Uint8Array.from(atob(sB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
-    const valid = await crypto.subtle.verify("HMAC", key, sig, new TextEncoder().encode(`${hB64}.${pB64}`));
-    if (!valid) return null;
-    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(pB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0))));
-    if (payload.exp && payload.exp < Date.now() / 1000) return null;
-    return payload;
-  } catch { return null; }
-}
+import { verifySession, json, corsHeaders, createSupabaseAdmin } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,85 +6,104 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Require admin or master auth to process automations
     const session = await verifySession(req);
     if (!session || (session.type !== "admin" && session.type !== "master")) {
-      return new Response(JSON.stringify({ error: "Não autorizado" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Não autorizado" }, 401);
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
+    const supabase = createSupabaseAdmin();
     const body = await req.json();
-    // Use winery_id from token for admin, or from body for master
     const winery_id = session.type === "master" ? (body.winery_id || session.winery_id) : session.winery_id;
 
     if (!winery_id) {
-      return new Response(JSON.stringify({ error: "winery_id required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "winery_id required" }, 400);
     }
 
-    const { data: leads, error: leadsErr } = await supabase
-      .from("users_leads")
-      .select("id, name, whatsapp, created_at")
-      .eq("winery_id", winery_id);
+    // Fetch all leads and existing automations in parallel
+    const [leadsRes, existingRes] = await Promise.all([
+      supabase
+        .from("users_leads")
+        .select("id, name, whatsapp, created_at")
+        .eq("winery_id", winery_id),
+      supabase
+        .from("automations")
+        .select("user_id, trigger_type")
+        .eq("winery_id", winery_id),
+    ]);
 
-    if (leadsErr) throw leadsErr;
+    if (leadsRes.error) throw leadsRes.error;
+
+    // Build a set of existing automations for O(1) lookup
+    const existingSet = new Set(
+      (existingRes.data ?? []).map((a) => `${a.user_id}:${a.trigger_type}`)
+    );
 
     const now = new Date();
-    const results = { created: 0, sent: 0 };
+    const toInsert: Array<{
+      winery_id: string;
+      user_id: string;
+      trigger_type: "D+1" | "D+15";
+      status: "sent" | "scheduled";
+      commission_value: number;
+    }> = [];
 
-    for (const lead of leads ?? []) {
+    const triggers: Array<{ type: "D+1" | "D+15"; days: number }> = [
+      { type: "D+1", days: 1 },
+      { type: "D+15", days: 15 },
+    ];
+
+    for (const lead of leadsRes.data ?? []) {
       const createdAt = new Date(lead.created_at);
-      const daysSince = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-
-      const triggers: Array<{ type: "D+1" | "D+15"; days: number }> = [
-        { type: "D+1", days: 1 },
-        { type: "D+15", days: 15 },
-      ];
+      const daysSince = Math.floor(
+        (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
       for (const trigger of triggers) {
-        const { data: existing } = await supabase
-          .from("automations")
-          .select("id")
-          .eq("winery_id", winery_id)
-          .eq("user_id", lead.id)
-          .eq("trigger_type", trigger.type)
-          .maybeSingle();
-
-        if (existing) continue;
+        const key = `${lead.id}:${trigger.type}`;
+        if (existingSet.has(key)) continue;
 
         if (daysSince >= trigger.days) {
-          const commission = trigger.type === "D+15" ? 25.0 : 0;
-          await supabase.from("automations").insert({
-            winery_id, user_id: lead.id, trigger_type: trigger.type, status: "sent", commission_value: commission,
+          toInsert.push({
+            winery_id,
+            user_id: lead.id,
+            trigger_type: trigger.type,
+            status: "sent",
+            commission_value: trigger.type === "D+15" ? 25.0 : 0,
           });
-          results.sent++;
         } else {
-          await supabase.from("automations").insert({
-            winery_id, user_id: lead.id, trigger_type: trigger.type, status: "scheduled", commission_value: 0,
+          toInsert.push({
+            winery_id,
+            user_id: lead.id,
+            trigger_type: trigger.type,
+            status: "scheduled",
+            commission_value: 0,
           });
-          results.created++;
         }
       }
     }
 
-    return new Response(
-      JSON.stringify({ success: true, message: `Processado: ${results.sent} enviados, ${results.created} agendados`, ...results }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    // Batch insert all new automations at once
+    let sent = 0;
+    let created = 0;
+
+    if (toInsert.length > 0) {
+      const { error: insertErr } = await supabase
+        .from("automations")
+        .insert(toInsert);
+      if (insertErr) throw insertErr;
+
+      sent = toInsert.filter((r) => r.status === "sent").length;
+      created = toInsert.filter((r) => r.status === "scheduled").length;
+    }
+
+    return json({
+      success: true,
+      message: `Processado: ${sent} enviados, ${created} agendados`,
+      sent,
+      created,
+    });
   } catch (error) {
     console.error("process-automations error:", error);
-    return new Response(JSON.stringify({ error: "An error occurred. Please try again." }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: "An error occurred. Please try again." }, 500);
   }
 });

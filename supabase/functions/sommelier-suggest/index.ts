@@ -1,28 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { verifySession, corsHeaders } from "../_shared/auth.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
-};
-
-async function verifySession(req: Request): Promise<{ sub: string; type: string } | null> {
-  try {
-    const token = req.headers.get("x-session-token");
-    if (!token) return null;
-    const [hB64, pB64, sB64] = token.split(".");
-    if (!hB64 || !pB64 || !sB64) return null;
-    const secret = Deno.env.get("JWT_SIGNING_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
-    const sig = Uint8Array.from(atob(sB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
-    const valid = await crypto.subtle.verify("HMAC", key, sig, new TextEncoder().encode(`${hB64}.${pB64}`));
-    if (!valid) return null;
-    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(pB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0))));
-    if (payload.exp && payload.exp < Date.now() / 1000) return null;
-    return payload;
-  } catch { return null; }
-}
-
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
@@ -49,9 +27,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "user", content: prompt },
-          ],
+          messages: [{ role: "user", content: prompt }],
         }),
       });
 
