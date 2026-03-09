@@ -44,7 +44,16 @@ const MasterAdminsPage = lazy(() => import("./pages/master/MasterAdminsPage"));
 const MasterReportsPage = lazy(() => import("./pages/master/MasterReportsPage"));
 const MasterImportPage = lazy(() => import("./pages/master/MasterImportPage"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 min — avoid refetching on every mount
+      gcTime: 10 * 60 * 1000,   // 10 min garbage collection
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function LazyFallback() {
   return (
