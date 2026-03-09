@@ -222,9 +222,10 @@ Deno.serve(async (req) => {
 
       const captureDist: Record<string, number> = {};
       for (const c of captureData ?? []) {
-        const label = (c.capture_point_id && cpMap[c.capture_point_id]) 
+        const rawLabel = (c.capture_point_id && cpMap[c.capture_point_id]) 
           ? cpMap[c.capture_point_id] 
-          : c.capture_location || c.capture_category || "Direto";
+          : c.capture_location || c.capture_category || "";
+        const label = rawLabel.trim() || "Acesso Direto";
         captureDist[label] = (captureDist[label] || 0) + 1;
       }
 
