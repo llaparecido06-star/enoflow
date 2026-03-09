@@ -101,7 +101,7 @@ export default function MasterDashboardPage() {
     <div>
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold text-foreground">Dashboard Master</h1>
-        <p className="text-sm text-muted-foreground">Visão global da plataforma SmartSommelier</p>
+        <p className="text-sm text-muted-foreground">Visão global da plataforma EnoFlow</p>
       </div>
 
       {/* Hero Financial KPIs */}
