@@ -457,9 +457,14 @@ export default function AdminCampaignsPage() {
               </div>
               <div className="flex justify-between items-center pt-3 border-t mt-2">
                 <span className="text-sm text-muted-foreground">{leads.length} leads</span>
-                <Button onClick={markAsSent}>
-                  <Send className="w-4 h-4 mr-2" /> Marcar como enviada
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={sendToAll}>
+                    <Users className="w-4 h-4 mr-2" /> Enviar para todos
+                  </Button>
+                  <Button onClick={markAsSent}>
+                    <Send className="w-4 h-4 mr-2" /> Marcar como enviada
+                  </Button>
+                </div>
               </div>
             </>
           )}
