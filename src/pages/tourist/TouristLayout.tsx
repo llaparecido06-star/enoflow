@@ -8,7 +8,8 @@ import WhatsAppLogin from "@/components/tourist/WhatsAppLogin";
 import QuizSommelier from "@/components/tourist/QuizSommelier";
 import { Loader2, LogOut, Wine } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { invokeAuth } from "@/lib/auth-api";
 
 function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const { isAuthenticated, lead, login, logout, updateProfile } = useTouristAuth();
@@ -26,6 +27,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const capturePointId = searchParams.get("cp") || undefined;
 
   const categoryToPath: Record<string, string> = { restaurant: "/restaurant", shop: "/shop", tasting: "" };
+  const hasTrackedVisit = useRef(false);
 
   const moduleMap: Record<string, string> = { restaurant: "restaurant", shop: "shop" };
   useEffect(() => {
@@ -35,6 +37,23 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
       navigate(`/app/${slug}`, { replace: true });
     }
   }, [location.pathname, enabledModules]);
+
+  // Track visit for returning authenticated users who arrive via QR code
+  useEffect(() => {
+    if (!isAuthenticated || hasTrackedVisit.current) return;
+    if (!capturePointId && !acqCategory && !acqLocation) return;
+    hasTrackedVisit.current = true;
+    invokeAuth("tourist-actions", {
+      action: "track_visit",
+      capture_point_id: capturePointId || undefined,
+      capture_category: acqCategory || undefined,
+      capture_location: acqLocation || undefined,
+    }).catch(() => {});
+    // Navigate to the right tab based on QR category
+    const path = categoryToPath[acqCategory || ""] ?? "";
+    const cpQuery = capturePointId ? `?cp=${capturePointId}` : "";
+    navigate(`/app/${slug}${path}${cpQuery}`, { replace: true });
+  }, [isAuthenticated, capturePointId, acqCategory, acqLocation]);
 
   // Show quiz right after first login (no preferences yet)
   useEffect(() => {
