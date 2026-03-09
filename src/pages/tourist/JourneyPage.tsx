@@ -8,8 +8,9 @@ import { calculatePersona, type WinePersona } from "@/components/tourist/Celebra
 import { formatCurrencyShort, formatCurrency } from "@/lib/currency";
 import Confetti from "@/components/tourist/Confetti";
 import VoucherHistory from "@/components/tourist/VoucherHistory";
+import QuizSommelier from "@/components/tourist/QuizSommelier";
 import { motion } from "framer-motion";
-import { Star, Heart, Wine as WineIcon, Trophy, TrendingUp, Sparkles, Loader2, ShoppingBag, User, Receipt } from "lucide-react";
+import { Star, Heart, Wine as WineIcon, Trophy, TrendingUp, Sparkles, Loader2, ShoppingBag, User, Receipt, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 
@@ -36,7 +37,7 @@ function SensoryStars({ value, label }: { value: number; label: string }) {
 export default function JourneyPage() {
   const { winery } = useOutletContext<{ winery: Winery }>();
   const { t } = useI18n();
-  const { lead } = useTouristAuth();
+  const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
   const { isFavorite } = useFavorites(lead?.id);
   const location = useLocation();
@@ -44,6 +45,7 @@ export default function JourneyPage() {
   const [ratings, setRatings] = useState<RatingData[]>([]);
   const [loadingRatings, setLoadingRatings] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
 
   const navState = location.state as { persona?: WinePersona; recommendations?: Wine[]; justFinished?: boolean } | null;
 
@@ -142,6 +144,24 @@ export default function JourneyPage() {
     );
   }
 
+  const hasProfile = !!lead?.preferences_summary || !!persona;
+
+  if (showQuiz) {
+    return (
+      <QuizSommelier
+        wineryColor={winery.primary_color}
+        onComplete={async (preferences) => {
+          try {
+            await updateProfile({ preferences_summary: preferences });
+            toast.success(t("quiz.title") + " ✨");
+          } catch {}
+          setShowQuiz(false);
+        }}
+        onSkip={() => setShowQuiz(false)}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6 relative">
       {showConfetti && <Confetti />}
@@ -157,6 +177,29 @@ export default function JourneyPage() {
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground mb-2">{persona.label}</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">{persona.description}</p>
+        </motion.div>
+      ) : !hasProfile ? (
+        /* Empty state — no quiz done */
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className="bg-card rounded-2xl border border-border/30 p-8 text-center luxury-shadow">
+          <motion.div
+            className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-primary/10"
+            animate={{ rotate: [0, -5, 5, -3, 3, 0] }}
+            transition={{ duration: 0.6, delay: 0.3, repeat: Infinity, repeatDelay: 4 }}
+          >
+            <Sparkles className="w-8 h-8 text-primary" />
+          </motion.div>
+          <h2 className="font-display text-lg font-bold text-foreground mb-2">{t("journey.no_profile")}</h2>
+          <p className="text-xs text-muted-foreground mb-5">{t("journey.empty_state")}</p>
+          <motion.button
+            onClick={() => setShowQuiz(true)}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-colors bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <Sparkles className="w-4 h-4" />
+            {t("journey.take_quiz")}
+          </motion.button>
         </motion.div>
       ) : (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -290,11 +333,18 @@ export default function JourneyPage() {
         <VoucherHistory currency={winery.currency} />
       </motion.div>
 
-      {ratings.length === 0 && !persona && (
-        <div className="text-center py-12">
-          <WineIcon className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">{t("journey.empty_state")}</p>
-        </div>
+      {/* Retake quiz link — only shown when user already has profile data */}
+      {hasProfile && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+          className="text-center pb-4">
+          <button
+            onClick={() => setShowQuiz(true)}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <RefreshCw className="w-3 h-3" />
+            {t("journey.retake_quiz")}
+          </button>
+        </motion.div>
       )}
     </div>
   );
