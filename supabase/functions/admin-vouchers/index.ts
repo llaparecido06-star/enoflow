@@ -59,6 +59,70 @@ Deno.serve(async (req) => {
       return json({ success: true, voucher: { ...data, redeemed: true } });
     }
 
+    if (action === "list_redeemed") {
+      const { data, error } = await supabase
+        .from("vouchers")
+        .select("id, code, total, redeemed, created_at, user_id")
+        .eq("winery_id", winery_id)
+        .eq("redeemed", true)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      // Fetch user names
+      const userIds = [...new Set((data ?? []).map((v: any) => v.user_id))];
+      let usersMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: users } = await supabase
+          .from("users_leads")
+          .select("id, name")
+          .in("id", userIds);
+        for (const u of users ?? []) {
+          usersMap[u.id] = u.name;
+        }
+      }
+
+      // Fetch who validated (from staff_login_activity)
+      const voucherIds = (data ?? []).map((v: any) => v.id);
+      let validatedByMap: Record<string, { name: string; date: string }> = {};
+      if (voucherIds.length > 0) {
+        const { data: activities } = await supabase
+          .from("staff_login_activity")
+          .select("metadata, admin_id, created_at")
+          .eq("winery_id", winery_id)
+          .eq("action", "voucher_validate");
+
+        for (const act of activities ?? []) {
+          const meta = act.metadata as any;
+          if (meta?.voucher_id && voucherIds.includes(meta.voucher_id)) {
+            // Get admin name
+            const { data: adm } = await supabase
+              .from("admin_users")
+              .select("name")
+              .eq("id", act.admin_id)
+              .single();
+            validatedByMap[meta.voucher_id] = {
+              name: adm?.name ?? "—",
+              date: act.created_at,
+            };
+          }
+        }
+      }
+
+      const vouchers = (data ?? []).map((v: any) => ({
+        id: v.id,
+        code: v.code,
+        total: v.total,
+        created_at: v.created_at,
+        customer_name: usersMap[v.user_id] ?? "—",
+        validated_by: validatedByMap[v.id]?.name ?? "—",
+        validated_at: validatedByMap[v.id]?.date ?? v.created_at,
+      }));
+
+      return json({ success: true, vouchers });
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (error) {
     console.error("admin-vouchers error:", error);

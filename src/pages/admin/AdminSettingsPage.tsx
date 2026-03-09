@@ -2,10 +2,20 @@ import { useState, useRef, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
-import { Palette, QrCode, CheckCircle, XCircle, Camera } from "lucide-react";
+import { Palette, QrCode, CheckCircle, XCircle, Camera, History, User, Clock } from "lucide-react";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency";
+
+interface RedeemedVoucher {
+  id: string;
+  code: string;
+  total: number;
+  created_at: string;
+  customer_name: string;
+  validated_by: string;
+  validated_at: string;
+}
 
 export default function AdminSettingsPage() {
   const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
@@ -14,6 +24,25 @@ export default function AdminSettingsPage() {
   const [scannerActive, setScannerActive] = useState(false);
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrcodeRef = useRef<any>(null);
+
+  const [redeemedVouchers, setRedeemedVouchers] = useState<RedeemedVoucher[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  const loadHistory = async () => {
+    try {
+      const { data, error } = await invokeAuth("admin-vouchers", { action: "list_redeemed" });
+      if (error) throw error;
+      setRedeemedVouchers(data?.vouchers ?? []);
+    } catch {
+      // silent
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
 
   const validateVoucher = async (code: string) => {
     if (!code.trim()) return;
@@ -41,6 +70,7 @@ export default function AdminSettingsPage() {
         icon: <CheckCircle className="w-4 h-4" />,
       });
       setVoucherCode("");
+      loadHistory();
     } catch {
       toast.error("Erro ao validar voucher");
     } finally {
@@ -84,6 +114,12 @@ export default function AdminSettingsPage() {
   }, []);
 
   const isOwner = admin.role === "owner" || admin.role === "master";
+
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" }) +
+      " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  };
 
   return (
     <div>
@@ -173,6 +209,58 @@ export default function AdminSettingsPage() {
           >
             {validating ? "Validando..." : "Validar Voucher"}
           </button>
+        </div>
+
+        {/* Histórico de Vouchers Validados */}
+        <div className="bg-card rounded-xl border border-border p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <History className="w-4 h-4 text-gold" />
+            <span className="text-sm font-semibold text-foreground">Histórico de Validações</span>
+          </div>
+
+          {loadingHistory ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-16 bg-muted/30 rounded-lg animate-pulse" />
+              ))}
+            </div>
+          ) : redeemedVouchers.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Nenhum voucher validado ainda
+            </p>
+          ) : (
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {redeemedVouchers.map((v) => (
+                <div
+                  key={v.id}
+                  className="flex items-center justify-between gap-3 border border-border/50 rounded-lg p-3 hover:bg-muted/20 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm font-semibold text-foreground">{v.code}</span>
+                      <span className="text-xs font-medium text-gold">
+                        {formatCurrency(v.total, winery.currency)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <User className="w-3 h-3" />
+                        {v.customer_name}
+                      </span>
+                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        {formatDate(v.validated_at)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-[10px] text-muted-foreground">por</span>
+                    <p className="text-[11px] font-medium text-foreground">{v.validated_by}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
