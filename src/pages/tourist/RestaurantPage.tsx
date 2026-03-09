@@ -292,4 +292,6 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
       </AnimatePresence>
     </div>
   );
-}
+});
+
+export default RestaurantPage;
