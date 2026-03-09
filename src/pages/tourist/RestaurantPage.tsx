@@ -118,7 +118,7 @@ function SommelierPanel({
   );
 }
 
-export default function RestaurantPage() {
+const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref) {
   const { winery } = useOutletContext<{ winery: Winery }>();
   const { t } = useI18n();
   const { data: wines } = useWines(winery.id);
