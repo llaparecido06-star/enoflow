@@ -1,29 +1,7 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
-};
+import { verifySession, corsHeaders, createSupabaseAdmin } from "../_shared/auth.ts";
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-
-async function verifySession(req: Request): Promise<{ sub: string; role: string; winery_id: string; type: string } | null> {
-  try {
-    const token = req.headers.get("x-session-token");
-    if (!token) return null;
-    const [hB64, pB64, sB64] = token.split(".");
-    if (!hB64 || !pB64 || !sB64) return null;
-    const secret = Deno.env.get("JWT_SIGNING_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
-    const sig = Uint8Array.from(atob(sB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
-    const valid = await crypto.subtle.verify("HMAC", key, sig, new TextEncoder().encode(`${hB64}.${pB64}`));
-    if (!valid) return null;
-    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(pB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0))));
-    if (payload.exp && payload.exp < Date.now() / 1000) return null;
-    return payload;
-  } catch { return null; }
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -49,7 +27,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return new Response(JSON.stringify({ error: "Invalid file type. Allowed: PNG, JPEG, WebP, GIF" }), {
         status: 400,
@@ -57,7 +34,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Validate file size
     if (file.size > MAX_SIZE) {
       return new Response(JSON.stringify({ error: "File too large. Maximum 5MB" }), {
         status: 400,
@@ -65,7 +41,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Read file bytes and validate magic bytes
     const bytes = new Uint8Array(await file.arrayBuffer());
     if (!validateMagicBytes(bytes, file.type)) {
       return new Response(JSON.stringify({ error: "File content does not match declared type" }), {
@@ -74,12 +49,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabase = createSupabaseAdmin();
 
-    // Generate unique filename with folder
     const safeFolders = ["logos", "wines", "menu", "products"];
     const safeFolder = safeFolders.includes(folder) ? folder : "logos";
     const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];

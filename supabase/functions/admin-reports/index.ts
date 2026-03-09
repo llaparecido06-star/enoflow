@@ -1,32 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
-};
-
-const json = (data: unknown, status = 200) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-
-async function verifySession(req: Request): Promise<{ sub: string; role: string; winery_id: string; type: string } | null> {
-  try {
-    const token = req.headers.get("x-session-token");
-    if (!token) return null;
-    const [hB64, pB64, sB64] = token.split(".");
-    if (!hB64 || !pB64 || !sB64) return null;
-    const secret = Deno.env.get("JWT_SIGNING_SECRET") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
-    const sig = Uint8Array.from(atob(sB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
-    const valid = await crypto.subtle.verify("HMAC", key, sig, new TextEncoder().encode(`${hB64}.${pB64}`));
-    if (!valid) return null;
-    const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(pB64.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0))));
-    if (payload.exp && payload.exp < Date.now() / 1000) return null;
-    return payload;
-  } catch { return null; }
-}
+import { verifySession, json, corsHeaders, createSupabaseAdmin } from "../_shared/auth.ts";
 
 function getAgeGroup(birthDate: string): string {
   const age = Math.floor((Date.now() - new Date(birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
@@ -49,10 +21,7 @@ Deno.serve(async (req) => {
       return json({ error: "Não autorizado" }, 401);
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabase = createSupabaseAdmin();
 
     const admin_id = session.sub;
     const winery_id = session.winery_id;
@@ -286,6 +255,79 @@ Deno.serve(async (req) => {
         bi_preferences: toChartArray(prefDist).slice(0, 10),
         bi_capture_points: toChartArray(captureDist).slice(0, 10),
       });
+    }
+
+    // ─── ROI BY CAPTURE POINT ────────────────────────────
+    if (body.action === "roi_capture_points") {
+      // Get all capture points
+      const { data: capturePoints } = await supabase
+        .from("capture_points")
+        .select("id, name, category")
+        .eq("winery_id", winery_id);
+
+      // Get capture history to map users to their capture points
+      const { data: captureHistory } = await supabase
+        .from("capture_history")
+        .select("user_id, capture_point_id")
+        .eq("winery_id", winery_id);
+
+      // Get all redeemed vouchers
+      const { data: redeemedVouchers } = await supabase
+        .from("vouchers")
+        .select("user_id, total")
+        .eq("winery_id", winery_id)
+        .eq("redeemed", true);
+
+      // Build user → capture_point mapping (first capture = attribution)
+      const userCapturePoint: Record<string, string> = {};
+      for (const ch of captureHistory ?? []) {
+        if (ch.capture_point_id && !userCapturePoint[ch.user_id]) {
+          userCapturePoint[ch.user_id] = ch.capture_point_id;
+        }
+      }
+
+      // Aggregate revenue per capture point
+      const cpRevenue: Record<string, { revenue: number; conversions: number; leads: number }> = {};
+      const cpLeads: Record<string, Set<string>> = {};
+
+      for (const ch of captureHistory ?? []) {
+        if (ch.capture_point_id) {
+          if (!cpLeads[ch.capture_point_id]) cpLeads[ch.capture_point_id] = new Set();
+          cpLeads[ch.capture_point_id].add(ch.user_id);
+        }
+      }
+
+      for (const v of redeemedVouchers ?? []) {
+        const cpId = userCapturePoint[v.user_id];
+        if (cpId) {
+          if (!cpRevenue[cpId]) cpRevenue[cpId] = { revenue: 0, conversions: 0, leads: 0 };
+          cpRevenue[cpId].revenue += Number(v.total || 0);
+          cpRevenue[cpId].conversions++;
+        }
+      }
+
+      // Build final array
+      const cpNameMap: Record<string, { name: string; category: string }> = {};
+      for (const cp of capturePoints ?? []) {
+        cpNameMap[cp.id] = { name: cp.name, category: cp.category };
+      }
+
+      const roiData = Object.entries(cpNameMap).map(([id, info]) => ({
+        id,
+        name: info.name,
+        category: info.category,
+        leads: cpLeads[id]?.size ?? 0,
+        conversions: cpRevenue[id]?.conversions ?? 0,
+        revenue: cpRevenue[id]?.revenue ?? 0,
+        conversion_rate: (cpLeads[id]?.size ?? 0) > 0
+          ? ((cpRevenue[id]?.conversions ?? 0) / cpLeads[id]!.size * 100).toFixed(1)
+          : "0",
+        avg_ticket: (cpRevenue[id]?.conversions ?? 0) > 0
+          ? (cpRevenue[id]!.revenue / cpRevenue[id]!.conversions).toFixed(2)
+          : "0",
+      })).sort((a, b) => b.revenue - a.revenue);
+
+      return json({ success: true, roi_capture_points: roiData });
     }
 
     // ─── DEFAULT: AUTOMATIONS ────────────────────────────
