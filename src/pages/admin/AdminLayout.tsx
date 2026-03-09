@@ -1,6 +1,7 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
+import { useVoucherNotifications } from "@/hooks/useVoucherNotifications";
 import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
@@ -26,6 +27,9 @@ export default function AdminLayout() {
   const basePath = `/admin/${slug}`;
 
   const { admin, loading: authLoading, logout, hasPermission } = useAdminAuth(winery?.id ?? "");
+
+  // Real-time voucher redemption notifications for owners and managers
+  useVoucherNotifications(winery?.id, !!admin && hasPermission("manager"));
 
   // Force light mode in admin
   useEffect(() => {
