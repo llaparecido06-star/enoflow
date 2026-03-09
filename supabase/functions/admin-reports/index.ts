@@ -259,6 +259,12 @@ Deno.serve(async (req) => {
 
     // ─── ROI BY CAPTURE POINT ────────────────────────────
     if (body.action === "roi_capture_points") {
+      // Optional period filter (days)
+      const days = body.days ? Number(body.days) : null;
+      const sinceDate = days
+        ? new Date(Date.now() - days * 86400000).toISOString()
+        : null;
+
       // Get all capture points
       const { data: capturePoints } = await supabase
         .from("capture_points")
@@ -266,17 +272,21 @@ Deno.serve(async (req) => {
         .eq("winery_id", winery_id);
 
       // Get capture history to map users to their capture points
-      const { data: captureHistory } = await supabase
+      let chQuery = supabase
         .from("capture_history")
-        .select("user_id, capture_point_id")
+        .select("user_id, capture_point_id, created_at")
         .eq("winery_id", winery_id);
+      if (sinceDate) chQuery = chQuery.gte("created_at", sinceDate);
+      const { data: captureHistory } = await chQuery;
 
-      // Get all redeemed vouchers
-      const { data: redeemedVouchers } = await supabase
+      // Get redeemed vouchers
+      let vQuery = supabase
         .from("vouchers")
-        .select("user_id, total")
+        .select("user_id, total, created_at")
         .eq("winery_id", winery_id)
         .eq("redeemed", true);
+      if (sinceDate) vQuery = vQuery.gte("created_at", sinceDate);
+      const { data: redeemedVouchers } = await vQuery;
 
       // Build user → capture_point mapping (first capture = attribution)
       const userCapturePoint: Record<string, string> = {};
