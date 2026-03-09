@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Lock, Mail, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { setSessionToken } from "@/lib/auth-api";
-import enoflowLogo from "@/assets/enoflow-logo.webp";
+import enoflowLogo from "@/assets/enoflow-logo.png";
 
 const ADMIN_STORAGE_KEY = "smartsommelier_admin";
 const MASTER_STORAGE_KEY = "smartsommelier_master";
