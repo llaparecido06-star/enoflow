@@ -180,6 +180,18 @@ export default function AdminCampaignsPage() {
     fetchLeads({});
   };
 
+  const sendToAll = () => {
+    if (leads.length === 0 || !sendingCampaign) return;
+    const msg = sendingCampaign.message;
+    // Open each wa.me link with a small delay to avoid popup blockers
+    leads.forEach((lead, i) => {
+      setTimeout(() => {
+        window.open(generateWhatsAppLink(lead.whatsapp, msg), "_blank");
+      }, i * 600);
+    });
+    toast({ title: `Abrindo ${leads.length} janelas do WhatsApp...` });
+  };
+
   const generateWhatsAppLink = (phone: string, msg: string) => {
     const cleanPhone = phone.replace(/\D/g, "");
     const encodedMsg = encodeURIComponent(msg);
