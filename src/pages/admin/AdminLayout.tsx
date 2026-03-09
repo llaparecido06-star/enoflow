@@ -1,6 +1,7 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
+import { useVoucherNotifications } from "@/hooks/useVoucherNotifications";
 import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare } from "lucide-react";
 import { useEffect, useMemo } from "react";
 
