@@ -19,6 +19,7 @@ export function useWinery(slug: string) {
       return data;
     },
     enabled: !!slug,
+    staleTime: 10 * 60 * 1000, // winery data rarely changes
   });
 }
 

@@ -7,13 +7,17 @@ import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import TouristLayout from "./pages/tourist/TouristLayout";
-import TastingPage from "./pages/tourist/TastingPage";
-import RestaurantPage from "./pages/tourist/RestaurantPage";
-import ShopPage from "./pages/tourist/ShopPage";
-import JourneyPage from "./pages/tourist/JourneyPage";
-import PrivacyPage from "./pages/PrivacyPage";
+
+// Lazy-loaded tourist routes
+const TouristLayout = lazy(() => import("./pages/tourist/TouristLayout"));
+const TastingPage = lazy(() => import("./pages/tourist/TastingPage"));
+const RestaurantPage = lazy(() => import("./pages/tourist/RestaurantPage"));
+const ShopPage = lazy(() => import("./pages/tourist/ShopPage"));
+const JourneyPage = lazy(() => import("./pages/tourist/JourneyPage"));
+
+// Lazy-loaded misc routes
+const NotFound = lazy(() => import("./pages/NotFound"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 
 // Lazy-loaded admin routes
 const AdminLoginPage = lazy(() => import("./pages/admin/AdminLoginPage"));
@@ -40,7 +44,16 @@ const MasterAdminsPage = lazy(() => import("./pages/master/MasterAdminsPage"));
 const MasterReportsPage = lazy(() => import("./pages/master/MasterReportsPage"));
 const MasterImportPage = lazy(() => import("./pages/master/MasterImportPage"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 min — avoid refetching on every mount
+      gcTime: 10 * 60 * 1000,   // 10 min garbage collection
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function LazyFallback() {
   return (
