@@ -90,6 +90,7 @@ const App = () => {
                 <Route path="performance" element={<AdminStaffPerformancePage />} />
                 <Route path="training" element={<AdminTrainingPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
+                <Route path="campaigns" element={<AdminCampaignsPage />} />
               </Route>
 
               {/* Privacy */}

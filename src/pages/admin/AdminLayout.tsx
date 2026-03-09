@@ -14,6 +14,7 @@ const navItems = [
   { id: "performance", label: "Performance", icon: Activity, path: "/performance", minRole: "owner" as AdminRole },
   { id: "locations", label: "Locais", icon: MapPin, path: "/locations", minRole: "manager" as AdminRole },
   { id: "training", label: "Treinamento", icon: Rocket, path: "/training", minRole: "staff" as AdminRole },
+  { id: "campaigns", label: "Campanhas", icon: MessageSquare, path: "/campaigns", minRole: "owner" as AdminRole },
   { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", minRole: "staff" as AdminRole },
 ];
 
