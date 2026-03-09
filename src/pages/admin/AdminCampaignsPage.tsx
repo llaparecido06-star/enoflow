@@ -1,0 +1,299 @@
+import { useState, useEffect, useCallback } from "react";
+import { useOutletContext } from "react-router-dom";
+import { invokeAuth } from "@/lib/auth-api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/use-toast";
+import { Plus, Send, Trash2, Edit, ExternalLink, Loader2, MessageSquare, Users } from "lucide-react";
+
+interface Campaign {
+  id: string;
+  title: string;
+  message: string;
+  type: string;
+  status: string;
+  sent_count: number;
+  created_at: string;
+  scheduled_at: string | null;
+  sent_at: string | null;
+}
+
+interface Lead {
+  id: string;
+  name: string;
+  whatsapp: string;
+}
+
+const typeLabels: Record<string, string> = {
+  promotion: "Promoção",
+  new_wine: "Novo Vinho",
+  event: "Evento",
+  follow_up: "Follow-up",
+};
+
+const statusColors: Record<string, string> = {
+  draft: "bg-muted text-muted-foreground",
+  sent: "bg-green-100 text-green-800",
+  scheduled: "bg-blue-100 text-blue-800",
+};
+
+export default function AdminCampaignsPage() {
+  const { winery } = useOutletContext<{ winery: { id: string; name: string } }>();
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
+  const [editing, setEditing] = useState<Campaign | null>(null);
+  const [sendingCampaign, setSendingCampaign] = useState<Campaign | null>(null);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
+
+  // Form state
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [type, setType] = useState("promotion");
+  const [saving, setSaving] = useState(false);
+
+  const fetchCampaigns = useCallback(async () => {
+    setLoading(true);
+    const res = await invokeAuth("admin-campaigns", { action: "list" });
+    if (res.data?.campaigns) setCampaigns(res.data.campaigns);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchCampaigns(); }, [fetchCampaigns]);
+
+  const openCreate = () => {
+    setEditing(null);
+    setTitle("");
+    setMessage("");
+    setType("promotion");
+    setFormOpen(true);
+  };
+
+  const openEdit = (c: Campaign) => {
+    setEditing(c);
+    setTitle(c.title);
+    setMessage(c.message);
+    setType(c.type);
+    setFormOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!title.trim() || !message.trim()) return;
+    setSaving(true);
+    const action = editing ? "update" : "create";
+    const payload: Record<string, unknown> = { action, title, message, type };
+    if (editing) payload.id = editing.id;
+
+    const res = await invokeAuth("admin-campaigns", payload);
+    if (res.data?.success) {
+      toast({ title: editing ? "Campanha atualizada" : "Campanha criada" });
+      setFormOpen(false);
+      fetchCampaigns();
+    } else {
+      toast({ title: "Erro", description: res.data?.error || "Erro ao salvar", variant: "destructive" });
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Excluir esta campanha?")) return;
+    await invokeAuth("admin-campaigns", { action: "delete", id });
+    toast({ title: "Campanha excluída" });
+    fetchCampaigns();
+  };
+
+  const openSend = async (c: Campaign) => {
+    setSendingCampaign(c);
+    setSendOpen(true);
+    setLeadsLoading(true);
+    const res = await invokeAuth("admin-campaigns", { action: "get_leads" });
+    if (res.data?.leads) setLeads(res.data.leads);
+    setLeadsLoading(false);
+  };
+
+  const generateWhatsAppLink = (phone: string, msg: string) => {
+    const cleanPhone = phone.replace(/\D/g, "");
+    const encodedMsg = encodeURIComponent(msg);
+    return `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
+  };
+
+  const markAsSent = async () => {
+    if (!sendingCampaign) return;
+    await invokeAuth("admin-campaigns", {
+      action: "mark_sent",
+      id: sendingCampaign.id,
+      sent_count: leads.length,
+    });
+    toast({ title: "Campanha marcada como enviada!" });
+    setSendOpen(false);
+    fetchCampaigns();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Campanhas WhatsApp</h1>
+          <p className="text-sm text-muted-foreground">Crie e envie notificações para seus turistas</p>
+        </div>
+        <Button onClick={openCreate}>
+          <Plus className="w-4 h-4 mr-2" /> Nova Campanha
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : campaigns.length === 0 ? (
+        <div className="text-center py-16 border border-dashed rounded-xl">
+          <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
+          <p className="text-muted-foreground">Nenhuma campanha criada ainda</p>
+          <Button variant="outline" className="mt-4" onClick={openCreate}>
+            <Plus className="w-4 h-4 mr-2" /> Criar primeira campanha
+          </Button>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {campaigns.map((c) => (
+            <div key={c.id} className="border rounded-xl p-4 bg-card">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-foreground truncate">{c.title}</h3>
+                    <Badge variant="secondary" className={statusColors[c.status] || ""}>
+                      {c.status === "draft" ? "Rascunho" : c.status === "sent" ? "Enviada" : "Agendada"}
+                    </Badge>
+                    <Badge variant="outline">{typeLabels[c.type] || c.type}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{c.message}</p>
+                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                    <span>Criada: {new Date(c.created_at).toLocaleDateString("pt-BR")}</span>
+                    {c.sent_at && <span>Enviada: {new Date(c.sent_at).toLocaleDateString("pt-BR")}</span>}
+                    {c.sent_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" /> {c.sent_count} leads
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button variant="ghost" size="icon" onClick={() => openSend(c)} title="Enviar">
+                    <Send className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => openEdit(c)} title="Editar">
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(c.id)} title="Excluir">
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Create/Edit Modal */}
+      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editing ? "Editar Campanha" : "Nova Campanha"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-foreground">Título</label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ex: Promoção de Inverno" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground">Tipo</label>
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="promotion">Promoção</SelectItem>
+                  <SelectItem value="new_wine">Novo Vinho</SelectItem>
+                  <SelectItem value="event">Evento</SelectItem>
+                  <SelectItem value="follow_up">Follow-up</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground">Mensagem</label>
+              <Textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Olá! Temos uma promoção especial..."
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground mt-1">{message.length}/1000 caracteres</p>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setFormOpen(false)}>Cancelar</Button>
+              <Button onClick={handleSave} disabled={saving || !title.trim() || !message.trim()}>
+                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {editing ? "Salvar" : "Criar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Modal */}
+      <Dialog open={sendOpen} onOpenChange={setSendOpen}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Enviar: {sendingCampaign?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="bg-muted/50 rounded-lg p-3 mb-2">
+            <p className="text-sm text-muted-foreground">{sendingCampaign?.message}</p>
+          </div>
+          {leadsLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : leads.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhum lead cadastrado</p>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground mb-2">
+                Clique no link de cada lead para abrir o WhatsApp com a mensagem pronta:
+              </p>
+              <div className="flex-1 overflow-y-auto space-y-2 max-h-[40vh]">
+                {leads.map((lead) => (
+                  <div key={lead.id} className="flex items-center justify-between gap-2 border rounded-lg p-2.5">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{lead.name}</p>
+                      <p className="text-xs text-muted-foreground">{lead.whatsapp}</p>
+                    </div>
+                    <a
+                      href={generateWhatsAppLink(lead.whatsapp, sendingCampaign?.message || "")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0"
+                    >
+                      <Button variant="outline" size="sm">
+                        <ExternalLink className="w-3 h-3 mr-1" /> Enviar
+                      </Button>
+                    </a>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between items-center pt-3 border-t mt-2">
+                <span className="text-sm text-muted-foreground">{leads.length} leads</span>
+                <Button onClick={markAsSent}>
+                  <Send className="w-4 h-4 mr-2" /> Marcar como enviada
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

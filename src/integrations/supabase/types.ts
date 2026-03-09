@@ -100,6 +100,56 @@ export type Database = {
           },
         ]
       }
+      campaigns: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          scheduled_at: string | null
+          sent_at: string | null
+          sent_count: number
+          status: string
+          target_filter: Json
+          title: string
+          type: string
+          winery_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          target_filter?: Json
+          title: string
+          type?: string
+          winery_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          target_filter?: Json
+          title?: string
+          type?: string
+          winery_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_winery_id_fkey"
+            columns: ["winery_id"]
+            isOneToOne: false
+            referencedRelation: "wineries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capture_history: {
         Row: {
           capture_category: string | null
