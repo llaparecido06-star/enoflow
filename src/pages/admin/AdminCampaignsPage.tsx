@@ -180,6 +180,18 @@ export default function AdminCampaignsPage() {
     fetchLeads({});
   };
 
+  const sendToAll = () => {
+    if (leads.length === 0 || !sendingCampaign) return;
+    const msg = sendingCampaign.message;
+    // Open each wa.me link with a small delay to avoid popup blockers
+    leads.forEach((lead, i) => {
+      setTimeout(() => {
+        window.open(generateWhatsAppLink(lead.whatsapp, msg), "_blank");
+      }, i * 600);
+    });
+    toast({ title: `Abrindo ${leads.length} janelas do WhatsApp...` });
+  };
+
   const generateWhatsAppLink = (phone: string, msg: string) => {
     const cleanPhone = phone.replace(/\D/g, "");
     const encodedMsg = encodeURIComponent(msg);
@@ -445,9 +457,14 @@ export default function AdminCampaignsPage() {
               </div>
               <div className="flex justify-between items-center pt-3 border-t mt-2">
                 <span className="text-sm text-muted-foreground">{leads.length} leads</span>
-                <Button onClick={markAsSent}>
-                  <Send className="w-4 h-4 mr-2" /> Marcar como enviada
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={sendToAll}>
+                    <Users className="w-4 h-4 mr-2" /> Enviar para todos
+                  </Button>
+                  <Button onClick={markAsSent}>
+                    <Send className="w-4 h-4 mr-2" /> Marcar como enviada
+                  </Button>
+                </div>
               </div>
             </>
           )}
