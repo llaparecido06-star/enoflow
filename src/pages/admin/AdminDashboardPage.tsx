@@ -4,11 +4,13 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { formatCurrency } from "@/lib/currency";
-import { DollarSign, Users, Wine, Loader2, BarChart3, TrendingUp, Receipt, Target, ThumbsUp } from "lucide-react";
+import { DollarSign, Users, Wine, Loader2, BarChart3, TrendingUp, Receipt, Target, ThumbsUp, QrCode } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
 } from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import RoiCapturePointsTab from "@/components/admin/RoiCapturePointsTab";
 
 const PIE_COLORS = [
   "hsl(var(--primary))",
@@ -96,61 +98,71 @@ export default function AdminDashboardPage() {
         <p className="text-sm text-muted-foreground">Visão geral de {winery.name}</p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {kpis.map((kpi) => (
-          <div key={kpi.label} className="bg-card rounded-xl border border-border p-5">
-            <div className="flex items-center gap-3 mb-3">
-              <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center`}>
-                <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview" className="gap-1.5">
+            <BarChart3 className="w-4 h-4" /> Visão Geral
+          </TabsTrigger>
+          <TabsTrigger value="roi" className="gap-1.5">
+            <QrCode className="w-4 h-4" /> ROI por QR Code
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {kpis.map((kpi) => (
+              <div key={kpi.label} className="bg-card rounded-xl border border-border p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center`}>
+                    <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
+                  </div>
+                  <span className="text-xs text-muted-foreground">{kpi.label}</span>
+                </div>
+                <p className="font-display text-2xl font-bold text-foreground truncate">{kpi.value}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">{kpi.sub}</p>
               </div>
-              <span className="text-xs text-muted-foreground">{kpi.label}</span>
+            ))}
+          </div>
+
+          {/* Weekly Chart */}
+          {chartData.length > 0 && (
+            <div className="bg-card rounded-xl border border-border p-5 mb-6">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                <h2 className="font-display text-base font-semibold text-foreground">Vendas & Leads — Últimos 7 dias</h2>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} barGap={4}>
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(5)} />
+                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} formatter={(value) => (value === "leads" ? "Novos Leads" : "Vendas (R$)")} />
+                    <Bar dataKey="leads" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="sales" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            <p className="font-display text-2xl font-bold text-foreground truncate">{kpi.value}</p>
-            <p className="text-[11px] text-muted-foreground mt-1">{kpi.sub}</p>
+          )}
+
+          {/* BI Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <BiBarCard title="📍 Pontos de Captura (visitas)" data={biCapture} emptyMsg="Sem dados de visitas por QR" />
+            <BiBarCard title="Origem por Local" data={biOrigin} emptyMsg="Sem dados de origem" />
           </div>
-        ))}
-      </div>
 
-      {/* Weekly Chart */}
-      {chartData.length > 0 && (
-        <div className="bg-card rounded-xl border border-border p-5 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="w-5 h-5 text-primary" />
-            <h2 className="font-display text-base font-semibold text-foreground">Vendas & Leads — Últimos 7 dias</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <BiPieCard title="Faixa Etária" data={biAge} emptyMsg="Sem dados de idade" />
+            <BiBarCard title="Preferências" data={biPrefs} emptyMsg="Sem dados de preferências" />
           </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} barGap={4}>
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(5)} />
-                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 11 }} formatter={(value) => (value === "leads" ? "Novos Leads" : "Vendas (R$)")} />
-                <Bar dataKey="leads" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="sales" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
+        </TabsContent>
 
-      {/* BI Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        {/* Capture Points */}
-        <BiBarCard title="📍 Pontos de Captura (visitas)" data={biCapture} emptyMsg="Sem dados de visitas por QR" />
-
-        {/* Origin by Location */}
-        <BiBarCard title="Origem por Local" data={biOrigin} emptyMsg="Sem dados de origem" />
-      </div>
-
-      {/* BI Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Age Distribution */}
-        <BiPieCard title="Faixa Etária" data={biAge} emptyMsg="Sem dados de idade" />
-
-        {/* Preferences */}
-        <BiBarCard title="Preferências" data={biPrefs} emptyMsg="Sem dados de preferências" />
-      </div>
+        <TabsContent value="roi">
+          <RoiCapturePointsTab currency={cur} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
