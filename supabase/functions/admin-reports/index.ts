@@ -257,6 +257,79 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ─── ROI BY CAPTURE POINT ────────────────────────────
+    if (body.action === "roi_capture_points") {
+      // Get all capture points
+      const { data: capturePoints } = await supabase
+        .from("capture_points")
+        .select("id, name, category")
+        .eq("winery_id", winery_id);
+
+      // Get capture history to map users to their capture points
+      const { data: captureHistory } = await supabase
+        .from("capture_history")
+        .select("user_id, capture_point_id")
+        .eq("winery_id", winery_id);
+
+      // Get all redeemed vouchers
+      const { data: redeemedVouchers } = await supabase
+        .from("vouchers")
+        .select("user_id, total")
+        .eq("winery_id", winery_id)
+        .eq("redeemed", true);
+
+      // Build user → capture_point mapping (first capture = attribution)
+      const userCapturePoint: Record<string, string> = {};
+      for (const ch of captureHistory ?? []) {
+        if (ch.capture_point_id && !userCapturePoint[ch.user_id]) {
+          userCapturePoint[ch.user_id] = ch.capture_point_id;
+        }
+      }
+
+      // Aggregate revenue per capture point
+      const cpRevenue: Record<string, { revenue: number; conversions: number; leads: number }> = {};
+      const cpLeads: Record<string, Set<string>> = {};
+
+      for (const ch of captureHistory ?? []) {
+        if (ch.capture_point_id) {
+          if (!cpLeads[ch.capture_point_id]) cpLeads[ch.capture_point_id] = new Set();
+          cpLeads[ch.capture_point_id].add(ch.user_id);
+        }
+      }
+
+      for (const v of redeemedVouchers ?? []) {
+        const cpId = userCapturePoint[v.user_id];
+        if (cpId) {
+          if (!cpRevenue[cpId]) cpRevenue[cpId] = { revenue: 0, conversions: 0, leads: 0 };
+          cpRevenue[cpId].revenue += Number(v.total || 0);
+          cpRevenue[cpId].conversions++;
+        }
+      }
+
+      // Build final array
+      const cpNameMap: Record<string, { name: string; category: string }> = {};
+      for (const cp of capturePoints ?? []) {
+        cpNameMap[cp.id] = { name: cp.name, category: cp.category };
+      }
+
+      const roiData = Object.entries(cpNameMap).map(([id, info]) => ({
+        id,
+        name: info.name,
+        category: info.category,
+        leads: cpLeads[id]?.size ?? 0,
+        conversions: cpRevenue[id]?.conversions ?? 0,
+        revenue: cpRevenue[id]?.revenue ?? 0,
+        conversion_rate: (cpLeads[id]?.size ?? 0) > 0
+          ? ((cpRevenue[id]?.conversions ?? 0) / cpLeads[id]!.size * 100).toFixed(1)
+          : "0",
+        avg_ticket: (cpRevenue[id]?.conversions ?? 0) > 0
+          ? (cpRevenue[id]!.revenue / cpRevenue[id]!.conversions).toFixed(2)
+          : "0",
+      })).sort((a, b) => b.revenue - a.revenue);
+
+      return json({ success: true, roi_capture_points: roiData });
+    }
+
     // ─── DEFAULT: AUTOMATIONS ────────────────────────────
     const { data: automations, error } = await supabase
       .from("automations")
