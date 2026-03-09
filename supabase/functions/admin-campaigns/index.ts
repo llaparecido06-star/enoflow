@@ -120,14 +120,37 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
-    // ─── GET LEADS for sending ───────────────────
+    // ─── GET LEADS for sending (with filters) ────
     if (action === "get_leads") {
-      const { data, error } = await supabase
+      const { filters } = body;
+      let query = supabase
         .from("users_leads")
-        .select("id, name, whatsapp")
-        .eq("winery_id", winery_id)
-        .order("name");
+        .select("id, name, whatsapp, gender, income_class, preferences_summary, created_at")
+        .eq("winery_id", winery_id);
 
+      // Apply filters
+      if (filters) {
+        if (filters.gender && ["masculino", "feminino", "nao_informar"].includes(filters.gender)) {
+          query = query.eq("gender", filters.gender);
+        }
+        if (filters.income_class) {
+          const allowed = ["A", "B", "C", "D", "E", "ate_3k", "3k_8k", "8k_15k", "acima_15k"];
+          if (allowed.includes(filters.income_class)) {
+            query = query.eq("income_class", filters.income_class);
+          }
+        }
+        if (filters.has_persona === true) {
+          query = query.not("preferences_summary", "is", null);
+        }
+        if (filters.registered_after && /^\d{4}-\d{2}-\d{2}$/.test(filters.registered_after)) {
+          query = query.gte("created_at", filters.registered_after);
+        }
+        if (filters.registered_before && /^\d{4}-\d{2}-\d{2}$/.test(filters.registered_before)) {
+          query = query.lte("created_at", filters.registered_before + "T23:59:59");
+        }
+      }
+
+      const { data, error } = await query.order("name");
       if (error) throw error;
       return json({ leads: data ?? [] });
     }
