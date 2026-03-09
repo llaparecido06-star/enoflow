@@ -196,9 +196,8 @@ Deno.serve(async (req) => {
           const group = getAgeGroup(l.birth_date);
           ageDist[group] = (ageDist[group] || 0) + 1;
         }
-        if (l.acquisition_location) {
-          originDist[l.acquisition_location] = (originDist[l.acquisition_location] || 0) + 1;
-        }
+        const originLabel = (l.acquisition_location || "").trim() || "Não informado";
+        originDist[originLabel] = (originDist[originLabel] || 0) + 1;
         if (l.preferences_summary) {
           const prefs = l.preferences_summary.split(",").map((p: string) => p.trim()).filter(Boolean);
           for (const p of prefs) {
