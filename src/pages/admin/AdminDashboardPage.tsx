@@ -4,11 +4,13 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { formatCurrency } from "@/lib/currency";
-import { DollarSign, Users, Wine, Loader2, BarChart3, TrendingUp, Receipt, Target, ThumbsUp } from "lucide-react";
+import { DollarSign, Users, Wine, Loader2, BarChart3, TrendingUp, Receipt, Target, ThumbsUp, QrCode } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell,
 } from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import RoiCapturePointsTab from "@/components/admin/RoiCapturePointsTab";
 
 const PIE_COLORS = [
   "hsl(var(--primary))",
