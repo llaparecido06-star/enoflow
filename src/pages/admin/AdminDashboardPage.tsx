@@ -87,9 +87,9 @@ export default function AdminDashboardPage() {
 
   const chartData = data?.weekly_chart ?? [];
   const biAge: { name: string; value: number }[] = data?.bi_age ?? [];
-  const biOrigin: { name: string; value: number }[] = data?.bi_origin ?? [];
-  const biPrefs: { name: string; value: number }[] = data?.bi_preferences ?? [];
-  const biCapture: { name: string; value: number }[] = data?.bi_capture_points ?? [];
+  const biOrigin: { name: string; value: number }[] = (data?.bi_origin ?? []).map((d: any) => ({ ...d, name: d.name || "Não informado" }));
+  const biPrefs: { name: string; value: number }[] = (data?.bi_preferences ?? []).map((d: any) => ({ ...d, name: d.name || "Não informado" }));
+  const biCapture: { name: string; value: number }[] = (data?.bi_capture_points ?? []).map((d: any) => ({ ...d, name: d.name || "Acesso Direto" }));
 
   return (
     <div>

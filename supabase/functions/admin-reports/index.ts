@@ -196,9 +196,8 @@ Deno.serve(async (req) => {
           const group = getAgeGroup(l.birth_date);
           ageDist[group] = (ageDist[group] || 0) + 1;
         }
-        if (l.acquisition_location) {
-          originDist[l.acquisition_location] = (originDist[l.acquisition_location] || 0) + 1;
-        }
+        const originLabel = (l.acquisition_location || "").trim() || "Não informado";
+        originDist[originLabel] = (originDist[originLabel] || 0) + 1;
         if (l.preferences_summary) {
           const prefs = l.preferences_summary.split(",").map((p: string) => p.trim()).filter(Boolean);
           for (const p of prefs) {
@@ -223,9 +222,10 @@ Deno.serve(async (req) => {
 
       const captureDist: Record<string, number> = {};
       for (const c of captureData ?? []) {
-        const label = (c.capture_point_id && cpMap[c.capture_point_id]) 
+        const rawLabel = (c.capture_point_id && cpMap[c.capture_point_id]) 
           ? cpMap[c.capture_point_id] 
-          : c.capture_location || c.capture_category || "Direto";
+          : c.capture_location || c.capture_category || "";
+        const label = rawLabel.trim() || "Acesso Direto";
         captureDist[label] = (captureDist[label] || 0) + 1;
       }
 
