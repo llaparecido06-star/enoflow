@@ -8,7 +8,8 @@ import WhatsAppLogin from "@/components/tourist/WhatsAppLogin";
 import QuizSommelier from "@/components/tourist/QuizSommelier";
 import { Loader2, LogOut, Wine } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { invokeAuth } from "@/lib/auth-api";
 
 function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const { isAuthenticated, lead, login, logout, updateProfile } = useTouristAuth();
