@@ -180,17 +180,25 @@ export default function TastingPage() {
         </AnimatePresence>
       );
     }
-    // Empty tasting state - show available packages
+    // Empty tasting state - show available packages or helpful message
     return (
       <div className="space-y-6">
         <div className="text-center py-8">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gold/10 flex items-center justify-center">
             <WineIcon className="w-8 h-8 text-gold" />
           </div>
-          <h2 className="font-display text-lg font-bold text-foreground mb-2">{t("tasting.cellar_preparing")}</h2>
-          <p className="text-sm text-muted-foreground">{t("tasting.check_packages")}</p>
+          <h2 className="font-display text-lg font-bold text-foreground mb-2">
+            {packages && packages.length > 0
+              ? t("tasting.select_package_title") || "Escolha seu pacote de degustação"
+              : t("tasting.cellar_preparing")}
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+            {packages && packages.length > 0
+              ? t("tasting.select_package_desc") || "Selecione um dos pacotes abaixo para iniciar sua experiência sensorial"
+              : t("tasting.ask_staff") || "Peça ao nosso sommelier para configurar sua degustação. Enquanto isso, explore nosso cardápio e loja!"}
+          </p>
         </div>
-        {packages && packages.length > 0 && (
+        {packages && packages.length > 0 ? (
           <div className="space-y-3">
             <h3 className="font-display text-sm font-semibold text-foreground flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-gold" />
@@ -215,6 +223,21 @@ export default function TastingPage() {
                 </button>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate(`/app/${winery.slug}/restaurant`)}
+              className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
+            >
+              🍽️ {t("nav.restaurant") || "Restaurante"}
+            </button>
+            <button
+              onClick={() => navigate(`/app/${winery.slug}/shop`)}
+              className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
+            >
+              🛍️ {t("nav.shop") || "Loja"}
+            </button>
           </div>
         )}
       </div>

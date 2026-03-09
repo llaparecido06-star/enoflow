@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, forwardRef } from "react";
 import { useOutletContext, useLocation } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import { useMenuItems, type MenuItem } from "@/hooks/useMenuItems";
@@ -118,7 +118,7 @@ function SommelierPanel({
   );
 }
 
-export default function RestaurantPage() {
+const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref) {
   const { winery } = useOutletContext<{ winery: Winery }>();
   const { t } = useI18n();
   const { data: wines } = useWines(winery.id);
@@ -292,4 +292,6 @@ export default function RestaurantPage() {
       </AnimatePresence>
     </div>
   );
-}
+});
+
+export default RestaurantPage;
