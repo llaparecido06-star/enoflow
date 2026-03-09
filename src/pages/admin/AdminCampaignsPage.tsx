@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
-import { Plus, Send, Trash2, Edit, ExternalLink, Loader2, MessageSquare, Users } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Send, Trash2, Edit, ExternalLink, Loader2, MessageSquare, Users, Filter, X } from "lucide-react";
 
 interface Campaign {
   id: string;
@@ -26,6 +27,18 @@ interface Lead {
   id: string;
   name: string;
   whatsapp: string;
+  gender?: string;
+  income_class?: string;
+  preferences_summary?: string;
+  created_at?: string;
+}
+
+interface Filters {
+  gender?: string;
+  income_class?: string;
+  has_persona?: boolean;
+  registered_after?: string;
+  registered_before?: string;
 }
 
 const typeLabels: Record<string, string> = {
@@ -41,6 +54,19 @@ const statusColors: Record<string, string> = {
   scheduled: "bg-blue-100 text-blue-800",
 };
 
+const genderLabels: Record<string, string> = {
+  masculino: "Masculino",
+  feminino: "Feminino",
+  nao_informar: "Não informado",
+};
+
+const incomeLabels: Record<string, string> = {
+  ate_3k: "Até R$3k",
+  "3k_8k": "R$3k–8k",
+  "8k_15k": "R$8k–15k",
+  acima_15k: "Acima R$15k",
+};
+
 export default function AdminCampaignsPage() {
   const { winery } = useOutletContext<{ winery: { id: string; name: string } }>();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -51,12 +77,16 @@ export default function AdminCampaignsPage() {
   const [sendingCampaign, setSendingCampaign] = useState<Campaign | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Form state
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [type, setType] = useState("promotion");
   const [saving, setSaving] = useState(false);
+
+  // Filter state
+  const [filters, setFilters] = useState<Filters>({});
 
   const fetchCampaigns = useCallback(async () => {
     setLoading(true);
@@ -66,6 +96,31 @@ export default function AdminCampaignsPage() {
   }, []);
 
   useEffect(() => { fetchCampaigns(); }, [fetchCampaigns]);
+
+  const fetchLeads = useCallback(async (f: Filters) => {
+    setLeadsLoading(true);
+    const cleanFilters: Record<string, unknown> = {};
+    if (f.gender) cleanFilters.gender = f.gender;
+    if (f.income_class) cleanFilters.income_class = f.income_class;
+    if (f.has_persona) cleanFilters.has_persona = true;
+    if (f.registered_after) cleanFilters.registered_after = f.registered_after;
+    if (f.registered_before) cleanFilters.registered_before = f.registered_before;
+
+    const res = await invokeAuth("admin-campaigns", {
+      action: "get_leads",
+      filters: Object.keys(cleanFilters).length > 0 ? cleanFilters : undefined,
+    });
+    if (res.data?.leads) setLeads(res.data.leads);
+    setLeadsLoading(false);
+  }, []);
+
+  const activeFilterCount = [
+    filters.gender,
+    filters.income_class,
+    filters.has_persona,
+    filters.registered_after,
+    filters.registered_before,
+  ].filter(Boolean).length;
 
   const openCreate = () => {
     setEditing(null);
@@ -111,10 +166,18 @@ export default function AdminCampaignsPage() {
   const openSend = async (c: Campaign) => {
     setSendingCampaign(c);
     setSendOpen(true);
-    setLeadsLoading(true);
-    const res = await invokeAuth("admin-campaigns", { action: "get_leads" });
-    if (res.data?.leads) setLeads(res.data.leads);
-    setLeadsLoading(false);
+    setFilters({});
+    setShowFilters(false);
+    await fetchLeads({});
+  };
+
+  const applyFilters = () => {
+    fetchLeads(filters);
+  };
+
+  const clearFilters = () => {
+    setFilters({});
+    fetchLeads({});
   };
 
   const generateWhatsAppLink = (phone: string, msg: string) => {
@@ -165,7 +228,7 @@ export default function AdminCampaignsPage() {
             <div key={c.id} className="border rounded-xl p-4 bg-card">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h3 className="font-semibold text-foreground truncate">{c.title}</h3>
                     <Badge variant="secondary" className={statusColors[c.status] || ""}>
                       {c.status === "draft" ? "Rascunho" : c.status === "sent" ? "Enviada" : "Agendada"}
@@ -244,27 +307,123 @@ export default function AdminCampaignsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Send Modal */}
+      {/* Send Modal with Filters */}
       <Dialog open={sendOpen} onOpenChange={setSendOpen}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Enviar: {sendingCampaign?.title}</DialogTitle>
           </DialogHeader>
           <div className="bg-muted/50 rounded-lg p-3 mb-2">
             <p className="text-sm text-muted-foreground">{sendingCampaign?.message}</p>
           </div>
+
+          {/* Filter Toggle */}
+          <div className="flex items-center justify-between">
+            <Button
+              variant={showFilters ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="w-3.5 h-3.5 mr-1.5" />
+              Segmentar
+              {activeFilterCount > 0 && (
+                <Badge variant="default" className="ml-1.5 h-5 min-w-[20px] px-1.5 text-[10px]">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+            {activeFilterCount > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs text-muted-foreground">
+                <X className="w-3 h-3 mr-1" /> Limpar filtros
+              </Button>
+            )}
+          </div>
+
+          {/* Filters Panel */}
+          {showFilters && (
+            <div className="border rounded-lg p-3 space-y-3 bg-muted/30">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-foreground mb-1 block">Sexo</label>
+                  <Select
+                    value={filters.gender || "all"}
+                    onValueChange={(v) => setFilters((f) => ({ ...f, gender: v === "all" ? undefined : v }))}
+                  >
+                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      {Object.entries(genderLabels).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-foreground mb-1 block">Faixa de renda</label>
+                  <Select
+                    value={filters.income_class || "all"}
+                    onValueChange={(v) => setFilters((f) => ({ ...f, income_class: v === "all" ? undefined : v }))}
+                  >
+                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas</SelectItem>
+                      {Object.entries(incomeLabels).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-foreground mb-1 block">Cadastro após</label>
+                  <Input
+                    type="date"
+                    className="h-8 text-xs"
+                    value={filters.registered_after || ""}
+                    onChange={(e) => setFilters((f) => ({ ...f, registered_after: e.target.value || undefined }))}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-foreground mb-1 block">Cadastro antes</label>
+                  <Input
+                    type="date"
+                    className="h-8 text-xs"
+                    value={filters.registered_before || ""}
+                    onChange={(e) => setFilters((f) => ({ ...f, registered_before: e.target.value || undefined }))}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="has_persona"
+                  checked={!!filters.has_persona}
+                  onCheckedChange={(v) => setFilters((f) => ({ ...f, has_persona: !!v }))}
+                />
+                <label htmlFor="has_persona" className="text-xs text-foreground cursor-pointer">
+                  Apenas com persona de vinho definida
+                </label>
+              </div>
+              <Button size="sm" onClick={applyFilters} className="w-full">
+                <Filter className="w-3.5 h-3.5 mr-1.5" /> Aplicar filtros
+              </Button>
+            </div>
+          )}
+
           {leadsLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : leads.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Nenhum lead cadastrado</p>
+            <p className="text-sm text-muted-foreground text-center py-8">
+              {activeFilterCount > 0 ? "Nenhum lead encontrado com esses filtros" : "Nenhum lead cadastrado"}
+            </p>
           ) : (
             <>
               <p className="text-sm text-muted-foreground mb-2">
                 Clique no link de cada lead para abrir o WhatsApp com a mensagem pronta:
               </p>
-              <div className="flex-1 overflow-y-auto space-y-2 max-h-[40vh]">
+              <div className="flex-1 overflow-y-auto space-y-2 max-h-[30vh]">
                 {leads.map((lead) => (
                   <div key={lead.id} className="flex items-center justify-between gap-2 border rounded-lg p-2.5">
                     <div className="min-w-0">
