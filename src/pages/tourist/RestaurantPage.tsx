@@ -89,7 +89,8 @@ function SommelierPanel({
               const wine = wines.find((w) => w.id === rec.wine_id);
               return (
                 <motion.div key={rec.wine_id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
-                  className="bg-muted/50 rounded-xl p-4 border border-border/20">
+                  className="bg-muted/50 rounded-xl p-4 border border-border/20 cursor-pointer hover:border-gold/30 transition-colors"
+                  onClick={() => wine && onSelectWine(wine)}>
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-lg bg-wine/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {wine?.image_url ? (
