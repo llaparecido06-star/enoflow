@@ -89,7 +89,13 @@ function SommelierPanel({
                 <motion.div key={rec.wine_id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
                   className="bg-muted/50 rounded-xl p-4 border border-border/20">
                   <div className="flex items-center gap-2 mb-2">
-                    <WineIcon className="w-4 h-4 text-wine-light" />
+                    <div className="w-8 h-8 rounded-lg bg-wine/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {wine?.image_url ? (
+                        <img src={wine.image_url} alt={rec.wine_name} className="w-full h-full object-cover" />
+                      ) : (
+                        <WineIcon className="w-4 h-4 text-wine-light" />
+                      )}
+                    </div>
                     <span className="font-display text-sm font-semibold text-foreground">{rec.wine_name}</span>
                     {wine && (
                       <span className="text-[10px] bg-wine/10 text-wine-light px-2 py-0.5 rounded-full ml-auto">{wine.type}</span>
