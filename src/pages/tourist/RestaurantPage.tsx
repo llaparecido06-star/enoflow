@@ -9,6 +9,8 @@ import { UtensilsCrossed, Wine as WineIcon, Sparkles, Search, Loader2, ChevronRi
 import { toast } from "sonner";
 import { invokeAuth } from "@/lib/auth-api";
 import { useI18n } from "@/lib/i18n";
+import { useCart } from "@/hooks/useCart";
+import WineDetailModal from "@/components/tourist/WineDetailModal";
 
 interface SommelierRecommendation {
   wine_id: string;
@@ -58,9 +60,9 @@ function MenuItemCard({
 }
 
 function SommelierPanel({
-  dish: dishItem, recommendations, loading, wines, onClose, t,
+  dish: dishItem, recommendations, loading, wines, onClose, onSelectWine, t,
 }: {
-  dish: MenuItem; recommendations: SommelierRecommendation[]; loading: boolean; wines: Wine[]; onClose: () => void; t: (k: string) => string;
+  dish: MenuItem; recommendations: SommelierRecommendation[]; loading: boolean; wines: Wine[]; onClose: () => void; onSelectWine: (wine: Wine) => void; t: (k: string) => string;
 }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -87,7 +89,8 @@ function SommelierPanel({
               const wine = wines.find((w) => w.id === rec.wine_id);
               return (
                 <motion.div key={rec.wine_id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
-                  className="bg-muted/50 rounded-xl p-4 border border-border/20">
+                  className="bg-muted/50 rounded-xl p-4 border border-border/20 cursor-pointer hover:border-gold/30 transition-colors"
+                  onClick={() => wine && onSelectWine(wine)}>
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-8 h-8 rounded-lg bg-wine/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {wine?.image_url ? (
@@ -103,10 +106,13 @@ function SommelierPanel({
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">{rec.reason}</p>
                   {wine && (
-                    <p className="text-xs font-medium text-gold mt-2">
-                      {formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}
-                      {wine.price_glass && ` · ${t("restaurant.glass")} ${formatCurrency(Number(wine.price_glass), (window as any).__enoflow_currency || "BRL")}`}
-                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <p className="text-xs font-medium text-gold">
+                        {formatCurrency(Number(wine.price_bottle), (window as any).__enoflow_currency || "BRL")}
+                        {wine.price_glass && ` · ${t("restaurant.glass")} ${formatCurrency(Number(wine.price_glass), (window as any).__enoflow_currency || "BRL")}`}
+                      </p>
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
                   )}
                 </motion.div>
               );
@@ -143,6 +149,8 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
   const [sommelierDish, setSommelierDish] = useState<MenuItem | null>(null);
   const [recommendations, setRecommendations] = useState<SommelierRecommendation[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
+  const [selectedWine, setSelectedWine] = useState<Wine | null>(null);
+  const { addItem } = useCart();
 
   const restaurantWines = wines?.filter((w) => w.on_restaurant) ?? [];
   const allWines = wines ?? [];
@@ -300,7 +308,18 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
       <AnimatePresence>
         {sommelierDish && (
           <SommelierPanel dish={sommelierDish} recommendations={recommendations} loading={aiLoading}
-            wines={allWines} onClose={() => setSommelierDish(null)} t={t} />
+            wines={allWines} onClose={() => setSommelierDish(null)} t={t}
+            onSelectWine={(wine) => setSelectedWine(wine)} />
+        )}
+        {selectedWine && (
+          <WineDetailModal
+            wine={selectedWine}
+            onClose={() => setSelectedWine(null)}
+            onAdd={() => addItem(selectedWine)}
+            t={t}
+            currency={(window as any).__enoflow_currency || "BRL"}
+            winerySlug={winery.slug}
+          />
         )}
       </AnimatePresence>
     </div>
