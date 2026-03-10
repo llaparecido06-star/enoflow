@@ -308,7 +308,18 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
       <AnimatePresence>
         {sommelierDish && (
           <SommelierPanel dish={sommelierDish} recommendations={recommendations} loading={aiLoading}
-            wines={allWines} onClose={() => setSommelierDish(null)} t={t} />
+            wines={allWines} onClose={() => setSommelierDish(null)} t={t}
+            onSelectWine={(wine) => setSelectedWine(wine)} />
+        )}
+        {selectedWine && (
+          <WineDetailModal
+            wine={selectedWine}
+            onClose={() => setSelectedWine(null)}
+            onAdd={() => addItem({ id: selectedWine.id, name: selectedWine.name, price: Math.round(Number(selectedWine.price_bottle) * 0.9), image_url: selectedWine.image_url })}
+            t={t}
+            currency={(window as any).__enoflow_currency || "BRL"}
+            winerySlug={winery.slug}
+          />
         )}
       </AnimatePresence>
     </div>
