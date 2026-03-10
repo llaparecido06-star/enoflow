@@ -60,9 +60,9 @@ function MenuItemCard({
 }
 
 function SommelierPanel({
-  dish: dishItem, recommendations, loading, wines, onClose, t,
+  dish: dishItem, recommendations, loading, wines, onClose, onSelectWine, t,
 }: {
-  dish: MenuItem; recommendations: SommelierRecommendation[]; loading: boolean; wines: Wine[]; onClose: () => void; t: (k: string) => string;
+  dish: MenuItem; recommendations: SommelierRecommendation[]; loading: boolean; wines: Wine[]; onClose: () => void; onSelectWine: (wine: Wine) => void; t: (k: string) => string;
 }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
