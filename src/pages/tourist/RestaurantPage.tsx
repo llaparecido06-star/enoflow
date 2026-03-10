@@ -315,7 +315,7 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
           <WineDetailModal
             wine={selectedWine}
             onClose={() => setSelectedWine(null)}
-            onAdd={() => addItem({ id: selectedWine.id, name: selectedWine.name, price: Math.round(Number(selectedWine.price_bottle) * 0.9), image_url: selectedWine.image_url })}
+            onAdd={() => addItem(selectedWine)}
             t={t}
             currency={(window as any).__enoflow_currency || "BRL"}
             winerySlug={winery.slug}
