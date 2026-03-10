@@ -225,13 +225,16 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
       </section>
 
       {categoryNames.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
-          {categoryNames.map((cat) => (
-            <button key={cat} onClick={() => setActiveCategory(cat)}
-              className={`whitespace-nowrap text-xs font-medium px-4 py-2 rounded-full border transition-all duration-300 ${
-                currentCategory === cat ? "bg-gold text-gold-foreground border-gold" : "bg-card text-muted-foreground border-border/30 hover:border-gold/30"
-              }`}>{translatedCategories[cat] || cat}</button>
-          ))}
+        <div className="relative -mx-4 px-4">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2" style={{ WebkitOverflowScrolling: "touch" }}>
+            {categoryNames.map((cat) => (
+              <button key={cat} onClick={() => setActiveCategory(cat)}
+                className={`whitespace-nowrap text-xs font-medium px-4 py-2 rounded-full border transition-all duration-300 flex-shrink-0 ${
+                  currentCategory === cat ? "bg-gold text-gold-foreground border-gold" : "bg-card text-muted-foreground border-border/30 hover:border-gold/30"
+                }`}>{translatedCategories[cat] || cat}</button>
+            ))}
+          </div>
+          <div className="pointer-events-none absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent" />
         </div>
       )}
 
