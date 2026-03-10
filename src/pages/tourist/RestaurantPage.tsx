@@ -275,7 +275,8 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
           <div className="space-y-2">
             {restaurantWines.map((wine) => (
               <motion.div key={wine.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className="flex items-center justify-between bg-card rounded-xl border border-border/30 px-4 py-3">
+                className="flex items-center justify-between bg-card rounded-xl border border-border/30 px-4 py-3 cursor-pointer hover:border-gold/30 transition-colors"
+                onClick={() => setSelectedWine(wine)}>
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-lg bg-wine/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {wine.image_url ? (
