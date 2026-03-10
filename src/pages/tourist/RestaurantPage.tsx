@@ -9,6 +9,8 @@ import { UtensilsCrossed, Wine as WineIcon, Sparkles, Search, Loader2, ChevronRi
 import { toast } from "sonner";
 import { invokeAuth } from "@/lib/auth-api";
 import { useI18n } from "@/lib/i18n";
+import { useCart } from "@/hooks/useCart";
+import WineDetailModal from "@/components/tourist/WineDetailModal";
 
 interface SommelierRecommendation {
   wine_id: string;
