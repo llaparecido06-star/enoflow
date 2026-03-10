@@ -225,13 +225,16 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
       </section>
 
       {categoryNames.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
-          {categoryNames.map((cat) => (
-            <button key={cat} onClick={() => setActiveCategory(cat)}
-              className={`whitespace-nowrap text-xs font-medium px-4 py-2 rounded-full border transition-all duration-300 ${
-                currentCategory === cat ? "bg-gold text-gold-foreground border-gold" : "bg-card text-muted-foreground border-border/30 hover:border-gold/30"
-              }`}>{translatedCategories[cat] || cat}</button>
-          ))}
+        <div className="relative -mx-4 px-4">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2" style={{ WebkitOverflowScrolling: "touch" }}>
+            {categoryNames.map((cat) => (
+              <button key={cat} onClick={() => setActiveCategory(cat)}
+                className={`whitespace-nowrap text-xs font-medium px-4 py-2 rounded-full border transition-all duration-300 flex-shrink-0 ${
+                  currentCategory === cat ? "bg-gold text-gold-foreground border-gold" : "bg-card text-muted-foreground border-border/30 hover:border-gold/30"
+                }`}>{translatedCategories[cat] || cat}</button>
+            ))}
+          </div>
+          <div className="pointer-events-none absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent" />
         </div>
       )}
 
@@ -260,8 +263,12 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
               <motion.div key={wine.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="flex items-center justify-between bg-card rounded-xl border border-border/30 px-4 py-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-wine/10 flex items-center justify-center flex-shrink-0">
-                    <WineIcon className="w-4 h-4 text-wine-light" />
+                  <div className="w-10 h-10 rounded-lg bg-wine/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {wine.image_url ? (
+                      <img src={wine.image_url} alt={wine.name} className="w-full h-full object-cover" loading="lazy" />
+                    ) : (
+                      <WineIcon className="w-4 h-4 text-wine-light" />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-foreground truncate">{translatedWineNames[restaurantWines.indexOf(wine)] || wine.name}</p>
