@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
 
     // ─── CREATE
     if (action === "create") {
-      const { name, category, redirect_url, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id } = body;
+      const { name, category, redirect_url, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id, linked_tasting_package_ids } = body;
       if (!name) return json({ error: "Nome obrigatório" }, 400);
 
       const { count } = await supabase.from("capture_points").select("id", { count: "exact", head: true }).eq("winery_id", winery_id);
@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
         linked_restaurant_cp_id: linked_restaurant_cp_id || null,
         linked_shop_cp_id: linked_shop_cp_id || null,
         linked_tasting_cp_id: linked_tasting_cp_id || null,
+        linked_tasting_package_ids: Array.isArray(linked_tasting_package_ids) ? linked_tasting_package_ids : [],
       }).select().single();
       if (error) throw error;
       return json({ success: true, location: data });
