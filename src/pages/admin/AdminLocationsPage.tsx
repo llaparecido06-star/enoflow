@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+import { useTastingPackages, type TastingPackage } from "@/hooks/useWinery";
+import { Checkbox } from "@/components/ui/checkbox";
+
 interface CapturePoint {
   id: string;
   name: string;
@@ -17,6 +20,7 @@ interface CapturePoint {
   linked_restaurant_cp_id: string | null;
   linked_shop_cp_id: string | null;
   linked_tasting_cp_id: string | null;
+  linked_tasting_package_ids: string[];
   created_at: string;
   visit_count: number;
 }
