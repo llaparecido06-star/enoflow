@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
     // ─── LIST
     if (!action || action === "list") {
       const [locsRes, wineryRes, captureRes] = await Promise.all([
-        supabase.from("capture_points").select("*").eq("winery_id", winery_id).order("created_at", { ascending: true }),
+        supabase.from("capture_points").select("*, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id").eq("winery_id", winery_id).order("created_at", { ascending: true }),
         supabase.from("wineries").select("max_locations, slug").eq("id", winery_id).single(),
         supabase.from("capture_history").select("capture_point_id").eq("winery_id", winery_id),
       ]);
