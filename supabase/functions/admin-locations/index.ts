@@ -17,8 +17,8 @@ Deno.serve(async (req) => {
       winery_id = body.winery_id;
     }
 
-    // Only owner/manager/master can manage locations
-    if (session.type !== "master" && !["owner", "dono", "manager", "gerente", "master"].includes(session.role)) {
+    // Only manager+ or master can manage locations
+    if (session.type !== "master" && !hasMinRole(session.role, "manager")) {
       return json({ error: "Permissão insuficiente" }, 403);
     }
 
