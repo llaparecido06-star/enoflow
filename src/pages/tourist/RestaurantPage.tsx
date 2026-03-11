@@ -151,7 +151,7 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
   const [recommendations, setRecommendations] = useState<SommelierRecommendation[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [selectedWine, setSelectedWine] = useState<Wine | null>(null);
-  const { addItem } = useCart();
+  const { addItem } = useCart(winery.id);
 
   const restaurantWines = wines?.filter((w) => w.on_restaurant) ?? [];
   const allWines = wines ?? [];
