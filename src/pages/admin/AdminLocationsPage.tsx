@@ -14,6 +14,9 @@ interface CapturePoint {
   name: string;
   category: string;
   redirect_url: string | null;
+  linked_restaurant_cp_id: string | null;
+  linked_shop_cp_id: string | null;
+  linked_tasting_cp_id: string | null;
   created_at: string;
   visit_count: number;
 }
@@ -44,7 +47,7 @@ export default function AdminLocationsPage() {
   const [editTarget, setEditTarget] = useState<CapturePoint | null>(null);
   const [saving, setSaving] = useState(false);
   const [qrTarget, setQrTarget] = useState<CapturePoint | null>(null);
-  const [form, setForm] = useState({ name: "", category: "restaurant", redirect_url: "" });
+  const [form, setForm] = useState({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "" });
 
   const fetchData = async () => {
     try {
@@ -65,13 +68,13 @@ export default function AdminLocationsPage() {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ name: "", category: "restaurant", redirect_url: "" });
+    setForm({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "" });
     setModalOpen(true);
   };
 
   const openEdit = (loc: CapturePoint) => {
     setEditTarget(loc);
-    setForm({ name: loc.name, category: loc.category, redirect_url: loc.redirect_url || "" });
+    setForm({ name: loc.name, category: loc.category, redirect_url: loc.redirect_url || "", linked_restaurant_cp_id: loc.linked_restaurant_cp_id || "", linked_shop_cp_id: loc.linked_shop_cp_id || "", linked_tasting_cp_id: loc.linked_tasting_cp_id || "" });
     setModalOpen(true);
   };
 
@@ -80,12 +83,12 @@ export default function AdminLocationsPage() {
     setSaving(true);
     try {
       if (editTarget) {
-        const { data, error } = await invokeAuth("admin-locations", { action: "update", location_id: editTarget.id, ...form, redirect_url: form.redirect_url || null });
+        const { data, error } = await invokeAuth("admin-locations", { action: "update", location_id: editTarget.id, ...form, redirect_url: form.redirect_url || null, linked_restaurant_cp_id: form.linked_restaurant_cp_id || null, linked_shop_cp_id: form.linked_shop_cp_id || null, linked_tasting_cp_id: form.linked_tasting_cp_id || null });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         toast.success("Local atualizado!");
       } else {
-        const { data, error } = await invokeAuth("admin-locations", { action: "create", ...form, redirect_url: form.redirect_url || null });
+        const { data, error } = await invokeAuth("admin-locations", { action: "create", ...form, redirect_url: form.redirect_url || null, linked_restaurant_cp_id: form.linked_restaurant_cp_id || null, linked_shop_cp_id: form.linked_shop_cp_id || null, linked_tasting_cp_id: form.linked_tasting_cp_id || null });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         toast.success("Local criado!");
@@ -182,6 +185,25 @@ export default function AdminLocationsPage() {
                        <LinkIcon className="w-3 h-3 shrink-0" /> {loc.redirect_url}
                      </a>
                    )}
+                   {(loc.linked_restaurant_cp_id || loc.linked_shop_cp_id || loc.linked_tasting_cp_id) && (
+                     <div className="flex flex-wrap gap-1 mt-1">
+                       {loc.linked_restaurant_cp_id && (
+                         <span className="text-[9px] bg-orange-500/10 text-orange-600 px-1.5 py-0.5 rounded-full">
+                           🍽️ {locations.find(l => l.id === loc.linked_restaurant_cp_id)?.name || "..."}
+                         </span>
+                       )}
+                       {loc.linked_shop_cp_id && (
+                         <span className="text-[9px] bg-green-500/10 text-green-600 px-1.5 py-0.5 rounded-full">
+                           🛒 {locations.find(l => l.id === loc.linked_shop_cp_id)?.name || "..."}
+                         </span>
+                       )}
+                       {loc.linked_tasting_cp_id && (
+                         <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
+                           🍷 {locations.find(l => l.id === loc.linked_tasting_cp_id)?.name || "..."}
+                         </span>
+                       )}
+                     </div>
+                   )}
                  </div>
                 <div className="flex items-center gap-1 ml-2">
                   <button onClick={() => setQrTarget(loc)} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="QR Code">
@@ -237,6 +259,36 @@ export default function AdminLocationsPage() {
               <Label>URL de Redirecionamento (opcional)</Label>
               <Input value={form.redirect_url} onChange={e => setForm(f => ({ ...f, redirect_url: e.target.value }))} placeholder="https://cardapio.exemplo.com" />
               <p className="text-[10px] text-muted-foreground mt-1">Ex: link do cardápio digital, catálogo, etc.</p>
+            </div>
+
+            {/* Linked Capture Points */}
+            <div className="border-t border-border pt-4 mt-2">
+              <p className="text-xs font-semibold text-foreground mb-1">Vincular Conteúdo de Outros Locais</p>
+              <p className="text-[10px] text-muted-foreground mb-3">Defina qual cardápio, loja ou degustação será exibido ao escanear o QR deste ponto.</p>
+              
+              {[
+                { key: "linked_restaurant_cp_id" as const, label: "🍽️ Cardápio (Restaurante)", filterCat: "restaurant" },
+                { key: "linked_shop_cp_id" as const, label: "🛒 Loja", filterCat: "shop" },
+                { key: "linked_tasting_cp_id" as const, label: "🍷 Degustação", filterCat: "tasting" },
+              ].map(({ key, label, filterCat }) => {
+                const options = locations.filter(l => l.id !== editTarget?.id);
+                return (
+                  <div key={key} className="mb-2">
+                    <Label className="text-[11px]">{label}</Label>
+                    <Select value={form[key] || "none"} onValueChange={v => setForm(f => ({ ...f, [key]: v === "none" ? "" : v }))}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Usar padrão (próprio local)</SelectItem>
+                        {options.map(o => (
+                          <SelectItem key={o.id} value={o.id}>
+                            {categoryLabels[o.category]?.split(" ")[0] || "📍"} {o.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              })}
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>

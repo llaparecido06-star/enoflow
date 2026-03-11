@@ -207,6 +207,9 @@ export type Database = {
           category: string
           created_at: string
           id: string
+          linked_restaurant_cp_id: string | null
+          linked_shop_cp_id: string | null
+          linked_tasting_cp_id: string | null
           name: string
           redirect_url: string | null
           winery_id: string
@@ -215,6 +218,9 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          linked_restaurant_cp_id?: string | null
+          linked_shop_cp_id?: string | null
+          linked_tasting_cp_id?: string | null
           name: string
           redirect_url?: string | null
           winery_id: string
@@ -223,11 +229,35 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          linked_restaurant_cp_id?: string | null
+          linked_shop_cp_id?: string | null
+          linked_tasting_cp_id?: string | null
           name?: string
           redirect_url?: string | null
           winery_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "capture_points_linked_restaurant_cp_id_fkey"
+            columns: ["linked_restaurant_cp_id"]
+            isOneToOne: false
+            referencedRelation: "capture_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capture_points_linked_shop_cp_id_fkey"
+            columns: ["linked_shop_cp_id"]
+            isOneToOne: false
+            referencedRelation: "capture_points"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "capture_points_linked_tasting_cp_id_fkey"
+            columns: ["linked_tasting_cp_id"]
+            isOneToOne: false
+            referencedRelation: "capture_points"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "capture_points_winery_id_fkey"
             columns: ["winery_id"]

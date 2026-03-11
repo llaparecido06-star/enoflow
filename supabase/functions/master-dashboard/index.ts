@@ -440,12 +440,14 @@ Deno.serve(async (req) => {
     });
 
     // ─── Consumer Profile Stats ────────────────────────
+    const cpWineryId = body.consumer_profile_winery_id || null;
+    const profileLeads = cpWineryId ? leads.filter((l: any) => l.winery_id === cpWineryId) : leads;
     const genderCounts: Record<string, number> = {};
     const incomeCounts: Record<string, number> = {};
     const ageBrackets: Record<string, number> = { "18-25": 0, "26-35": 0, "36-45": 0, "46-55": 0, "56+": 0, "N/I": 0 };
     const preferenceCounts: Record<string, number> = {};
 
-    leads.forEach((l: any) => {
+    profileLeads.forEach((l: any) => {
       // Gender
       const g = l.gender || "N/I";
       genderCounts[g] = (genderCounts[g] || 0) + 1;
@@ -493,7 +495,8 @@ Deno.serve(async (req) => {
         income: incomeCounts,
         age: ageBrackets,
         preferences: preferenceCounts,
-        total: leads.length,
+        total: profileLeads.length,
+        winery_id: cpWineryId,
       },
     });
   } catch (error) {

@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
 import { invokeAuth } from "@/lib/auth-api";
-import { Building2, Users, Wine, Receipt, TrendingUp, DollarSign, BarChart3, Loader2, Sparkles, CreditCard, Percent, UserCircle } from "lucide-react";
+import { Building2, Users, Wine, Receipt, TrendingUp, DollarSign, BarChart3, Loader2, Sparkles, CreditCard, Percent, UserCircle, Filter } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Metrics {
   total_wineries: number;
@@ -70,6 +71,9 @@ export default function MasterDashboardPage() {
   const [personaTotal, setPersonaTotal] = useState(0);
   const [consumerProfile, setConsumerProfile] = useState<ConsumerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [wineries, setWineries] = useState<{ id: string; name: string }[]>([]);
+  const [profileWineryFilter, setProfileWineryFilter] = useState<string>("all");
+  const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
@@ -82,6 +86,7 @@ export default function MasterDashboardPage() {
         setPersonaStats(res.data.persona_stats ?? null);
         setPersonaTotal(res.data.persona_total ?? 0);
         setConsumerProfile(res.data.consumer_profile ?? null);
+        setWineries((res.data.wineries ?? []).map((w: any) => ({ id: w.id, name: w.name })));
       } catch {
         console.error("Erro ao carregar dashboard");
       } finally {
@@ -90,6 +95,27 @@ export default function MasterDashboardPage() {
     };
     fetch();
   }, [admin.id]);
+
+  const fetchConsumerProfile = useCallback(async (wineryId: string) => {
+    setProfileLoading(true);
+    try {
+      const res = await invokeAuth("master-dashboard", {
+        consumer_profile_winery_id: wineryId === "all" ? null : wineryId,
+      });
+      if (res.data?.consumer_profile) {
+        setConsumerProfile(res.data.consumer_profile);
+      }
+    } catch {
+      console.error("Erro ao filtrar perfil");
+    } finally {
+      setProfileLoading(false);
+    }
+  }, []);
+
+  const handleProfileFilterChange = (value: string) => {
+    setProfileWineryFilter(value);
+    fetchConsumerProfile(value);
+  };
 
   if (loading) {
     return (
@@ -214,10 +240,25 @@ export default function MasterDashboardPage() {
       {/* Consumer Profile Section */}
       {consumerProfile && consumerProfile.total > 0 && (
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
             <UserCircle className="w-5 h-5 text-accent" />
             <h2 className="font-display text-lg font-bold text-foreground">Perfil do Consumidor</h2>
-            <span className="text-xs text-muted-foreground ml-auto">{consumerProfile.total} leads</span>
+            <div className="flex items-center gap-2 ml-auto">
+              {profileLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+              <Select value={profileWineryFilter} onValueChange={handleProfileFilterChange}>
+                <SelectTrigger className="w-[180px] h-8 text-xs">
+                  <Filter className="w-3 h-3 mr-1" />
+                  <SelectValue placeholder="Todas vinícolas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas vinícolas</SelectItem>
+                  {wineries.map(w => (
+                    <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-xs text-muted-foreground">{consumerProfile.total} leads</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
