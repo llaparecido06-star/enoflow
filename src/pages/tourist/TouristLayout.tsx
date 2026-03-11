@@ -63,6 +63,20 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
     navigate(`/app/${slug}${path}${cpQuery}`, { replace: true });
   }, [isAuthenticated, capturePointId, acqCategory, acqLocation]);
 
+  // Resolve linked capture points
+  useEffect(() => {
+    if (!isAuthenticated || !capturePointId || hasResolvedCPs.current) return;
+    hasResolvedCPs.current = true;
+    invokeAuth("tourist-actions", {
+      action: "resolve_capture_point",
+      capture_point_id: capturePointId,
+    }).then(({ data }) => {
+      if (data?.resolved) {
+        setResolvedCPs(data.resolved);
+      }
+    }).catch(() => {});
+  }, [isAuthenticated, capturePointId]);
+
   // Show quiz right after first login (no preferences yet)
   useEffect(() => {
     if (isAuthenticated && lead && !lead.preferences_summary) {
