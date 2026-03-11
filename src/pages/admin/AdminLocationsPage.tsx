@@ -83,12 +83,12 @@ export default function AdminLocationsPage() {
     setSaving(true);
     try {
       if (editTarget) {
-        const { data, error } = await invokeAuth("admin-locations", { action: "update", location_id: editTarget.id, ...form, redirect_url: form.redirect_url || null });
+        const { data, error } = await invokeAuth("admin-locations", { action: "update", location_id: editTarget.id, ...form, redirect_url: form.redirect_url || null, linked_restaurant_cp_id: form.linked_restaurant_cp_id || null, linked_shop_cp_id: form.linked_shop_cp_id || null, linked_tasting_cp_id: form.linked_tasting_cp_id || null });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         toast.success("Local atualizado!");
       } else {
-        const { data, error } = await invokeAuth("admin-locations", { action: "create", ...form, redirect_url: form.redirect_url || null });
+        const { data, error } = await invokeAuth("admin-locations", { action: "create", ...form, redirect_url: form.redirect_url || null, linked_restaurant_cp_id: form.linked_restaurant_cp_id || null, linked_shop_cp_id: form.linked_shop_cp_id || null, linked_tasting_cp_id: form.linked_tasting_cp_id || null });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         toast.success("Local criado!");
