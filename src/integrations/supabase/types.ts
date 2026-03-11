@@ -270,6 +270,52 @@ export type Database = {
           },
         ]
       }
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          wine_id: string
+          winery_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          wine_id: string
+          winery_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          wine_id?: string
+          winery_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_wine_id_fkey"
+            columns: ["wine_id"]
+            isOneToOne: false
+            referencedRelation: "wines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_winery_id_fkey"
+            columns: ["winery_id"]
+            isOneToOne: false
+            referencedRelation: "wineries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_items: {
         Row: {
           capture_point_ids: string[]

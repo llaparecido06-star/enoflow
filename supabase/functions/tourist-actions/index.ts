@@ -77,6 +77,43 @@ Deno.serve(async (req) => {
       return json({ success: true, ratings: data ?? [] });
     }
 
+    // ─── ACTION: get_favorites
+    if (action === "get_favorites") {
+      const { data, error } = await supabase
+        .from("favorites")
+        .select("wine_id")
+        .eq("user_id", user_id)
+        .eq("winery_id", winery_id);
+      if (error) throw error;
+      return json({ success: true, favorites: data ?? [] });
+    }
+
+    // ─── ACTION: add_favorite
+    if (action === "add_favorite") {
+      const { wine_id } = body;
+      if (!isUUID(wine_id)) return json({ error: "Valid wine_id required" }, 400);
+
+      const { error } = await supabase.from("favorites").upsert(
+        { user_id, wine_id, winery_id },
+        { onConflict: "user_id,wine_id" }
+      );
+      if (error) throw error;
+      return json({ success: true });
+    }
+
+    // ─── ACTION: remove_favorite
+    if (action === "remove_favorite") {
+      const { wine_id } = body;
+      if (!isUUID(wine_id)) return json({ error: "Valid wine_id required" }, 400);
+
+      const { error } = await supabase.from("favorites")
+        .delete()
+        .eq("user_id", user_id)
+        .eq("wine_id", wine_id);
+      if (error) throw error;
+      return json({ success: true });
+    }
+
     // ─── ACTION: create_voucher
     if (action === "create_voucher") {
       const { code, items, total } = body;
@@ -142,7 +179,6 @@ Deno.serve(async (req) => {
         return json({ error: "At least one capture param required" }, 400);
       }
 
-      // Validate capture_point_id if provided
       if (capture_point_id) {
         const { data: cp } = await supabase.from("capture_points").select("id").eq("id", capture_point_id).maybeSingle();
         if (!cp) return json({ error: "Invalid capture point" }, 400);

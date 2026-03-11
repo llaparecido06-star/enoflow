@@ -30,8 +30,8 @@ export default function ShopPage() {
   const { t, locale } = useI18n();
   const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
-  const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart();
-  const { favorites, isFavorite, toggleFavorite } = useFavorites(lead?.id);
+  const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart(winery.id);
+  const { favorites, isFavorite, toggleFavorite } = useFavorites(lead?.id, winery.id);
   const location = useLocation();
   const cur = winery.currency || "BRL";
   const [voucher, setVoucher] = useState<{ code: string; id?: string } | null>(null);
@@ -50,8 +50,17 @@ export default function ShopPage() {
   const [funnelStep, setFunnelStep] = useState<"profile" | null>(null);
   const [voucherRedeemed, setVoucherRedeemed] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("default");
+  const [userRatings, setUserRatings] = useState<{ wine_id: string; stars_acidity: number; stars_body: number; stars_sweetness: number }[]>([]);
 
   const discountMultiplier = discountApplied ? 0.9 : 1;
+
+  // Load user ratings for profile-based sorting
+  useEffect(() => {
+    if (!lead?.id) return;
+    invokeAuth("tourist-actions", { action: "get_ratings" })
+      .then(({ data }) => { if (data?.ratings) setUserRatings(data.ratings); })
+      .catch(() => {});
+  }, [lead?.id]);
   const discountedTotal = total * discountMultiplier;
 
   // Realtime voucher redemption listener
@@ -86,11 +95,54 @@ export default function ShopPage() {
   const rawCp = searchParams.get("cp");
   const capturePointId = resolvedCPs?.shop_cp || rawCp;
 
+  // Compute user flavor profile from ratings + quiz
+  const userProfile = useMemo(() => {
+    const ratingsProfile = userRatings.length > 0 ? {
+      acidity: userRatings.reduce((s, r) => s + r.stars_acidity, 0) / userRatings.length,
+      body: userRatings.reduce((s, r) => s + r.stars_body, 0) / userRatings.length,
+      sweetness: userRatings.reduce((s, r) => s + r.stars_sweetness, 0) / userRatings.length,
+    } : null;
+
+    let quizProfile: { acidity: number; body: number; sweetness: number } | null = null;
+    if (lead?.preferences_summary) {
+      const prefs = lead.preferences_summary.toLowerCase();
+      let bodyHint = 3, acidityHint = 3, sweetnessHint = 3;
+      if (prefs.includes("encorpado")) bodyHint = 5;
+      else if (prefs.includes("médio")) bodyHint = 3;
+      else if (prefs.includes("leve")) bodyHint = 1;
+      if (prefs.includes("doce")) sweetnessHint = 5;
+      else if (prefs.includes("suave")) sweetnessHint = 4;
+      else if (prefs.includes("meio-seco")) sweetnessHint = 2;
+      else if (prefs.includes("seco")) sweetnessHint = 1;
+      quizProfile = { acidity: acidityHint, body: bodyHint, sweetness: sweetnessHint };
+    }
+
+    if (ratingsProfile && quizProfile) {
+      return {
+        acidity: ratingsProfile.acidity * 0.7 + quizProfile.acidity * 0.3,
+        body: ratingsProfile.body * 0.7 + quizProfile.body * 0.3,
+        sweetness: ratingsProfile.sweetness * 0.7 + quizProfile.sweetness * 0.3,
+      };
+    }
+    return ratingsProfile || quizProfile;
+  }, [userRatings, lead?.preferences_summary]);
+
   const shopWines = useMemo(() => {
     const all = wines?.filter((w) => w.on_shop) ?? [];
-    if (!capturePointId) return all;
-    return all.filter(w => !(w as any).capture_point_id || (w as any).capture_point_id === capturePointId);
-  }, [wines, capturePointId]);
+    const filtered = capturePointId
+      ? all.filter(w => !(w as any).capture_point_id || (w as any).capture_point_id === capturePointId)
+      : all;
+
+    // Sort by profile similarity (closest match first) when no explicit sort
+    if (userProfile) {
+      return [...filtered].sort((a, b) => {
+        const scoreA = Math.abs(a.sensory_acidity - userProfile.acidity) + Math.abs(a.sensory_body - userProfile.body) + Math.abs(a.sensory_sweetness - userProfile.sweetness);
+        const scoreB = Math.abs(b.sensory_acidity - userProfile.acidity) + Math.abs(b.sensory_body - userProfile.body) + Math.abs(b.sensory_sweetness - userProfile.sweetness);
+        return scoreA - scoreB;
+      });
+    }
+    return filtered;
+  }, [wines, capturePointId, userProfile]);
 
   const translatedWineNames = useContentTranslation(shopWines.map(w => w.name));
   const wineNameMap = useMemo(() => {
