@@ -6,29 +6,36 @@ export interface CartItem {
   quantity: number;
 }
 
-const CART_STORAGE_KEY = "enoflow_cart";
+function getCartKey(wineryId?: string) {
+  return wineryId ? `enoflow_cart_${wineryId}` : "enoflow_cart";
+}
 
-function loadCart(): CartItem[] {
+function loadCart(wineryId?: string): CartItem[] {
   try {
-    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    const stored = localStorage.getItem(getCartKey(wineryId));
     if (stored) return JSON.parse(stored);
   } catch {}
   return [];
 }
 
-function persistCart(items: CartItem[]) {
+function persistCart(items: CartItem[], wineryId?: string) {
   try {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(getCartKey(wineryId), JSON.stringify(items));
   } catch {}
 }
 
-export function useCart() {
-  const [items, setItems] = useState<CartItem[]>(loadCart);
+export function useCart(wineryId?: string) {
+  const [items, setItems] = useState<CartItem[]>(() => loadCart(wineryId));
+
+  // Reload cart when wineryId changes
+  useEffect(() => {
+    setItems(loadCart(wineryId));
+  }, [wineryId]);
 
   // Persist on every change
   useEffect(() => {
-    persistCart(items);
-  }, [items]);
+    persistCart(items, wineryId);
+  }, [items, wineryId]);
 
   const addItem = useCallback((wine: Wine) => {
     setItems((prev) => {
@@ -63,8 +70,8 @@ export function useCart() {
 
   const clearCart = useCallback(() => {
     setItems([]);
-    try { localStorage.removeItem(CART_STORAGE_KEY); } catch {}
-  }, []);
+    try { localStorage.removeItem(getCartKey(wineryId)); } catch {}
+  }, [wineryId]);
 
   return { items, addItem, removeItem, updateQuantity, total, clearCart };
 }
