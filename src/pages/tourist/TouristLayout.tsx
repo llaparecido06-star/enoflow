@@ -164,7 +164,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
       </header>
 
       <main className="px-4 py-4">
-        <Outlet context={{ winery, lead }} />
+        <Outlet context={{ winery, lead, resolvedCPs }} />
       </main>
 
       <BottomNav slug={slug} enabledModules={enabledModules} />
