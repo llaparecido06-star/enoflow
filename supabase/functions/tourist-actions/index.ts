@@ -171,6 +171,30 @@ Deno.serve(async (req) => {
       return json({ success: true, vouchers: data ?? [] });
     }
 
+    // ─── ACTION: resolve_capture_point
+    if (action === "resolve_capture_point") {
+      const { capture_point_id } = body;
+      if (!isUUID(capture_point_id)) return json({ error: "capture_point_id required" }, 400);
+
+      const { data: cp, error } = await supabase
+        .from("capture_points")
+        .select("id, name, category, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id")
+        .eq("id", capture_point_id)
+        .eq("winery_id", winery_id)
+        .single();
+
+      if (error || !cp) return json({ success: true, resolved: { restaurant_cp: capture_point_id, shop_cp: capture_point_id, tasting_cp: capture_point_id } });
+
+      return json({
+        success: true,
+        resolved: {
+          restaurant_cp: cp.linked_restaurant_cp_id || capture_point_id,
+          shop_cp: cp.linked_shop_cp_id || capture_point_id,
+          tasting_cp: cp.linked_tasting_cp_id || capture_point_id,
+        },
+      });
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (error) {
     console.error("tourist-actions error:", error);
