@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
 
     // ─── UPDATE
     if (action === "update") {
-      const { location_id, name, category, redirect_url, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id } = body;
+      const { location_id, name, category, redirect_url, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id, linked_tasting_package_ids } = body;
       if (!location_id) return json({ error: "location_id obrigatório" }, 400);
 
       const updates: Record<string, unknown> = {};
@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
       if (linked_restaurant_cp_id !== undefined) updates.linked_restaurant_cp_id = linked_restaurant_cp_id || null;
       if (linked_shop_cp_id !== undefined) updates.linked_shop_cp_id = linked_shop_cp_id || null;
       if (linked_tasting_cp_id !== undefined) updates.linked_tasting_cp_id = linked_tasting_cp_id || null;
+      if (linked_tasting_package_ids !== undefined) updates.linked_tasting_package_ids = Array.isArray(linked_tasting_package_ids) ? linked_tasting_package_ids : [];
 
       if (Object.keys(updates).length === 0) return json({ error: "Nada para atualizar" }, 400);
 
