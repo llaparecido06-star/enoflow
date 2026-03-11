@@ -39,7 +39,7 @@ export default function JourneyPage() {
   const { t } = useI18n();
   const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
-  const { isFavorite } = useFavorites(lead?.id);
+  const { isFavorite } = useFavorites(lead?.id, winery.id);
   const location = useLocation();
   const navigate = useNavigate();
   const [ratings, setRatings] = useState<RatingData[]>([]);
