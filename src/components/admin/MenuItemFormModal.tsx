@@ -67,8 +67,8 @@ export default function MenuItemFormModal({ wineryId, adminId, item, wines, loca
       };
 
       const body = isEdit
-        ? { action: "update", item_id: item!.id, item_data: payload }
-        : { action: "create", item_data: payload };
+        ? { action: "update", item_id: item!.id, item_data: payload, winery_id: wineryId }
+        : { action: "create", item_data: payload, winery_id: wineryId };
 
       const res = await invokeAuth("admin-menu", body);
       if (res.error) throw res.error;

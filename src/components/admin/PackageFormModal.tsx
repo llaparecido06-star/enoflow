@@ -50,6 +50,7 @@ export default function PackageFormModal({ wineryId, adminId, pkg, wines, onClos
         action: isEdit ? "update" : "create",
         package_id: isEdit ? pkg!.id : undefined,
         package_data,
+        winery_id: wineryId,
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

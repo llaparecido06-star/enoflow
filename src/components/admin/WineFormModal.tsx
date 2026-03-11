@@ -106,12 +106,12 @@ export default function WineFormModal({ wineryId, adminId, wine, locations = [],
       };
 
       if (isEdit) {
-        const res = await invokeAuth("admin-wines", { action: "update", wine_id: wine!.id, wine_data: payload });
+        const res = await invokeAuth("admin-wines", { action: "update", wine_id: wine!.id, wine_data: payload, winery_id: wineryId });
         if (res.error) throw res.error;
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinho atualizado!");
       } else {
-        const res = await invokeAuth("admin-wines", { action: "create", wine_data: payload });
+        const res = await invokeAuth("admin-wines", { action: "create", wine_data: payload, winery_id: wineryId });
         if (res.error) throw res.error;
         if (res.data?.error) throw new Error(res.data.error);
         toast.success("Vinho criado!");
