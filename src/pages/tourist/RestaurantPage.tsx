@@ -131,13 +131,14 @@ function SommelierPanel({
 }
 
 const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref) {
-  const { winery } = useOutletContext<{ winery: Winery }>();
+  const { winery, resolvedCPs } = useOutletContext<{ winery: Winery; resolvedCPs?: { restaurant_cp: string | null; shop_cp: string | null; tasting_cp: string | null } }>();
   const { t } = useI18n();
   const { data: wines } = useWines(winery.id);
   const { data: allMenuItems } = useMenuItems(winery.id);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const capturePointId = searchParams.get("cp");
+  const rawCp = searchParams.get("cp");
+  const capturePointId = resolvedCPs?.restaurant_cp || rawCp;
 
   // Filter menu items: show items for this capture point + items with no capture point
   const menuItems = useMemo(() => {

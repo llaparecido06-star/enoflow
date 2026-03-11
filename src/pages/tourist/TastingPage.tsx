@@ -34,7 +34,7 @@ function saveProgress(leadId: string, wineryId: string, index: number, ratings: 
 }
 
 export default function TastingPage() {
-  const { winery } = useOutletContext<{ winery: Winery; lead: Tables<"users_leads"> }>();
+  const { winery, resolvedCPs } = useOutletContext<{ winery: Winery; lead: Tables<"users_leads">; resolvedCPs?: { restaurant_cp: string | null; shop_cp: string | null; tasting_cp: string | null } }>();
   const { t } = useI18n();
   const { lead } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
@@ -42,6 +42,7 @@ export default function TastingPage() {
   const { isFavorite, toggleFavorite } = useFavorites(lead?.id);
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const tastingCp = resolvedCPs?.tasting_cp || null;
 
   // Load saved progress
   const saved = useMemo(() => lead ? loadProgress(lead.id, winery.id) : null, [lead, winery.id]);
@@ -61,8 +62,13 @@ export default function TastingPage() {
         return wines.filter(w => pkg.wine_ids.includes(w.id));
       }
     }
-    return wines?.filter((w) => w.on_tasting) ?? [];
-  }, [wines, packages, selectedPackageId]);
+    let tasting = wines?.filter((w) => w.on_tasting) ?? [];
+    // Filter by resolved tasting capture point
+    if (tastingCp) {
+      tasting = tasting.filter(w => !w.capture_point_id || w.capture_point_id === tastingCp);
+    }
+    return tasting;
+  }, [wines, packages, selectedPackageId, tastingCp]);
 
   const shopWines = useMemo(() => wines?.filter((w) => w.on_shop && !w.on_tasting) ?? [], [wines]);
 

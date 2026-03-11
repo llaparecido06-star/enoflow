@@ -26,7 +26,7 @@ import { toast } from "sonner";
 import { invokeAuth } from "@/lib/auth-api";
 
 export default function ShopPage() {
-  const { winery } = useOutletContext<{ winery: Winery }>();
+  const { winery, resolvedCPs } = useOutletContext<{ winery: Winery; resolvedCPs?: { restaurant_cp: string | null; shop_cp: string | null; tasting_cp: string | null } }>();
   const { t, locale } = useI18n();
   const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
@@ -83,7 +83,8 @@ export default function ShopPage() {
   }, [location.state]);
 
   const searchParams = new URLSearchParams(location.search);
-  const capturePointId = searchParams.get("cp");
+  const rawCp = searchParams.get("cp");
+  const capturePointId = resolvedCPs?.shop_cp || rawCp;
 
   const shopWines = useMemo(() => {
     const all = wines?.filter((w) => w.on_shop) ?? [];

@@ -11,6 +11,12 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { useEffect, useState, useRef } from "react";
 import { invokeAuth } from "@/lib/auth-api";
 
+interface ResolvedCPs {
+  restaurant_cp: string | null;
+  shop_cp: string | null;
+  tasting_cp: string | null;
+}
+
 function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const { isAuthenticated, lead, login, logout, updateProfile } = useTouristAuth();
   const { t } = useI18n();
@@ -19,6 +25,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const enabledModules: string[] = winery.enabled_modules ?? ["tasting", "restaurant", "shop"];
   const [showQuiz, setShowQuiz] = useState(false);
   const [pendingRedirectCategory, setPendingRedirectCategory] = useState<string | null>(null);
+  const [resolvedCPs, setResolvedCPs] = useState<ResolvedCPs | null>(null);
 
   // Read acquisition params from URL
   const searchParams = new URLSearchParams(location.search);
@@ -28,6 +35,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
 
   const categoryToPath: Record<string, string> = { restaurant: "/restaurant", shop: "/shop", tasting: "" };
   const hasTrackedVisit = useRef(false);
+  const hasResolvedCPs = useRef(false);
 
   const moduleMap: Record<string, string> = { restaurant: "restaurant", shop: "shop" };
   useEffect(() => {
@@ -54,6 +62,20 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
     const cpQuery = capturePointId ? `?cp=${capturePointId}` : "";
     navigate(`/app/${slug}${path}${cpQuery}`, { replace: true });
   }, [isAuthenticated, capturePointId, acqCategory, acqLocation]);
+
+  // Resolve linked capture points
+  useEffect(() => {
+    if (!isAuthenticated || !capturePointId || hasResolvedCPs.current) return;
+    hasResolvedCPs.current = true;
+    invokeAuth("tourist-actions", {
+      action: "resolve_capture_point",
+      capture_point_id: capturePointId,
+    }).then(({ data }) => {
+      if (data?.resolved) {
+        setResolvedCPs(data.resolved);
+      }
+    }).catch(() => {});
+  }, [isAuthenticated, capturePointId]);
 
   // Show quiz right after first login (no preferences yet)
   useEffect(() => {
@@ -142,7 +164,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
       </header>
 
       <main className="px-4 py-4">
-        <Outlet context={{ winery, lead }} />
+        <Outlet context={{ winery, lead, resolvedCPs }} />
       </main>
 
       <BottomNav slug={slug} enabledModules={enabledModules} />
