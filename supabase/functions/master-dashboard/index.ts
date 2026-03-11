@@ -371,7 +371,7 @@ Deno.serve(async (req) => {
     // ─── DEFAULT: dashboard metrics ──────────────────────
     const [wineriesRes, leadsRes, winesRes, vouchersRes, automationsRes, adminsRes, ratingsRes] = await Promise.all([
       supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at, subscription_value, platform_commission_rate, enabled_modules, logo_url, status, max_locations, currency"),
-      supabase.from("users_leads").select("id, winery_id, created_at, preferences_summary"),
+      supabase.from("users_leads").select("id, winery_id, created_at, preferences_summary, gender, income_class, birth_date"),
       supabase.from("wines").select("id, winery_id"),
       supabase.from("vouchers").select("id, winery_id, total, redeemed, created_at"),
       supabase.from("automations").select("id, winery_id, commission_value, status"),
@@ -439,6 +439,45 @@ Deno.serve(async (req) => {
       else personaCounts.balanced_explorer++;
     });
 
+    // ─── Consumer Profile Stats ────────────────────────
+    const genderCounts: Record<string, number> = {};
+    const incomeCounts: Record<string, number> = {};
+    const ageBrackets: Record<string, number> = { "18-25": 0, "26-35": 0, "36-45": 0, "46-55": 0, "56+": 0, "N/I": 0 };
+    const preferenceCounts: Record<string, number> = {};
+
+    leads.forEach((l: any) => {
+      // Gender
+      const g = l.gender || "N/I";
+      genderCounts[g] = (genderCounts[g] || 0) + 1;
+
+      // Income
+      const inc = l.income_class || "N/I";
+      incomeCounts[inc] = (incomeCounts[inc] || 0) + 1;
+
+      // Age
+      if (l.birth_date) {
+        const birth = new Date(l.birth_date);
+        const age = Math.floor((now.getTime() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        if (age < 18) ageBrackets["18-25"]++;
+        else if (age <= 25) ageBrackets["18-25"]++;
+        else if (age <= 35) ageBrackets["26-35"]++;
+        else if (age <= 45) ageBrackets["36-45"]++;
+        else if (age <= 55) ageBrackets["46-55"]++;
+        else ageBrackets["56+"]++;
+      } else {
+        ageBrackets["N/I"]++;
+      }
+
+      // Preferences (from quiz persona)
+      if (l.preferences_summary) {
+        const match = String(l.preferences_summary).match(/\(([a-z_]+)\)/);
+        if (match) {
+          const key = match[1];
+          preferenceCounts[key] = (preferenceCounts[key] || 0) + 1;
+        }
+      }
+    });
+
     return json({
       success: true,
       metrics: {
@@ -449,6 +488,13 @@ Deno.serve(async (req) => {
       },
       wineries: wineryMetrics, leads_chart: leadsChart,
       persona_stats: personaCounts, persona_total: Object.values(personaCounts).reduce((s, v) => s + v, 0),
+      consumer_profile: {
+        gender: genderCounts,
+        income: incomeCounts,
+        age: ageBrackets,
+        preferences: preferenceCounts,
+        total: leads.length,
+      },
     });
   } catch (error) {
     console.error("master-dashboard error:", error);
