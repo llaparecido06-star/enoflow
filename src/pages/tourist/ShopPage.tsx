@@ -50,8 +50,17 @@ export default function ShopPage() {
   const [funnelStep, setFunnelStep] = useState<"profile" | null>(null);
   const [voucherRedeemed, setVoucherRedeemed] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("default");
+  const [userRatings, setUserRatings] = useState<{ wine_id: string; stars_acidity: number; stars_body: number; stars_sweetness: number }[]>([]);
 
   const discountMultiplier = discountApplied ? 0.9 : 1;
+
+  // Load user ratings for profile-based sorting
+  useEffect(() => {
+    if (!lead?.id) return;
+    invokeAuth("tourist-actions", { action: "get_ratings" })
+      .then(({ data }) => { if (data?.ratings) setUserRatings(data.ratings); })
+      .catch(() => {});
+  }, [lead?.id]);
   const discountedTotal = total * discountMultiplier;
 
   // Realtime voucher redemption listener
