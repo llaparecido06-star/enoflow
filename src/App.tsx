@@ -114,6 +114,7 @@ const App = () => {
               <Route path="/master" element={<MasterLayout />}>
                 <Route index element={<MasterDashboardPage />} />
                 <Route path="wineries" element={<MasterWineriesPage />} />
+                <Route path="wineries/:wineryId" element={<MasterWineryContentPage />} />
                 <Route path="plans" element={<MasterPlansPage />} />
                 <Route path="admins" element={<MasterAdminsPage />} />
                 <Route path="reports" element={<MasterReportsPage />} />
