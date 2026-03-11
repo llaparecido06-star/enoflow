@@ -495,7 +495,8 @@ Deno.serve(async (req) => {
         income: incomeCounts,
         age: ageBrackets,
         preferences: preferenceCounts,
-        total: leads.length,
+        total: profileLeads.length,
+        winery_id: cpWineryId,
       },
     });
   } catch (error) {
