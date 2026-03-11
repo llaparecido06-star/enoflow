@@ -15,6 +15,7 @@ interface ResolvedCPs {
   restaurant_cp: string | null;
   shop_cp: string | null;
   tasting_cp: string | null;
+  tasting_package_ids: string[];
 }
 
 function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
