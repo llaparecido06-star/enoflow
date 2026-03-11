@@ -241,6 +241,36 @@ export default function AdminLocationsPage() {
               <Input value={form.redirect_url} onChange={e => setForm(f => ({ ...f, redirect_url: e.target.value }))} placeholder="https://cardapio.exemplo.com" />
               <p className="text-[10px] text-muted-foreground mt-1">Ex: link do cardápio digital, catálogo, etc.</p>
             </div>
+
+            {/* Linked Capture Points */}
+            <div className="border-t border-border pt-4 mt-2">
+              <p className="text-xs font-semibold text-foreground mb-1">Vincular Conteúdo de Outros Locais</p>
+              <p className="text-[10px] text-muted-foreground mb-3">Defina qual cardápio, loja ou degustação será exibido ao escanear o QR deste ponto.</p>
+              
+              {[
+                { key: "linked_restaurant_cp_id" as const, label: "🍽️ Cardápio (Restaurante)", filterCat: "restaurant" },
+                { key: "linked_shop_cp_id" as const, label: "🛒 Loja", filterCat: "shop" },
+                { key: "linked_tasting_cp_id" as const, label: "🍷 Degustação", filterCat: "tasting" },
+              ].map(({ key, label, filterCat }) => {
+                const options = locations.filter(l => l.id !== editTarget?.id);
+                return (
+                  <div key={key} className="mb-2">
+                    <Label className="text-[11px]">{label}</Label>
+                    <Select value={form[key] || "none"} onValueChange={v => setForm(f => ({ ...f, [key]: v === "none" ? "" : v }))}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Usar padrão (próprio local)</SelectItem>
+                        {options.map(o => (
+                          <SelectItem key={o.id} value={o.id}>
+                            {categoryLabels[o.category]?.split(" ")[0] || "📍"} {o.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                );
+              })}
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
               <Button onClick={handleSave} disabled={saving || !form.name.trim()}>
