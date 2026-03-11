@@ -34,15 +34,25 @@ function saveProgress(leadId: string, wineryId: string, index: number, ratings: 
 }
 
 export default function TastingPage() {
-  const { winery, resolvedCPs } = useOutletContext<{ winery: Winery; lead: Tables<"users_leads">; resolvedCPs?: { restaurant_cp: string | null; shop_cp: string | null; tasting_cp: string | null } }>();
+  const { winery, resolvedCPs } = useOutletContext<{ winery: Winery; lead: Tables<"users_leads">; resolvedCPs?: { restaurant_cp: string | null; shop_cp: string | null; tasting_cp: string | null; tasting_package_ids?: string[] } }>();
   const { t } = useI18n();
   const { lead } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
-  const { data: packages } = useTastingPackages(winery.id);
+  const { data: allPackages } = useTastingPackages(winery.id);
   const { isFavorite, toggleFavorite } = useFavorites(lead?.id);
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const tastingCp = resolvedCPs?.tasting_cp || null;
+  const linkedPackageIds = resolvedCPs?.tasting_package_ids;
+
+  // Filter packages by linked IDs if set
+  const packages = useMemo(() => {
+    if (!allPackages) return undefined;
+    if (linkedPackageIds && linkedPackageIds.length > 0) {
+      return allPackages.filter(p => linkedPackageIds.includes(p.id));
+    }
+    return allPackages;
+  }, [allPackages, linkedPackageIds]);
 
   // Load saved progress
   const saved = useMemo(() => lead ? loadProgress(lead.id, winery.id) : null, [lead, winery.id]);

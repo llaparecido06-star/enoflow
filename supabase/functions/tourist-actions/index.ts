@@ -178,12 +178,12 @@ Deno.serve(async (req) => {
 
       const { data: cp, error } = await supabase
         .from("capture_points")
-        .select("id, name, category, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id")
+        .select("id, name, category, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id, linked_tasting_package_ids")
         .eq("id", capture_point_id)
         .eq("winery_id", winery_id)
         .single();
 
-      if (error || !cp) return json({ success: true, resolved: { restaurant_cp: capture_point_id, shop_cp: capture_point_id, tasting_cp: capture_point_id } });
+      if (error || !cp) return json({ success: true, resolved: { restaurant_cp: capture_point_id, shop_cp: capture_point_id, tasting_cp: capture_point_id, tasting_package_ids: [] } });
 
       return json({
         success: true,
@@ -191,6 +191,7 @@ Deno.serve(async (req) => {
           restaurant_cp: cp.linked_restaurant_cp_id || capture_point_id,
           shop_cp: cp.linked_shop_cp_id || capture_point_id,
           tasting_cp: cp.linked_tasting_cp_id || capture_point_id,
+          tasting_package_ids: (cp as any).linked_tasting_package_ids ?? [],
         },
       });
     }

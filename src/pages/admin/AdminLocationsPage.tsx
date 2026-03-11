@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+import { useTastingPackages, type TastingPackage } from "@/hooks/useWinery";
+import { Checkbox } from "@/components/ui/checkbox";
+
 interface CapturePoint {
   id: string;
   name: string;
@@ -17,6 +20,7 @@ interface CapturePoint {
   linked_restaurant_cp_id: string | null;
   linked_shop_cp_id: string | null;
   linked_tasting_cp_id: string | null;
+  linked_tasting_package_ids: string[];
   created_at: string;
   visit_count: number;
 }
@@ -47,7 +51,8 @@ export default function AdminLocationsPage() {
   const [editTarget, setEditTarget] = useState<CapturePoint | null>(null);
   const [saving, setSaving] = useState(false);
   const [qrTarget, setQrTarget] = useState<CapturePoint | null>(null);
-  const [form, setForm] = useState({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "" });
+  const [form, setForm] = useState({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "", linked_tasting_package_ids: [] as string[] });
+  const { data: tastingPackages } = useTastingPackages(winery?.id);
 
   const fetchData = async () => {
     try {
@@ -68,13 +73,13 @@ export default function AdminLocationsPage() {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "" });
+    setForm({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "", linked_tasting_package_ids: [] });
     setModalOpen(true);
   };
 
   const openEdit = (loc: CapturePoint) => {
     setEditTarget(loc);
-    setForm({ name: loc.name, category: loc.category, redirect_url: loc.redirect_url || "", linked_restaurant_cp_id: loc.linked_restaurant_cp_id || "", linked_shop_cp_id: loc.linked_shop_cp_id || "", linked_tasting_cp_id: loc.linked_tasting_cp_id || "" });
+    setForm({ name: loc.name, category: loc.category, redirect_url: loc.redirect_url || "", linked_restaurant_cp_id: loc.linked_restaurant_cp_id || "", linked_shop_cp_id: loc.linked_shop_cp_id || "", linked_tasting_cp_id: loc.linked_tasting_cp_id || "", linked_tasting_package_ids: loc.linked_tasting_package_ids ?? [] });
     setModalOpen(true);
   };
 
@@ -83,12 +88,14 @@ export default function AdminLocationsPage() {
     setSaving(true);
     try {
       if (editTarget) {
-        const { data, error } = await invokeAuth("admin-locations", { action: "update", location_id: editTarget.id, ...form, redirect_url: form.redirect_url || null, linked_restaurant_cp_id: form.linked_restaurant_cp_id || null, linked_shop_cp_id: form.linked_shop_cp_id || null, linked_tasting_cp_id: form.linked_tasting_cp_id || null });
+        const payload = { action: "update", location_id: editTarget.id, ...form, redirect_url: form.redirect_url || null, linked_restaurant_cp_id: form.linked_restaurant_cp_id || null, linked_shop_cp_id: form.linked_shop_cp_id || null, linked_tasting_cp_id: form.linked_tasting_cp_id || null, linked_tasting_package_ids: form.linked_tasting_package_ids };
+        const { data, error } = await invokeAuth("admin-locations", payload);
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         toast.success("Local atualizado!");
       } else {
-        const { data, error } = await invokeAuth("admin-locations", { action: "create", ...form, redirect_url: form.redirect_url || null, linked_restaurant_cp_id: form.linked_restaurant_cp_id || null, linked_shop_cp_id: form.linked_shop_cp_id || null, linked_tasting_cp_id: form.linked_tasting_cp_id || null });
+        const payload = { action: "create", ...form, redirect_url: form.redirect_url || null, linked_restaurant_cp_id: form.linked_restaurant_cp_id || null, linked_shop_cp_id: form.linked_shop_cp_id || null, linked_tasting_cp_id: form.linked_tasting_cp_id || null, linked_tasting_package_ids: form.linked_tasting_package_ids };
+        const { data, error } = await invokeAuth("admin-locations", payload);
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         toast.success("Local criado!");
@@ -289,6 +296,33 @@ export default function AdminLocationsPage() {
                   </div>
                 );
               })}
+
+              {/* Tasting Packages */}
+              {tastingPackages && tastingPackages.length > 0 && (
+                <div className="mt-3">
+                  <Label className="text-[11px]">🎫 Pacotes de Degustação Disponíveis</Label>
+                  <p className="text-[10px] text-muted-foreground mb-2">Selecione quais pacotes estarão disponíveis ao escanear este QR. Vazio = todos.</p>
+                  <div className="space-y-1 max-h-32 overflow-y-auto border border-border rounded-lg p-2">
+                    {tastingPackages.map(pkg => (
+                      <label key={pkg.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-secondary cursor-pointer">
+                        <Checkbox
+                          checked={form.linked_tasting_package_ids.includes(pkg.id)}
+                          onCheckedChange={(checked) => {
+                            setForm(f => ({
+                              ...f,
+                              linked_tasting_package_ids: checked
+                                ? [...f.linked_tasting_package_ids, pkg.id]
+                                : f.linked_tasting_package_ids.filter(id => id !== pkg.id),
+                            }));
+                          }}
+                        />
+                        <span className="text-xs text-foreground">{pkg.name}</span>
+                        {pkg.description && <span className="text-[10px] text-muted-foreground truncate">— {pkg.description}</span>}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
