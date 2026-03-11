@@ -71,6 +71,9 @@ export default function MasterDashboardPage() {
   const [personaTotal, setPersonaTotal] = useState(0);
   const [consumerProfile, setConsumerProfile] = useState<ConsumerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [wineries, setWineries] = useState<{ id: string; name: string }[]>([]);
+  const [profileWineryFilter, setProfileWineryFilter] = useState<string>("all");
+  const [profileLoading, setProfileLoading] = useState(false);
 
   useEffect(() => {
     const fetch = async () => {
@@ -83,6 +86,7 @@ export default function MasterDashboardPage() {
         setPersonaStats(res.data.persona_stats ?? null);
         setPersonaTotal(res.data.persona_total ?? 0);
         setConsumerProfile(res.data.consumer_profile ?? null);
+        setWineries((res.data.wineries ?? []).map((w: any) => ({ id: w.id, name: w.name })));
       } catch {
         console.error("Erro ao carregar dashboard");
       } finally {
@@ -91,6 +95,27 @@ export default function MasterDashboardPage() {
     };
     fetch();
   }, [admin.id]);
+
+  const fetchConsumerProfile = useCallback(async (wineryId: string) => {
+    setProfileLoading(true);
+    try {
+      const res = await invokeAuth("master-dashboard", {
+        consumer_profile_winery_id: wineryId === "all" ? null : wineryId,
+      });
+      if (res.data?.consumer_profile) {
+        setConsumerProfile(res.data.consumer_profile);
+      }
+    } catch {
+      console.error("Erro ao filtrar perfil");
+    } finally {
+      setProfileLoading(false);
+    }
+  }, []);
+
+  const handleProfileFilterChange = (value: string) => {
+    setProfileWineryFilter(value);
+    fetchConsumerProfile(value);
+  };
 
   if (loading) {
     return (
