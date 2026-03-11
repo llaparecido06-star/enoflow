@@ -72,9 +72,19 @@ export function createSupabaseAdmin() {
   );
 }
 
-/** Standard role hierarchy check */
+/** Standard role hierarchy check — supports both EN and PT role names */
 const ROLE_HIERARCHY = ["staff", "manager", "owner", "master"];
 
+const ROLE_ALIAS: Record<string, string> = {
+  funcionario: "staff",
+  gerente: "manager",
+  dono: "owner",
+};
+
+function normalizeRole(role: string): string {
+  return ROLE_ALIAS[role] || role;
+}
+
 export function hasMinRole(userRole: string, minRole: string): boolean {
-  return ROLE_HIERARCHY.indexOf(userRole) >= ROLE_HIERARCHY.indexOf(minRole);
+  return ROLE_HIERARCHY.indexOf(normalizeRole(userRole)) >= ROLE_HIERARCHY.indexOf(normalizeRole(minRole));
 }

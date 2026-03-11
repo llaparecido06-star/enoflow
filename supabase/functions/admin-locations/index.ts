@@ -1,4 +1,4 @@
-import { verifySession, json, corsHeaders, createSupabaseAdmin } from "../_shared/auth.ts";
+import { verifySession, json, corsHeaders, createSupabaseAdmin, hasMinRole } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
