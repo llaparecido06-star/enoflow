@@ -14,6 +14,9 @@ interface CapturePoint {
   name: string;
   category: string;
   redirect_url: string | null;
+  linked_restaurant_cp_id: string | null;
+  linked_shop_cp_id: string | null;
+  linked_tasting_cp_id: string | null;
   created_at: string;
   visit_count: number;
 }
