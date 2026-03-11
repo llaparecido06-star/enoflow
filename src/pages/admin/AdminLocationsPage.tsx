@@ -47,7 +47,7 @@ export default function AdminLocationsPage() {
   const [editTarget, setEditTarget] = useState<CapturePoint | null>(null);
   const [saving, setSaving] = useState(false);
   const [qrTarget, setQrTarget] = useState<CapturePoint | null>(null);
-  const [form, setForm] = useState({ name: "", category: "restaurant", redirect_url: "" });
+  const [form, setForm] = useState({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "" });
 
   const fetchData = async () => {
     try {
