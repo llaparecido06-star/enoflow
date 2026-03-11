@@ -371,7 +371,7 @@ Deno.serve(async (req) => {
     // ─── DEFAULT: dashboard metrics ──────────────────────
     const [wineriesRes, leadsRes, winesRes, vouchersRes, automationsRes, adminsRes, ratingsRes] = await Promise.all([
       supabase.from("wineries").select("id, name, slug, plan_level, primary_color, created_at, subscription_value, platform_commission_rate, enabled_modules, logo_url, status, max_locations, currency"),
-      supabase.from("users_leads").select("id, winery_id, created_at, preferences_summary"),
+      supabase.from("users_leads").select("id, winery_id, created_at, preferences_summary, gender, income_class, birth_date"),
       supabase.from("wines").select("id, winery_id"),
       supabase.from("vouchers").select("id, winery_id, total, redeemed, created_at"),
       supabase.from("automations").select("id, winery_id, commission_value, status"),
