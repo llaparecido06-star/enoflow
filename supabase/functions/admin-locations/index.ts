@@ -1,4 +1,4 @@
-import { verifySession, json, corsHeaders, createSupabaseAdmin } from "../_shared/auth.ts";
+import { verifySession, json, corsHeaders, createSupabaseAdmin, hasMinRole } from "../_shared/auth.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -17,8 +17,8 @@ Deno.serve(async (req) => {
       winery_id = body.winery_id;
     }
 
-    // Only owner/manager/master can manage locations
-    if (session.type !== "master" && !["owner", "dono", "manager", "gerente", "master"].includes(session.role)) {
+    // Only manager+ or master can manage locations
+    if (session.type !== "master" && !hasMinRole(session.role, "manager")) {
       return json({ error: "Permissão insuficiente" }, 403);
     }
 
