@@ -43,6 +43,7 @@ const MasterPlansPage = lazy(() => import("./pages/master/MasterPlansPage"));
 const MasterAdminsPage = lazy(() => import("./pages/master/MasterAdminsPage"));
 const MasterReportsPage = lazy(() => import("./pages/master/MasterReportsPage"));
 const MasterImportPage = lazy(() => import("./pages/master/MasterImportPage"));
+const MasterWineryContentPage = lazy(() => import("./pages/master/MasterWineryContentPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
