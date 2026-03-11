@@ -243,6 +243,12 @@ export default function MasterWineriesPage() {
               >
                 <Copy className="w-3 h-3" /> Copiar Link
               </button>
+              <button
+                onClick={() => navigate(`/master/wineries/${w.id}`)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+              >
+                <Settings2 className="w-3 h-3" /> Gerenciar Conteúdo
+              </button>
             </div>
 
             <div className="grid grid-cols-4 gap-3">
