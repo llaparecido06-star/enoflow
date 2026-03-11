@@ -185,6 +185,25 @@ export default function AdminLocationsPage() {
                        <LinkIcon className="w-3 h-3 shrink-0" /> {loc.redirect_url}
                      </a>
                    )}
+                   {(loc.linked_restaurant_cp_id || loc.linked_shop_cp_id || loc.linked_tasting_cp_id) && (
+                     <div className="flex flex-wrap gap-1 mt-1">
+                       {loc.linked_restaurant_cp_id && (
+                         <span className="text-[9px] bg-orange-500/10 text-orange-600 px-1.5 py-0.5 rounded-full">
+                           🍽️ {locations.find(l => l.id === loc.linked_restaurant_cp_id)?.name || "..."}
+                         </span>
+                       )}
+                       {loc.linked_shop_cp_id && (
+                         <span className="text-[9px] bg-green-500/10 text-green-600 px-1.5 py-0.5 rounded-full">
+                           🛒 {locations.find(l => l.id === loc.linked_shop_cp_id)?.name || "..."}
+                         </span>
+                       )}
+                       {loc.linked_tasting_cp_id && (
+                         <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">
+                           🍷 {locations.find(l => l.id === loc.linked_tasting_cp_id)?.name || "..."}
+                         </span>
+                       )}
+                     </div>
+                   )}
                  </div>
                 <div className="flex items-center gap-1 ml-2">
                   <button onClick={() => setQrTarget(loc)} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="QR Code">
