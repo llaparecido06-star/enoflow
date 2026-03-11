@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { Building2, Users, Wine, Receipt, Loader2, ExternalLink, Plus, Pencil, Trash2, Image, ToggleLeft, Copy, Link as LinkIcon, Power, Settings2 } from "lucide-react";
