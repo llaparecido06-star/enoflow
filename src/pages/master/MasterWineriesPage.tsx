@@ -35,6 +35,7 @@ const planColors: Record<string, string> = {
 
 export default function MasterWineriesPage() {
   const { admin } = useOutletContext<{ admin: MasterAdmin }>();
+  const navigate = useNavigate();
   const [wineries, setWineries] = useState<WineryMetric[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
