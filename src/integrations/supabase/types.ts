@@ -210,6 +210,7 @@ export type Database = {
           linked_restaurant_cp_id: string | null
           linked_shop_cp_id: string | null
           linked_tasting_cp_id: string | null
+          linked_tasting_package_ids: string[]
           name: string
           redirect_url: string | null
           winery_id: string
@@ -221,6 +222,7 @@ export type Database = {
           linked_restaurant_cp_id?: string | null
           linked_shop_cp_id?: string | null
           linked_tasting_cp_id?: string | null
+          linked_tasting_package_ids?: string[]
           name: string
           redirect_url?: string | null
           winery_id: string
@@ -232,6 +234,7 @@ export type Database = {
           linked_restaurant_cp_id?: string | null
           linked_shop_cp_id?: string | null
           linked_tasting_cp_id?: string | null
+          linked_tasting_package_ids?: string[]
           name?: string
           redirect_url?: string | null
           winery_id?: string

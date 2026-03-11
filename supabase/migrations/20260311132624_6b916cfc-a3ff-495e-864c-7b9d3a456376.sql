@@ -1,0 +1,1 @@
+ALTER TABLE public.capture_points ADD COLUMN linked_tasting_package_ids uuid[] NOT NULL DEFAULT '{}'::uuid[];
