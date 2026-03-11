@@ -83,7 +83,8 @@ export default function ShopPage() {
   }, [location.state]);
 
   const searchParams = new URLSearchParams(location.search);
-  const capturePointId = searchParams.get("cp");
+  const rawCp = searchParams.get("cp");
+  const capturePointId = resolvedCPs?.shop_cp || rawCp;
 
   const shopWines = useMemo(() => {
     const all = wines?.filter((w) => w.on_shop) ?? [];
