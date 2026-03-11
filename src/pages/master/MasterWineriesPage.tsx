@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
 import { invokeAuth } from "@/lib/auth-api";
-import { Building2, Users, Wine, Receipt, Loader2, ExternalLink, Plus, Pencil, Trash2, Image, ToggleLeft, Copy, Link as LinkIcon, Power } from "lucide-react";
+import { Building2, Users, Wine, Receipt, Loader2, ExternalLink, Plus, Pencil, Trash2, Image, ToggleLeft, Copy, Link as LinkIcon, Power, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,7 @@ const planColors: Record<string, string> = {
 
 export default function MasterWineriesPage() {
   const { admin } = useOutletContext<{ admin: MasterAdmin }>();
+  const navigate = useNavigate();
   const [wineries, setWineries] = useState<WineryMetric[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -241,6 +242,12 @@ export default function MasterWineriesPage() {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-secondary text-secondary-foreground hover:bg-secondary/80 transition-colors"
               >
                 <Copy className="w-3 h-3" /> Copiar Link
+              </button>
+              <button
+                onClick={() => navigate(`/master/wineries/${w.id}`)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+              >
+                <Settings2 className="w-3 h-3" /> Gerenciar Conteúdo
               </button>
             </div>
 

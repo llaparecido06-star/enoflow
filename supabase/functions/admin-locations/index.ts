@@ -5,15 +5,20 @@ Deno.serve(async (req) => {
 
   try {
     const session = await verifySession(req);
-    if (!session || session.type !== "admin") return json({ error: "Não autorizado" }, 401);
+    if (!session || (session.type !== "admin" && session.type !== "master")) return json({ error: "Não autorizado" }, 401);
 
     const supabase = createSupabaseAdmin();
     const body = await req.json();
     const { action } = body;
-    const winery_id = session.winery_id;
 
-    // Only owner/manager can manage locations
-    if (!["owner", "dono", "manager", "gerente", "master"].includes(session.role)) {
+    // Master can specify target winery_id in body
+    let winery_id = session.winery_id;
+    if (session.type === "master" && body.winery_id) {
+      winery_id = body.winery_id;
+    }
+
+    // Only owner/manager/master can manage locations
+    if (session.type !== "master" && !["owner", "dono", "manager", "gerente", "master"].includes(session.role)) {
       return json({ error: "Permissão insuficiente" }, 403);
     }
 

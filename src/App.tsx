@@ -43,6 +43,7 @@ const MasterPlansPage = lazy(() => import("./pages/master/MasterPlansPage"));
 const MasterAdminsPage = lazy(() => import("./pages/master/MasterAdminsPage"));
 const MasterReportsPage = lazy(() => import("./pages/master/MasterReportsPage"));
 const MasterImportPage = lazy(() => import("./pages/master/MasterImportPage"));
+const MasterWineryContentPage = lazy(() => import("./pages/master/MasterWineryContentPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,6 +114,7 @@ const App = () => {
               <Route path="/master" element={<MasterLayout />}>
                 <Route index element={<MasterDashboardPage />} />
                 <Route path="wineries" element={<MasterWineriesPage />} />
+                <Route path="wineries/:wineryId" element={<MasterWineryContentPage />} />
                 <Route path="plans" element={<MasterPlansPage />} />
                 <Route path="admins" element={<MasterAdminsPage />} />
                 <Route path="reports" element={<MasterReportsPage />} />
