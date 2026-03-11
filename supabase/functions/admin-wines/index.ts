@@ -14,20 +14,27 @@ Deno.serve(async (req) => {
 
     const supabase = createSupabaseAdmin();
     const admin_id = session.sub;
-    const winery_id = session.winery_id;
 
     const body = await req.json();
     const { action, wine_id, wine_data } = body;
 
-    const { data: admin, error: adminErr } = await supabase
-      .from("admin_users")
-      .select("id, winery_id, role")
-      .eq("id", admin_id)
-      .eq("winery_id", winery_id)
-      .single();
+    // Master can specify target winery_id in body
+    let winery_id = session.winery_id;
+    if (session.type === "master" && body.winery_id) {
+      winery_id = body.winery_id;
+    }
 
-    if (adminErr || !admin) return json({ error: "Não autorizado" }, 403);
-    if (!hasMinRole(admin.role, "manager")) return json({ error: "Permissão insuficiente" }, 403);
+    // Skip admin_users check for master
+    if (session.type !== "master") {
+      const { data: admin, error: adminErr } = await supabase
+        .from("admin_users")
+        .select("id, winery_id, role")
+        .eq("id", admin_id)
+        .eq("winery_id", winery_id)
+        .single();
+      if (adminErr || !admin) return json({ error: "Não autorizado" }, 403);
+      if (!hasMinRole(admin.role, "manager")) return json({ error: "Permissão insuficiente" }, 403);
+    }
 
     let result;
 
