@@ -9,8 +9,9 @@ import WhatsAppLogin from "@/components/tourist/WhatsAppLogin";
 import QuizSommelier from "@/components/tourist/QuizSommelier";
 import { Loader2, LogOut, Wine } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { invokeAuth } from "@/lib/auth-api";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ResolvedCPs {
   restaurant_cp: string | null;
