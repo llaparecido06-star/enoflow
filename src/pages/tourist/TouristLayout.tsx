@@ -29,6 +29,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const [showQuiz, setShowQuiz] = useState(false);
   const [pendingRedirectCategory, setPendingRedirectCategory] = useState<string | null>(null);
   const [resolvedCPs, setResolvedCPs] = useState<ResolvedCPs | null>(null);
+  const queryClient = useQueryClient();
 
   // Read acquisition params from URL
   const searchParams = new URLSearchParams(location.search);
