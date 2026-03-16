@@ -151,20 +151,30 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
   const [recommendations, setRecommendations] = useState<SommelierRecommendation[]>([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [selectedWine, setSelectedWine] = useState<Wine | null>(null);
+  const [menuSearch, setMenuSearch] = useState("");
   const { addItem } = useCart(winery.id);
 
   const restaurantWines = wines?.filter((w) => w.on_restaurant) ?? [];
   const allWines = wines ?? [];
   const translatedWineNames = useContentTranslation(restaurantWines.map(w => w.name));
 
+  // Filter by search
+  const searchedItems = useMemo(() => {
+    if (!menuSearch.trim()) return menuItems ?? [];
+    const q = menuSearch.toLowerCase();
+    return (menuItems ?? []).filter(item =>
+      item.name.toLowerCase().includes(q) || item.description?.toLowerCase().includes(q) || item.category.toLowerCase().includes(q)
+    );
+  }, [menuItems, menuSearch]);
+
   const categories = useMemo(() => {
     const cats: Record<string, MenuItem[]> = {};
-    (menuItems ?? []).forEach((item) => {
+    searchedItems.forEach((item) => {
       if (!cats[item.category]) cats[item.category] = [];
       cats[item.category].push(item);
     });
     return cats;
-  }, [menuItems]);
+  }, [searchedItems]);
 
   const categoryNames = Object.keys(categories);
   const currentCategory = activeCategory ?? categoryNames[0] ?? null;
@@ -236,7 +246,17 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
           <UtensilsCrossed className="w-4 h-4 text-gold" />
           <h2 className="font-display text-sm font-semibold text-foreground">{t("restaurant.menu")}</h2>
         </div>
-        <p className="text-[11px] text-muted-foreground">{t("restaurant.select_dish")}</p>
+        <p className="text-[11px] text-muted-foreground mb-3">{t("restaurant.select_dish")}</p>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder={t("restaurant.search_menu")}
+            value={menuSearch}
+            onChange={(e) => setMenuSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-card border border-border/30 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/50"
+          />
+        </div>
       </section>
 
       {categoryNames.length > 0 && (

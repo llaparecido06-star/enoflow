@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { QrCode, Copy, AlertTriangle } from "lucide-react";
+import { QrCode, Copy, AlertTriangle, Share2 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import { toast } from "sonner";
+import { haptic } from "@/lib/haptic";
 
 interface ShopVoucherProps {
   voucher: { code: string; id?: string };
@@ -10,12 +11,21 @@ interface ShopVoucherProps {
   currency: string;
   onNewPurchase: () => void;
   t: (k: string) => string;
+  wineryName?: string;
 }
 
-export default function ShopVoucher({ voucher, qrDataUrl, discountedTotal, currency, onNewPurchase, t }: ShopVoucherProps) {
+export default function ShopVoucher({ voucher, qrDataUrl, discountedTotal, currency, onNewPurchase, t, wineryName }: ShopVoucherProps) {
   const copyCode = () => {
     navigator.clipboard.writeText(voucher.code);
+    haptic();
     toast.success(t("shop.code_copied"));
+  };
+
+  const shareVoucher = () => {
+    haptic();
+    const text = `🍷 ${wineryName || "Vinícola"}\n\n${t("shop.present_at_checkout")}\n📋 ${voucher.code}\n💰 ${t("shop.total")}: ${formatCurrency(discountedTotal, currency)}\n⏳ ${t("shop.valid_today")}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank");
   };
 
   return (
@@ -38,9 +48,12 @@ export default function ShopVoucher({ voucher, qrDataUrl, discountedTotal, curre
         <span className="text-[11px] font-medium">{t("shop.valid_today")}</span>
       </div>
 
-      <div className="flex gap-2 mt-4 justify-center">
+      <div className="flex gap-2 mt-4 justify-center flex-wrap">
         <button onClick={copyCode} className="flex items-center gap-1.5 text-sm border border-border px-4 py-2 rounded-xl hover:bg-muted transition-colors">
           <Copy className="w-3.5 h-3.5" /> {t("shop.copy")}
+        </button>
+        <button onClick={shareVoucher} className="flex items-center gap-1.5 text-sm bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition-colors">
+          <Share2 className="w-3.5 h-3.5" /> {t("shop.share_voucher")}
         </button>
         <button onClick={onNewPurchase}
           className="text-sm bg-gold text-gold-foreground px-4 py-2 rounded-xl hover:bg-gold/90 transition-colors">

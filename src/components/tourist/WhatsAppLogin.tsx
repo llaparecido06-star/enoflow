@@ -137,55 +137,57 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
         ) : (
           <div className="space-y-4 animate-fade-in">
             {/* Phone with DDI selector */}
-            <div className="flex gap-2">
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowCountryPicker(!showCountryPicker)}
-                  className="flex items-center gap-1 px-3 py-3 bg-card border border-border rounded-xl text-sm min-w-[5rem] hover:bg-secondary transition-colors"
-                >
-                  <span className="text-base">{selectedCountry.flag}</span>
-                  <span className="text-xs text-muted-foreground">{selectedCountry.code}</span>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                </button>
-                {showCountryPicker && (
-                  <div className="absolute top-full left-0 mt-1 z-50 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto w-48">
-                    {countryCodes.map((c) => (
-                      <button
-                        key={c.code}
-                        onClick={() => { setCountryCode(c.code); setPhone(""); setShowCountryPicker(false); }}
-                        className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary transition-colors ${
-                          c.code === countryCode ? "bg-primary/5" : ""
-                        }`}
-                      >
-                        <span>{c.flag}</span>
-                        <span className="text-xs text-muted-foreground">{c.code}</span>
-                        <span className="text-xs truncate">{c.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className="relative flex-1">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="tel"
-                  placeholder={selectedCountry.placeholder}
-                  value={phone}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    const masked = applyMask(raw, selectedCountry.mask);
-                    setPhone(masked);
-                  }}
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                  className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  autoFocus
-                  maxLength={selectedCountry.mask.length}
-                />
+            <div>
+              <div className="flex gap-2">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowCountryPicker(!showCountryPicker)}
+                    className="flex items-center gap-1 px-3 py-3 bg-card border border-border rounded-xl text-sm min-w-[5rem] hover:bg-secondary transition-colors"
+                  >
+                    <span className="text-base">{selectedCountry.flag}</span>
+                    <span className="text-xs text-muted-foreground">{selectedCountry.code}</span>
+                    <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                  </button>
+                  {showCountryPicker && (
+                    <div className="absolute top-full left-0 mt-1 z-50 bg-card border border-border rounded-xl shadow-lg max-h-48 overflow-y-auto w-48">
+                      {countryCodes.map((c) => (
+                        <button
+                          key={c.code}
+                          onClick={() => { setCountryCode(c.code); setPhone(""); setShowCountryPicker(false); }}
+                          className={`w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-secondary transition-colors ${
+                            c.code === countryCode ? "bg-primary/5" : ""
+                          }`}
+                        >
+                          <span>{c.flag}</span>
+                          <span className="text-xs text-muted-foreground">{c.code}</span>
+                          <span className="text-xs truncate">{c.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="tel"
+                    placeholder={selectedCountry.placeholder}
+                    value={phone}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      const masked = applyMask(raw, selectedCountry.mask);
+                      setPhone(masked);
+                    }}
+                    onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                    className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    autoFocus
+                    maxLength={selectedCountry.mask.length}
+                  />
+                </div>
               </div>
               {phoneDigits.length > 0 && (
-                <p className={`text-xs mt-1 ${isPhoneValid ? 'text-green-600' : 'text-muted-foreground'}`}>
-                  {phoneDigits.length}/{selectedCountry.digits} dígitos
+                <p className={`text-xs mt-1.5 ${isPhoneValid ? 'text-green-600' : 'text-muted-foreground'}`}>
+                  {phoneDigits.length}/{selectedCountry.digits} {t("login.digits_label") || "dígitos"}
                 </p>
               )}
             </div>

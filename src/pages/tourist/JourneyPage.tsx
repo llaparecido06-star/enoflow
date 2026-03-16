@@ -215,7 +215,7 @@ export default function JourneyPage() {
         className="grid grid-cols-3 gap-3">
         <div className="bg-card rounded-xl border border-border/30 p-3 text-center">
           <WineIcon className="w-4 h-4 text-wine-light mx-auto mb-1" />
-          <p className="font-display text-lg font-bold text-foreground">{tastingWines.length}</p>
+          <p className="font-display text-lg font-bold text-foreground">{ratings.length}</p>
           <p className="text-[9px] text-muted-foreground">{t("journey.tasted")}</p>
         </div>
         <div className="bg-card rounded-xl border border-border/30 p-3 text-center">

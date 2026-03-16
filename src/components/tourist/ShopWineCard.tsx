@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Wine as WineIcon, Heart, Star, Plus } from "lucide-react";
 import { formatCurrencyShort } from "@/lib/currency";
 import ShareWineButton from "./ShareWineButton";
+import { haptic } from "@/lib/haptic";
 import type { Wine } from "@/hooks/useWinery";
 
 function SensoryStarsMini({ value }: { value: number }) {
@@ -39,7 +40,7 @@ export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onTogg
         <div className="absolute top-2 right-2 flex gap-1">
           {winerySlug && <ShareWineButton wine={wine} winerySlug={winerySlug} currency={currency} />}
           <button
-            onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+            onClick={(e) => { e.stopPropagation(); haptic(); onToggleFavorite(); }}
             className="p-1.5 rounded-full bg-background/30 backdrop-blur-md border border-foreground/10"
           >
             <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-red-500 text-red-500" : "text-foreground/60"}`} />
@@ -66,7 +67,7 @@ export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onTogg
             <span className="text-[8px] text-green-500 font-bold ml-0.5">-10%</span>
           </div>
           <button
-            onClick={onAdd}
+            onClick={() => { haptic(); onAdd(); }}
             className="w-8 h-8 rounded-lg bg-gold text-gold-foreground flex items-center justify-center hover:bg-gold/90 transition-colors"
           >
             <Plus className="w-4 h-4" />

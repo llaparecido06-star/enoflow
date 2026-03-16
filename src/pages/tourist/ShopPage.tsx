@@ -281,6 +281,7 @@ export default function ShopPage() {
           currency={cur}
           onNewPurchase={handleNewPurchase}
           t={t}
+          wineryName={winery.name}
         />
       )}
 
@@ -379,6 +380,14 @@ export default function ShopPage() {
 
           {!wines ? (
             <WineGridSkeleton count={6} />
+          ) : shopWines.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gold/10 flex items-center justify-center">
+                <WineIcon className="w-8 h-8 text-gold" />
+              </div>
+              <h3 className="font-display text-base font-bold text-foreground mb-2">{t("shop.empty_title")}</h3>
+              <p className="text-sm text-muted-foreground max-w-xs mx-auto">{t("shop.empty_desc")}</p>
+            </div>
           ) : (
             <>
               <motion.div layout className="grid grid-cols-2 gap-3">

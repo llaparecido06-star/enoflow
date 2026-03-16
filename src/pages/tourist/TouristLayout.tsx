@@ -4,12 +4,14 @@ import { useDynamicTheme } from "@/hooks/useDynamicTheme";
 import { TouristAuthProvider, useTouristAuth } from "@/hooks/useTouristAuth";
 import { I18nProvider, useI18n, LanguageSelector } from "@/lib/i18n";
 import BottomNav from "@/components/tourist/BottomNav";
+import PullToRefresh from "@/components/tourist/PullToRefresh";
 import WhatsAppLogin from "@/components/tourist/WhatsAppLogin";
 import QuizSommelier from "@/components/tourist/QuizSommelier";
 import { Loader2, LogOut, Wine } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { invokeAuth } from "@/lib/auth-api";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ResolvedCPs {
   restaurant_cp: string | null;
@@ -27,6 +29,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const [showQuiz, setShowQuiz] = useState(false);
   const [pendingRedirectCategory, setPendingRedirectCategory] = useState<string | null>(null);
   const [resolvedCPs, setResolvedCPs] = useState<ResolvedCPs | null>(null);
+  const queryClient = useQueryClient();
 
   // Read acquisition params from URL
   const searchParams = new URLSearchParams(location.search);
@@ -165,7 +168,13 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
       </header>
 
       <main className="px-4 py-4">
-        <Outlet context={{ winery, lead, resolvedCPs }} />
+        <PullToRefresh onRefresh={async () => {
+          await queryClient.invalidateQueries({ queryKey: ["wines", winery.id] });
+          await queryClient.invalidateQueries({ queryKey: ["menu_items", winery.id] });
+          await queryClient.invalidateQueries({ queryKey: ["tasting_packages", winery.id] });
+        }}>
+          <Outlet context={{ winery, lead, resolvedCPs }} />
+        </PullToRefresh>
       </main>
 
       <BottomNav slug={slug} enabledModules={enabledModules} />
