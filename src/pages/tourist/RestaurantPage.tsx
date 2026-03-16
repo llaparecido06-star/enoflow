@@ -158,14 +158,23 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
   const allWines = wines ?? [];
   const translatedWineNames = useContentTranslation(restaurantWines.map(w => w.name));
 
+  // Filter by search
+  const searchedItems = useMemo(() => {
+    if (!menuSearch.trim()) return menuItems ?? [];
+    const q = menuSearch.toLowerCase();
+    return (menuItems ?? []).filter(item =>
+      item.name.toLowerCase().includes(q) || item.description?.toLowerCase().includes(q) || item.category.toLowerCase().includes(q)
+    );
+  }, [menuItems, menuSearch]);
+
   const categories = useMemo(() => {
     const cats: Record<string, MenuItem[]> = {};
-    (menuItems ?? []).forEach((item) => {
+    searchedItems.forEach((item) => {
       if (!cats[item.category]) cats[item.category] = [];
       cats[item.category].push(item);
     });
     return cats;
-  }, [menuItems]);
+  }, [searchedItems]);
 
   const categoryNames = Object.keys(categories);
   const currentCategory = activeCategory ?? categoryNames[0] ?? null;
