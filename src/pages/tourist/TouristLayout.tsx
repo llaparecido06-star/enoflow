@@ -4,6 +4,7 @@ import { useDynamicTheme } from "@/hooks/useDynamicTheme";
 import { TouristAuthProvider, useTouristAuth } from "@/hooks/useTouristAuth";
 import { I18nProvider, useI18n, LanguageSelector } from "@/lib/i18n";
 import BottomNav from "@/components/tourist/BottomNav";
+import PullToRefresh from "@/components/tourist/PullToRefresh";
 import WhatsAppLogin from "@/components/tourist/WhatsAppLogin";
 import QuizSommelier from "@/components/tourist/QuizSommelier";
 import { Loader2, LogOut, Wine } from "lucide-react";
