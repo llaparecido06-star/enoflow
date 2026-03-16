@@ -40,7 +40,7 @@ export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onTogg
         <div className="absolute top-2 right-2 flex gap-1">
           {winerySlug && <ShareWineButton wine={wine} winerySlug={winerySlug} currency={currency} />}
           <button
-            onClick={(e) => { e.stopPropagation(); onToggleFavorite(); }}
+            onClick={(e) => { e.stopPropagation(); haptic(); onToggleFavorite(); }}
             className="p-1.5 rounded-full bg-background/30 backdrop-blur-md border border-foreground/10"
           >
             <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-red-500 text-red-500" : "text-foreground/60"}`} />
