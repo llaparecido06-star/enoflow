@@ -246,7 +246,17 @@ const RestaurantPage = forwardRef<HTMLDivElement>(function RestaurantPage(_, ref
           <UtensilsCrossed className="w-4 h-4 text-gold" />
           <h2 className="font-display text-sm font-semibold text-foreground">{t("restaurant.menu")}</h2>
         </div>
-        <p className="text-[11px] text-muted-foreground">{t("restaurant.select_dish")}</p>
+        <p className="text-[11px] text-muted-foreground mb-3">{t("restaurant.select_dish")}</p>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder={t("restaurant.search_menu")}
+            value={menuSearch}
+            onChange={(e) => setMenuSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-card border border-border/30 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/50"
+          />
+        </div>
       </section>
 
       {categoryNames.length > 0 && (

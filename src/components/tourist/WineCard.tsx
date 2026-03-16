@@ -1,11 +1,14 @@
 import { Wine as WineType } from "@/hooks/useWinery";
 import { Wine, Droplets, Circle } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
+import { useI18n } from "@/lib/i18n";
 
 interface WineCardProps {
   wine: WineType;
   onRate?: () => void;
   onAddToCart?: () => void;
   showCartButton?: boolean;
+  currency?: string;
 }
 
 function SensoryDots({ value, label, icon: Icon }: { value: number; label: string; icon: React.ElementType }) {
@@ -27,7 +30,9 @@ function SensoryDots({ value, label, icon: Icon }: { value: number; label: strin
   );
 }
 
-export default function WineCard({ wine, onRate, onAddToCart, showCartButton }: WineCardProps) {
+export default function WineCard({ wine, onRate, onAddToCart, showCartButton, currency = "BRL" }: WineCardProps) {
+  const { t } = useI18n();
+  
   const typeColors: Record<string, string> = {
     Tinto: "bg-primary/10 text-primary",
     Branco: "bg-gold/10 text-gold",
@@ -57,19 +62,19 @@ export default function WineCard({ wine, onRate, onAddToCart, showCartButton }: 
       </div>
 
       <div className="mt-3 space-y-1">
-        <SensoryDots value={wine.sensory_acidity} label="Acidez" icon={Droplets} />
-        <SensoryDots value={wine.sensory_body} label="Corpo" icon={Circle} />
-        <SensoryDots value={wine.sensory_sweetness} label="Doçura" icon={Wine} />
+        <SensoryDots value={wine.sensory_acidity} label={t("wine.acidity")} icon={Droplets} />
+        <SensoryDots value={wine.sensory_body} label={t("wine.body")} icon={Circle} />
+        <SensoryDots value={wine.sensory_sweetness} label={t("wine.sweetness")} icon={Wine} />
       </div>
 
       <div className="mt-3 flex items-center justify-between">
         <div>
           <span className="text-lg font-display font-bold text-foreground">
-            R$ {Number(wine.price_bottle).toFixed(2)}
+            {formatCurrency(Number(wine.price_bottle), currency)}
           </span>
           {wine.price_glass && (
             <span className="text-[11px] text-muted-foreground ml-2">
-              Taça R$ {Number(wine.price_glass).toFixed(2)}
+              {t("restaurant.glass")} {formatCurrency(Number(wine.price_glass), currency)}
             </span>
           )}
         </div>
@@ -79,7 +84,7 @@ export default function WineCard({ wine, onRate, onAddToCart, showCartButton }: 
               onClick={onRate}
               className="text-[11px] font-medium text-primary border border-primary/30 px-3 py-1.5 rounded-lg hover:bg-primary/5 transition-colors"
             >
-              Avaliar
+              {t("tasting.rate_wine")}
             </button>
           )}
           {showCartButton && onAddToCart && (
@@ -87,7 +92,7 @@ export default function WineCard({ wine, onRate, onAddToCart, showCartButton }: 
               onClick={onAddToCart}
               className="text-[11px] font-medium bg-primary text-primary-foreground px-3 py-1.5 rounded-lg hover:bg-primary/90 transition-colors"
             >
-              + Carrinho
+              + {t("shop.cart")}
             </button>
           )}
         </div>
