@@ -67,7 +67,7 @@ export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onTogg
             <span className="text-[8px] text-green-500 font-bold ml-0.5">-10%</span>
           </div>
           <button
-            onClick={onAdd}
+            onClick={() => { haptic(); onAdd(); }}
             className="w-8 h-8 rounded-lg bg-gold text-gold-foreground flex items-center justify-center hover:bg-gold/90 transition-colors"
           >
             <Plus className="w-4 h-4" />
