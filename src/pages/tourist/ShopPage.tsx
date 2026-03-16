@@ -281,6 +281,7 @@ export default function ShopPage() {
           currency={cur}
           onNewPurchase={handleNewPurchase}
           t={t}
+          wineryName={winery.name}
         />
       )}
 
