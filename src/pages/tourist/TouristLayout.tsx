@@ -168,7 +168,13 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
       </header>
 
       <main className="px-4 py-4">
-        <Outlet context={{ winery, lead, resolvedCPs }} />
+        <PullToRefresh onRefresh={async () => {
+          await queryClient.invalidateQueries({ queryKey: ["wines", winery.id] });
+          await queryClient.invalidateQueries({ queryKey: ["menu_items", winery.id] });
+          await queryClient.invalidateQueries({ queryKey: ["tasting_packages", winery.id] });
+        }}>
+          <Outlet context={{ winery, lead, resolvedCPs }} />
+        </PullToRefresh>
       </main>
 
       <BottomNav slug={slug} enabledModules={enabledModules} />
