@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Wine as WineIcon, Heart, Star, Plus } from "lucide-react";
 import { formatCurrencyShort } from "@/lib/currency";
 import ShareWineButton from "./ShareWineButton";
+import { haptic } from "@/lib/haptic";
 import type { Wine } from "@/hooks/useWinery";
 
 function SensoryStarsMini({ value }: { value: number }) {
