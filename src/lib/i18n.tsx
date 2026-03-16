@@ -150,6 +150,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "restaurant.no_items": "Nenhum item disponível no restaurante no momento.",
     "restaurant.suggestion": "Sugestão:",
     "restaurant.sommelier_error": "Erro ao consultar o sommelier digital",
+    "restaurant.search_menu": "Buscar no cardápio...",
+    // Shop extras
+    "shop.empty_title": "Loja em preparação",
+    "shop.empty_desc": "Em breve nossos vinhos estarão disponíveis para compra com desconto exclusivo!",
+    "shop.share_voucher": "Compartilhar",
     // Profile form
     "profile.almost_there": "Quase lá! 🎉",
     "profile.fill_data": "Preencha seus dados para liberar o voucher de desconto",
