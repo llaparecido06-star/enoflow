@@ -316,6 +316,36 @@ export type Database = {
           },
         ]
       }
+      landing_leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          winery_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          winery_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          winery_name?: string | null
+        }
+        Relationships: []
+      }
       menu_items: {
         Row: {
           capture_point_ids: string[]
