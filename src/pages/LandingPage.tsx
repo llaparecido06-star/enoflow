@@ -9,6 +9,7 @@ import enoflowLogo from "@/assets/enoflow-logo.webp";
 import phoneMockup from "@/assets/landing-phone-mockup.png";
 import vineyardBg from "@/assets/landing-vineyard-bg.jpg";
 import darkSectionBg from "@/assets/landing-dark-section.jpg";
+import ContactForm from "@/components/landing/ContactForm";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
