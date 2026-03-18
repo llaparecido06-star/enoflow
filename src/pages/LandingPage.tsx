@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, type Easing } from "framer-motion";
 import {
   Grape, ArrowRight, Smartphone, BarChart3, Users, QrCode,
   Wine, Star, ShoppingBag, ChefHat, TrendingUp, Shield, Zap,
