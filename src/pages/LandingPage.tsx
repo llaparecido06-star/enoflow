@@ -352,40 +352,44 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
+      {/* ── CTA + Contact Form ── */}
       <section id="contact" className="py-24 bg-primary">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <Grape className="w-10 h-10 text-gold mx-auto mb-4" />
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
-              Pronto para digitalizar seu enoturismo?
-            </h2>
-            <p className="text-primary-foreground/70 mb-8 max-w-lg mx-auto">
-              Agende uma demonstração gratuita e descubra como o EnoFlow pode transformar a experiência dos seus visitantes em dados e vendas.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="https://wa.me/5554999999999?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20o%20EnoFlow"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-gold text-gold-foreground px-8 py-3.5 rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-              >
-                <MessageCircle className="w-4 h-4" />
-                Falar pelo WhatsApp
-              </a>
-              <button
-                onClick={() => navigate("/admin/login")}
-                className="border border-primary-foreground/30 text-primary-foreground px-8 py-3.5 rounded-lg font-semibold text-sm hover:bg-primary-foreground/10 transition-colors flex items-center justify-center gap-2"
-              >
-                Já sou cliente
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </motion.div>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-start">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <Grape className="w-10 h-10 text-gold mb-4" />
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
+                Pronto para digitalizar seu enoturismo?
+              </h2>
+              <p className="text-primary-foreground/70 mb-8 max-w-lg">
+                Agende uma demonstração gratuita e descubra como o EnoFlow pode transformar a experiência dos seus visitantes em dados e vendas.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <a
+                  href="https://wa.me/5511983580664?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20o%20EnoFlow"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-gold text-gold-foreground px-8 py-3.5 rounded-lg font-semibold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  Falar pelo WhatsApp
+                </a>
+                <button
+                  onClick={() => navigate("/admin/login")}
+                  className="border border-primary-foreground/30 text-primary-foreground px-8 py-3.5 rounded-lg font-semibold text-sm hover:bg-primary-foreground/10 transition-colors flex items-center justify-center gap-2"
+                >
+                  Já sou cliente
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+
+            <ContactForm />
+          </div>
         </div>
       </section>
 
