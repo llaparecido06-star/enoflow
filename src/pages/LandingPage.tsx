@@ -417,9 +417,9 @@ export default function LandingPage() {
             <div>
               <h4 className="font-display font-semibold mb-3">Contato</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2"><Mail className="w-4 h-4" /> contato@enoflow.com.br</li>
-                <li className="flex items-center gap-2"><MessageCircle className="w-4 h-4" /> (54) 99999-9999</li>
-                <li className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Serra Gaúcha, RS</li>
+                <li className="flex items-center gap-2"><Mail className="w-4 h-4" /> lucas.lima@idealbi.com.br</li>
+                <li className="flex items-center gap-2"><MessageCircle className="w-4 h-4" /> (11) 98358-0664</li>
+                <li className="flex items-center gap-2"><MapPin className="w-4 h-4" /> Rua Mazel, 234 - Cotia, SP</li>
               </ul>
             </div>
           </div>
