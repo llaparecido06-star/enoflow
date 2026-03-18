@@ -79,7 +79,8 @@ const App = () => {
         <ErrorBoundary fallbackTitle="Erro no aplicativo">
           <Suspense fallback={<LazyFallback />}>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/wineries" element={<WineryListPage />} />
 
               {/* SSO Login */}
               <Route path="/admin/login" element={<AdminLoginPage />} />
