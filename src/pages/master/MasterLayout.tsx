@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useMasterAuth } from "@/hooks/useMasterAuth";
-import { BarChart3, Building2, Users, Loader2, LogOut, Shield, Upload, FileBarChart, CreditCard } from "lucide-react";
+import { BarChart3, Building2, Users, Loader2, LogOut, Shield, Upload, FileBarChart, CreditCard, UserSearch } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { id: "wineries", label: "Vinícolas", icon: Building2, path: "/wineries" },
   { id: "plans", label: "Planos", icon: CreditCard, path: "/plans" },
   { id: "admins", label: "Admins", icon: Users, path: "/admins" },
+  { id: "leads", label: "Leads B2B", icon: UserSearch, path: "/leads" },
   { id: "reports", label: "Relatórios", icon: FileBarChart, path: "/reports" },
   { id: "import", label: "Importar", icon: Upload, path: "/import" },
 ];
