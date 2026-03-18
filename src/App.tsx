@@ -120,6 +120,7 @@ const App = () => {
                 <Route path="wineries/:wineryId" element={<MasterWineryContentPage />} />
                 <Route path="plans" element={<MasterPlansPage />} />
                 <Route path="admins" element={<MasterAdminsPage />} />
+                <Route path="leads" element={<MasterLeadsPage />} />
                 <Route path="reports" element={<MasterReportsPage />} />
                 <Route path="import" element={<MasterImportPage />} />
               </Route>
