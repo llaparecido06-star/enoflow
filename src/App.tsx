@@ -6,7 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import Index from "./pages/Index";
+import LandingPage from "./pages/LandingPage";
+const WineryListPage = lazy(() => import("./pages/WineryListPage"));
 
 // Lazy-loaded tourist routes
 const TouristLayout = lazy(() => import("./pages/tourist/TouristLayout"));
@@ -78,7 +79,8 @@ const App = () => {
         <ErrorBoundary fallbackTitle="Erro no aplicativo">
           <Suspense fallback={<LazyFallback />}>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/wineries" element={<WineryListPage />} />
 
               {/* SSO Login */}
               <Route path="/admin/login" element={<AdminLoginPage />} />
