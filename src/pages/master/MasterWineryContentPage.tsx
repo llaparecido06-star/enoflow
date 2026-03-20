@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useOutletContext } from "react-router-dom";
 import type { MasterAdmin } from "@/hooks/useMasterAuth";
 import { invokeAuth } from "@/lib/auth-api";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Wine as WineIcon, Package, UtensilsCrossed, MapPin, Plus, Pencil, Trash2, Loader2, QrCode, Copy, Eye } from "lucide-react";

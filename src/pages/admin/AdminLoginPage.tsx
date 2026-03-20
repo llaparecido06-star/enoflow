@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, Loader2, ArrowLeft } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { setSessionToken } from "@/lib/auth-api";
 import enoflowLogo from "@/assets/enoflow-logo.png";
 
