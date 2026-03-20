@@ -18,7 +18,7 @@ import ShopVoucher from "@/components/tourist/ShopVoucher";
 import ShopSortSelect, { type SortOption } from "@/components/tourist/ShopSortSelect";
 import { WineGridSkeleton } from "@/components/tourist/WineCardSkeleton";
 import { useI18n } from "@/lib/i18n";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingBag, Wine as WineIcon, Heart, ChevronRight } from "lucide-react";

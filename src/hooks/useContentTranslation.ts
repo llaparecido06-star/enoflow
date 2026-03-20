@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useI18n, type Locale } from "@/lib/i18n";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 // In-memory cache shared across all hook instances
 const translationCache: Record<string, string> = {};
