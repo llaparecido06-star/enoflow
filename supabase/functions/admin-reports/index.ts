@@ -113,9 +113,9 @@ Deno.serve(async (req) => {
       for (const v of (allVouchers ?? []).filter(v => v.redeemed)) {
         const items = Array.isArray(v.items) ? v.items : [];
         for (const item of items) {
-          const wineId = (item as any)?.id || (item as any)?.wine?.id;
+          const wineId = (item as any)?.wine_id || (item as any)?.id || (item as any)?.wine?.id;
           if (wineId && wineNameMap[wineId]) {
-            const qty = Number((item as any)?.quantity) || 1;
+            const qty = Number((item as any)?.quantity ?? (item as any)?.qty) || 1;
             wineSalesCount[wineId] = (wineSalesCount[wineId] || 0) + qty;
           }
         }
