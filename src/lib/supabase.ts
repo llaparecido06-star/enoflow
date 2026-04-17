@@ -1,25 +1,10 @@
 /**
- * Custom Supabase client pointing to the EXTERNAL Supabase instance.
- * This file overrides the auto-generated client from Lovable Cloud.
- * All app code should import from here: import { supabase } from "@/lib/supabase";
+ * Re-export do cliente Supabase auto-gerado do Lovable Cloud.
+ * O projeto externo (myiardyzfkqcvnilbfdx) não está acessível, então
+ * voltamos a usar o Lovable Cloud (vhxcaaqknltkkdujaygi), onde estão os dados reais.
  */
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+export { supabase } from "@/integrations/supabase/client";
 
-const EXTERNAL_SUPABASE_URL = "https://myiardyzfkqcvnilbfdx.supabase.co";
-const EXTERNAL_SUPABASE_ANON_KEY = "sb_publishable_o12_7O4Uo-PCIDNLXziEDg_jtJzLr-q";
-
-export const supabase = createClient<Database>(
-  EXTERNAL_SUPABASE_URL,
-  EXTERNAL_SUPABASE_ANON_KEY,
-  {
-    auth: {
-      storage: localStorage,
-      persistSession: true,
-      autoRefreshToken: true,
-    },
-  }
-);
-
-export const SUPABASE_URL = EXTERNAL_SUPABASE_URL;
-export const SUPABASE_ANON_KEY = EXTERNAL_SUPABASE_ANON_KEY;
+export const SUPABASE_URL = "https://vhxcaaqknltkkdujaygi.supabase.co";
+export const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZoeGNhYXFrbmx0a2tkdWpheWdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5Mzk0ODQsImV4cCI6MjA4NzUxNTQ4NH0.1DzZrBTZzEbqBzpWCtgF56Tn-Yp4YrETHUdY9T7uvWM";
