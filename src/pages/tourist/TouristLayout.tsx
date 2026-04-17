@@ -138,7 +138,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   }
 
   return (
-    <div className="min-h-screen bg-background max-w-lg mx-auto relative pb-20">
+    <div className="min-h-screen bg-background max-w-lg mx-auto relative pb-28">
       <header className="sticky top-0 z-40 bg-background/90 backdrop-blur-xl border-b border-border/30 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

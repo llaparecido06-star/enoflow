@@ -12,7 +12,7 @@ interface VoucherRecord {
   redeemed: boolean;
   nps_score: number | null;
   created_at: string;
-  items: Array<{ name: string; qty: number; price: number }>;
+  items: Array<{ name: string; qty?: number; quantity?: number; price?: number }>;
 }
 
 export default function VoucherHistory({ currency = "BRL" }: { currency?: string }) {
@@ -75,12 +75,16 @@ export default function VoucherHistory({ currency = "BRL" }: { currency?: string
             </div>
           </div>
           <div className="space-y-0.5 mb-2">
-            {(v.items || []).map((item, j) => (
-              <div key={j} className="flex justify-between text-[10px] text-muted-foreground">
-                <span>{item.qty}x {item.name}</span>
-                <span>{formatCurrency(item.price * item.qty, currency)}</span>
-              </div>
-            ))}
+            {(v.items || []).map((item, j) => {
+              const qty = Number(item.qty ?? item.quantity ?? 1);
+              const price = Number(item.price ?? 0);
+              return (
+                <div key={j} className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>{qty}x {item.name}</span>
+                  <span>{formatCurrency(price * qty, currency)}</span>
+                </div>
+              );
+            })}
           </div>
           <div className="flex items-center justify-between pt-1.5 border-t border-border/20">
             <span className="text-[10px] text-muted-foreground">
