@@ -233,6 +233,12 @@ export default function JourneyPage() {
         </div>
       </motion.div>
 
+      {lead?.id && <LoyaltyCard leadId={lead.id} />}
+
+      {lead?.id && <AIRecommendations leadId={lead.id} slug={winery.slug} currency={winery.currency || "BRL"} />}
+
+      {lead?.id && <ReferralCard leadId={lead.id} slug={winery.slug} wineryName={winery.name} />}
+
       {flavorProfile && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
           className="bg-card rounded-xl border border-border/30 p-4 luxury-shadow">
