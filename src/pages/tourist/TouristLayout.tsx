@@ -36,6 +36,13 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const acqCategory = searchParams.get("category") || undefined;
   const acqLocation = searchParams.get("location") || undefined;
   const capturePointId = searchParams.get("cp") || undefined;
+  const referrerId = searchParams.get("ref") || undefined;
+
+  // Persist referrer once authenticated
+  useEffect(() => {
+    if (!isAuthenticated || !referrerId) return;
+    invokeAuth("tourist-loyalty", { action: "set_referrer", referrer_id: referrerId }).catch(() => {});
+  }, [isAuthenticated, referrerId]);
 
   const categoryToPath: Record<string, string> = { restaurant: "/restaurant", shop: "/shop", tasting: "" };
   const hasTrackedVisit = useRef(false);

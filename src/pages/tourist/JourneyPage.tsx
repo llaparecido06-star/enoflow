@@ -9,6 +9,9 @@ import { formatCurrencyShort, formatCurrency } from "@/lib/currency";
 import Confetti from "@/components/tourist/Confetti";
 import VoucherHistory from "@/components/tourist/VoucherHistory";
 import QuizSommelier from "@/components/tourist/QuizSommelier";
+import LoyaltyCard from "@/components/tourist/LoyaltyCard";
+import AIRecommendations from "@/components/tourist/AIRecommendations";
+import ReferralCard from "@/components/tourist/ReferralCard";
 import { motion } from "framer-motion";
 import { Star, Heart, Wine as WineIcon, Trophy, TrendingUp, Sparkles, Loader2, ShoppingBag, User, Receipt, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
@@ -229,6 +232,12 @@ export default function JourneyPage() {
           <p className="text-[9px] text-muted-foreground">{t("journey.favorites")}</p>
         </div>
       </motion.div>
+
+      {lead?.id && <LoyaltyCard leadId={lead.id} />}
+
+      {lead?.id && <AIRecommendations leadId={lead.id} slug={winery.slug} currency={winery.currency || "BRL"} />}
+
+      {lead?.id && <ReferralCard leadId={lead.id} slug={winery.slug} wineryName={winery.name} />}
 
       {flavorProfile && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
