@@ -222,6 +222,8 @@ export default function ShopPage() {
       if (data?.error) throw new Error(data.error);
       setVoucher({ code, id: data?.voucher?.id });
       toast.success(t("shop.voucher_generated"));
+      // Award loyalty point + handle referral propagation (fire and forget)
+      invokeAuth("tourist-loyalty", { action: "award_voucher_points" }).catch(() => {});
       try {
         const qrUrl = await QRCode.toDataURL(code, { width: 200, margin: 2, color: { dark: "#000000", light: "#ffffff" } });
         setQrDataUrl(qrUrl);
