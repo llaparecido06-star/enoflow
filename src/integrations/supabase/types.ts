@@ -270,6 +270,153 @@ export type Database = {
           },
         ]
       }
+      crm_lead_notes: {
+        Row: {
+          admin_id: string
+          body: string
+          created_at: string
+          id: string
+          lead_id: string
+          winery_id: string
+        }
+        Insert: {
+          admin_id: string
+          body: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          winery_id: string
+        }
+        Update: {
+          admin_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
+      crm_lead_state: {
+        Row: {
+          assigned_admin_id: string | null
+          created_at: string
+          estimated_value: number
+          id: string
+          lead_id: string
+          stage: string
+          tags: string[]
+          updated_at: string
+          winery_id: string
+        }
+        Insert: {
+          assigned_admin_id?: string | null
+          created_at?: string
+          estimated_value?: number
+          id?: string
+          lead_id: string
+          stage?: string
+          tags?: string[]
+          updated_at?: string
+          winery_id: string
+        }
+        Update: {
+          assigned_admin_id?: string | null
+          created_at?: string
+          estimated_value?: number
+          id?: string
+          lead_id?: string
+          stage?: string
+          tags?: string[]
+          updated_at?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
+      crm_message_log: {
+        Row: {
+          admin_id: string
+          body: string | null
+          channel: string
+          id: string
+          lead_id: string
+          sent_at: string
+          template_id: string | null
+          winery_id: string
+        }
+        Insert: {
+          admin_id: string
+          body?: string | null
+          channel?: string
+          id?: string
+          lead_id: string
+          sent_at?: string
+          template_id?: string | null
+          winery_id: string
+        }
+        Update: {
+          admin_id?: string
+          body?: string | null
+          channel?: string
+          id?: string
+          lead_id?: string
+          sent_at?: string
+          template_id?: string | null
+          winery_id?: string
+        }
+        Relationships: []
+      }
+      crm_message_templates: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          name: string
+          stage: string | null
+          winery_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          name: string
+          stage?: string | null
+          winery_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          name?: string
+          stage?: string | null
+          winery_id?: string
+        }
+        Relationships: []
+      }
+      crm_saved_segments: {
+        Row: {
+          created_at: string
+          filters: Json
+          id: string
+          name: string
+          winery_id: string
+        }
+        Insert: {
+          created_at?: string
+          filters?: Json
+          id?: string
+          name: string
+          winery_id: string
+        }
+        Update: {
+          created_at?: string
+          filters?: Json
+          id?: string
+          name?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
@@ -343,6 +490,33 @@ export type Database = {
           name?: string
           phone?: string | null
           winery_name?: string | null
+        }
+        Relationships: []
+      }
+      loyalty_rewards: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          threshold: number
+          title: string
+          winery_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          threshold: number
+          title: string
+          winery_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          threshold?: number
+          title?: string
+          winery_id?: string
         }
         Relationships: []
       }
@@ -589,8 +763,11 @@ export type Database = {
           id: string
           income_class: string | null
           lgpd_consent_date: string | null
+          loyalty_points: number
           name: string
           preferences_summary: string | null
+          referral_count: number
+          referred_by: string | null
           whatsapp: string
           winery_id: string
         }
@@ -605,8 +782,11 @@ export type Database = {
           id?: string
           income_class?: string | null
           lgpd_consent_date?: string | null
+          loyalty_points?: number
           name: string
           preferences_summary?: string | null
+          referral_count?: number
+          referred_by?: string | null
           whatsapp: string
           winery_id: string
         }
@@ -621,8 +801,11 @@ export type Database = {
           id?: string
           income_class?: string | null
           lgpd_consent_date?: string | null
+          loyalty_points?: number
           name?: string
           preferences_summary?: string | null
+          referral_count?: number
+          referred_by?: string | null
           whatsapp?: string
           winery_id?: string
         }
