@@ -61,7 +61,9 @@ export default function AdminPackagesPage() {
                 </div>
                 <div>
                   <h3 className="font-display text-sm font-semibold">{pkg.name}</h3>
-                  <p className="text-[11px] text-muted-foreground">{pkg.wine_ids.length} vinhos · {pkg.description}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {pkg.wine_ids.length} vinhos{pkg.description ? ` · ${pkg.description}` : ""}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
