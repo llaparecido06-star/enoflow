@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { X, Phone, Calendar, Wine, MapPin, Star, Heart, MessageSquare, Plus, Trash2, ExternalLink, Award } from "lucide-react";
+import { X, Phone, Calendar, Wine, MapPin, Star, Heart, MessageSquare, Plus, Trash2, ExternalLink, Award, Bell, CheckCircle2, Clock, Copy } from "lucide-react";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/currency";
 import type { CrmLead } from "./LeadCard";
+import TaskFormModal from "./TaskFormModal";
+import ScheduleMessageModal from "./ScheduleMessageModal";
 
 interface Props {
   lead: CrmLead;
@@ -16,11 +18,14 @@ interface Props {
 export default function LeadTimelineModal({ lead, wineryId, currency, onClose, onUpdate }: Props) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"timeline" | "notes" | "messages">("timeline");
+  const [tab, setTab] = useState<"timeline" | "notes" | "messages" | "tasks">("timeline");
   const [newNote, setNewNote] = useState("");
   const [newTag, setNewTag] = useState("");
   const [tags, setTags] = useState<string[]>(lead.tags);
   const [estValue, setEstValue] = useState(lead.estimated_value.toString());
+  const [showTask, setShowTask] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [tasks, setTasks] = useState<any[]>([]);
 
   const load = async () => {
     setLoading(true);
