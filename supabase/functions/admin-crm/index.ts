@@ -243,6 +243,201 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
+    // ─── TASKS ───────────────────────────────────────────────────
+    if (action === "list_tasks") {
+      const { scope, lead_id } = body; // scope: 'mine' | 'winery' | 'lead'
+      let q = supabase.from("crm_tasks").select("*").eq("winery_id", winery_id);
+      if (scope === "mine") q = q.eq("admin_id", admin_id);
+      if (scope === "lead" && lead_id) q = q.eq("lead_id", lead_id);
+      const { data } = await q.order("due_at", { ascending: true });
+      return json({ success: true, tasks: data ?? [] });
+    }
+
+    if (action === "upsert_task") {
+      const { task_id, lead_id, assigned_admin_id, title, description, due_at, type } = body;
+      if (!title || !due_at) return json({ error: "title and due_at required" }, 400);
+      const payload: any = {
+        winery_id,
+        title: String(title).slice(0, 200),
+        description: description ? String(description).slice(0, 2000) : null,
+        due_at,
+        type: type || "followup",
+        admin_id: assigned_admin_id || admin_id,
+        lead_id: lead_id || null,
+      };
+      if (task_id) {
+        const { data, error } = await supabase
+          .from("crm_tasks")
+          .update(payload)
+          .eq("id", task_id)
+          .eq("winery_id", winery_id)
+          .select()
+          .single();
+        if (error) throw error;
+        return json({ success: true, task: data });
+      }
+      const { data, error } = await supabase
+        .from("crm_tasks")
+        .insert({ ...payload, created_by: admin_id })
+        .select()
+        .single();
+      if (error) throw error;
+      return json({ success: true, task: data });
+    }
+
+    if (action === "complete_task") {
+      const { task_id } = body;
+      if (!task_id) return json({ error: "task_id required" }, 400);
+      const { data: task } = await supabase
+        .from("crm_tasks")
+        .update({ status: "feito", completed_at: new Date().toISOString() })
+        .eq("id", task_id)
+        .eq("winery_id", winery_id)
+        .select()
+        .single();
+      // Auto-log na timeline do lead
+      if (task?.lead_id) {
+        await supabase.from("crm_lead_notes").insert({
+          lead_id: task.lead_id,
+          winery_id,
+          admin_id,
+          body: `✓ Tarefa concluída: ${task.title}`,
+        });
+      }
+      return json({ success: true });
+    }
+
+    if (action === "delete_task") {
+      const { task_id } = body;
+      if (!task_id) return json({ error: "task_id required" }, 400);
+      await supabase.from("crm_tasks").delete().eq("id", task_id).eq("winery_id", winery_id);
+      return json({ success: true });
+    }
+
+    if (action === "task_counts") {
+      const now = new Date().toISOString();
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      const { data: pending } = await supabase
+        .from("crm_tasks")
+        .select("id, due_at, admin_id")
+        .eq("winery_id", winery_id)
+        .eq("status", "pendente");
+      let overdue = 0, today = 0, upcoming = 0, mineOverdue = 0;
+      for (const t of pending ?? []) {
+        if (t.due_at < now) {
+          overdue++;
+          if (t.admin_id === admin_id) mineOverdue++;
+        } else if (t.due_at <= todayEnd.toISOString()) today++;
+        else upcoming++;
+      }
+      return json({ success: true, overdue, today, upcoming, mineOverdue });
+    }
+
+    // ─── SCHEDULED MESSAGES ──────────────────────────────────────
+    if (action === "schedule_messages") {
+      const { lead_ids, template_id, body_template, scheduled_for } = body;
+      if (!Array.isArray(lead_ids) || lead_ids.length === 0 || !scheduled_for) {
+        return json({ error: "lead_ids and scheduled_for required" }, 400);
+      }
+      // Resolve body per lead
+      const { data: leads } = await supabase
+        .from("users_leads")
+        .select("id, name, whatsapp")
+        .in("id", lead_ids)
+        .eq("winery_id", winery_id);
+      const rows = (leads ?? []).map((l: any) => ({
+        winery_id,
+        lead_id: l.id,
+        template_id: template_id || null,
+        body_resolved: String(body_template || "")
+          .replace(/\{\{nome\}\}/g, (l.name || "").split(" ")[0]),
+        scheduled_for,
+        status: "pendente",
+        created_by: admin_id,
+      }));
+      if (rows.length === 0) return json({ error: "No valid leads" }, 400);
+      const { error } = await supabase.from("crm_scheduled_messages").insert(rows);
+      if (error) throw error;
+      return json({ success: true, count: rows.length });
+    }
+
+    if (action === "list_scheduled") {
+      const { filter } = body; // 'pending' | 'ready' | 'all'
+      let q = supabase
+        .from("crm_scheduled_messages")
+        .select("*, users_leads:lead_id(name, whatsapp)")
+        .eq("winery_id", winery_id);
+      if (filter === "pending") q = q.eq("status", "pendente");
+      if (filter === "ready") {
+        q = q.eq("status", "pendente").lte("scheduled_for", new Date().toISOString());
+      }
+      const { data } = await q.order("scheduled_for", { ascending: true }).limit(500);
+      return json({ success: true, scheduled: data ?? [] });
+    }
+
+    if (action === "mark_scheduled_sent") {
+      const { message_id } = body;
+      if (!message_id) return json({ error: "message_id required" }, 400);
+      const { data: msg } = await supabase
+        .from("crm_scheduled_messages")
+        .update({ status: "enviada", sent_at: new Date().toISOString() })
+        .eq("id", message_id)
+        .eq("winery_id", winery_id)
+        .select()
+        .single();
+      if (msg) {
+        await supabase.from("crm_message_log").insert({
+          lead_id: msg.lead_id,
+          winery_id,
+          admin_id,
+          template_id: msg.template_id,
+          channel: "whatsapp",
+          body: msg.body_resolved,
+        });
+      }
+      return json({ success: true });
+    }
+
+    if (action === "cancel_scheduled") {
+      const { message_id } = body;
+      if (!message_id) return json({ error: "message_id required" }, 400);
+      await supabase
+        .from("crm_scheduled_messages")
+        .update({ status: "cancelada" })
+        .eq("id", message_id)
+        .eq("winery_id", winery_id);
+      return json({ success: true });
+    }
+
+    // ─── STAFF list (para atribuir tarefas)
+    if (action === "list_staff") {
+      const { data } = await supabase
+        .from("admin_users")
+        .select("id, name, role")
+        .eq("winery_id", winery_id)
+        .eq("is_active", true);
+      return json({ success: true, staff: data ?? [] });
+    }
+
+    // ─── Lost reason ao mover para perdido
+    if (action === "move_stage_with_reason") {
+      const { lead_id, stage, lost_reason } = body;
+      if (!lead_id || !STAGES.includes(stage)) return json({ error: "Invalid params" }, 400);
+      await supabase.from("crm_lead_state").upsert(
+        {
+          lead_id,
+          winery_id,
+          stage,
+          lost_reason: stage === "perdido" ? (lost_reason || null) : null,
+          stage_changed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "lead_id" }
+      );
+      return json({ success: true });
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (e) {
     console.error("admin-crm error:", e);
