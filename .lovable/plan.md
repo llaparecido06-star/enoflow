@@ -1,110 +1,106 @@
-# Plano: CRM Admin + Features Turista
+# CRM Admin — Versão Definitiva
 
-Hífen pendurado dos Pacotes já corrigido. Agora entregamos dois grandes blocos.
+Transformar o CRM em uma ferramenta de trabalho diária para a vinícola, capaz de operar com milhares de leads sem perda de performance, com segmentação salva, agenda de follow-ups, lembretes e mensagens agendadas.
 
 ---
 
-## Bloco 1 — CRM Completo no Painel Admin
+## 1. Visualização "Lista" performática (paginação + virtualização)
 
-Substitui a página atual `/admin/:slug/leads` por um módulo CRM unificado com 3 abas.
+Hoje a aba lista renderiza todos os leads de uma vez. Vamos reescrever:
 
-### 1.1 Pipeline (Kanban) — aba "Funil"
+- **Busca** por nome / WhatsApp (debounce 300ms) — preserva estado entre abas
+- **Filtros rápidos**: estágio, persona, tag, responsável, ticket mín, recência
+- **Virtualização** com `@tanstack/react-virtual` (já é leve, sem nova dependência pesada) — renderiza apenas as linhas visíveis, suporta 10k+ leads sem travar
+- **Paginação no servidor** (limite 200 por página + cursor) na edge `admin-crm` ação `list_leads_paginated` para evitar trafegar tudo
+- **Estado persistido** no `sessionStorage` por vinícola (filtros + busca) — voltar para a aba mantém o que estava
 
-Colunas fixas: **Novo → Contatado → Qualificado → Convertido → Perdido**
+Cards densificados na lista: nome, persona, estágio, responsável, próximo follow-up, último contato, LTV.
 
-- Cards de lead arrastáveis entre colunas (drag-and-drop com `@dnd-kit/core`, já instalado em projetos similares — verificar e adicionar se faltar)
-- Cada card mostra: nome, persona, ticket médio, dias desde última visita, badge de tags
-- Atribuição de lead a um membro da equipe (dropdown com staff da vinícola)
-- Contador por coluna + valor estimado da coluna
+## 2. Aba "Segmentos"
 
-### 1.2 Timeline 360° do Lead — modal/drawer ao clicar no card
+Nova aba dedicada que usa `crm_saved_segments` (já existe).
 
-Vista única consolidada do lead:
-- **Perfil**: persona, idade, gênero, classe de renda, vinhos favoritos
-- **Atividade**: visitas (`capture_history`), vouchers gerados/redimidos, NPS dado
-- **Compras**: histórico de itens comprados, ticket médio, frequência
-- **Notas**: anotações manuais da equipe (quem, quando, o quê)
-- **Tags**: livres ("VIP", "aniversário em junho", "intolerante a sulfito"…)
-- **Comunicação**: log de mensagens WhatsApp enviadas (registro local)
+- Construtor visual de filtros combináveis (AND): persona, faixa etária, gênero, classe de renda, ticket, NPS, recência, frequência, tags, estágio, vinhos favoritos, tem voucher pendente, tem aniversário no mês
+- **Salvar** segmento com nome → reaplica em 1 clique no Funil OU na Lista
+- **Ações em massa** sobre o segmento atual: aplicar tag, mover de estágio, atribuir responsável, exportar CSV, **enviar campanha WhatsApp em lote** (já existe BulkSendModal — reutilizar)
+- Lista lateral de segmentos salvos com contador "X leads agora"
 
-### 1.3 Segmentação + Ações em Massa — aba "Segmentos"
+## 3. Tarefas, follow-ups e lembretes (novo coração do CRM)
 
-Filtros combináveis (AND): persona, faixa de ticket, NPS mín, recência (últimos N dias), frequência (≥ N visitas), gênero, faixa etária, tags, estágio do funil.
+Hoje o CRM só registra histórico. Vinícola precisa de **agenda viva**.
 
-Ações em massa sobre o resultado:
-- Adicionar tag em lote
-- Mover de estágio em lote
-- **Enviar campanha WhatsApp em lote** com templates (vide 1.4)
-- Exportar CSV
-- Salvar segmento (consulta nomeada reutilizável)
-
-### 1.4 Templates de WhatsApp + Envio em Lote Manual
-
-Biblioteca de templates por estágio do funil, com variáveis `{{nome}}`, `{{vinho_favorito}}`, `{{ultima_visita}}`.
-- CRUD de templates por vinícola
-- Tela de envio em lote: escolher segmento + template → preview por lead → botão "Iniciar envio" abre `wa.me/...` em sequência (compatível com a memória existente sobre wa.me com delay)
-- Cada envio confirmado registra log na timeline do lead
-
-### 1.5 Mudanças de Backend
-
-Nova tabela:
+Nova tabela `crm_tasks`:
 ```text
-crm_lead_state (id, lead_id, winery_id, stage, assigned_admin_id,
-                tags[], estimated_value, updated_at)
-crm_lead_notes (id, lead_id, winery_id, admin_id, body, created_at)
-crm_message_log (id, lead_id, winery_id, admin_id, template_id,
-                 channel, sent_at, payload)
-crm_message_templates (id, winery_id, name, stage, body, vars[], created_at)
-crm_saved_segments (id, winery_id, name, filters jsonb, created_at)
+id, winery_id, lead_id, admin_id (responsável),
+title, description, due_at, status (pendente|feito|cancelado),
+type (followup|ligacao|whatsapp|visita|outro),
+created_by, created_at, completed_at
 ```
 
-Edge function nova: `admin-crm` (verbos: list_pipeline, move_stage, upsert_note, upsert_tag, send_template_log, list_templates, save_segment, query_segment). Reutiliza `_shared/auth.ts`.
+Recursos:
+- Botão "Agendar follow-up" no card do lead e na timeline 360° → cria tarefa com data/hora e responsável
+- **Painel "Hoje / Atrasadas / Próximas"** no topo do CRM com badge de contagem
+- **Bell de notificações** no AdminLayout mostrando tarefas vencidas + criadas para o admin logado (poll a cada 60s)
+- Marcar tarefa como concluída registra na timeline do lead automaticamente
+- Fila inicial: tarefa criada automaticamente quando lead muda para "Contatado" sem follow-up nos últimos 7 dias (regra opcional configurável)
 
-RLS: tabelas com policies "no direct" — todo acesso via edge function isolando por `winery_id` da sessão.
+## 4. Mensagens agendadas
 
----
+Hoje envio em lote é manual e imediato. Adicionar:
 
-## Bloco 2 — Novas Funcionalidades no Modo Turista
+Nova tabela `crm_scheduled_messages`:
+```text
+id, winery_id, lead_id, template_id, body_resolved,
+scheduled_for, status (pendente|enviada|cancelada|falhou),
+created_by, created_at, sent_at
+```
 
-### 2.1 Programa de Fidelidade (selo digital)
-- A cada voucher redimido, +1 ponto. Marcos: 3, 5, 10 vouchers → desbloqueiam recompensa exibida na vinícola
-- Card "Meus selos" no `/journey` com progresso visual e celebração ao bater marco
-- Backend: campo `loyalty_points` em `users_leads` + tabela `loyalty_rewards` por vinícola configurável no Admin
+- Modal "Agendar envio" no BulkSendModal e no card do lead: escolhe template + data/hora
+- **Edge function cron** `process-crm-scheduled` (a cada 5 min via `pg_cron`) gera log e marca como pendente de envio manual — ao atingir o horário aparece no painel "Para enviar agora" com 1 clique abre `wa.me` e marca como enviada
+- Memória `marketing-campaigns` exige envio manual via `wa.me` com delay → mantemos esse princípio: o agendamento prepara a fila, o admin aciona
 
-### 2.2 Indicação de Amigos (referral)
-- Botão "Indicar amigo" gera link único `/w/{slug}?ref={user_id}`
-- Quando o amigo gera o primeiro voucher, ambos ganham +1 selo
-- Tela "Minhas indicações" com status (pendente/convertida)
+## 5. Pipeline polido
 
-### 2.3 Recomendações IA Personalizadas no /journey
-- Card "Para o seu paladar" usando Lovable AI Gateway (`google/gemini-2.5-flash`)
-- Input: persona + ratings + favoritos + histórico → Output: 3 vinhos da vinícola que o usuário ainda não provou, com justificativa em 1 frase
+- Estimativa de receita por estágio no header
+- Filtro do Funil por responsável e por segmento salvo
+- Drag-and-drop com confirmação para "Convertido" e "Perdido" (opcional motivo de perda — gravado em `crm_lead_state.tags` ou novo campo `lost_reason`)
+- Cards mostram badge "⚠️ X dias parado" quando lead estagnou >7 dias num estágio não-final
+- Indicador de tarefa pendente no card (📅 hoje / atrasada)
 
-### 2.4 Histórico de Compras Enriquecido
-- Em `VoucherHistory`, agrupar por mês, mostrar foto dos vinhos comprados e botão "Comprar de novo" que repopula o carrinho
+## 6. Notas e timeline ricas
 
-### 2.5 Micro-melhorias UX
-- Skeletons em todas as listas (Shop, Restaurant, Tasting)
-- Feedback háptico nos botões críticos (já existe `lib/haptic.ts`, expandir uso)
-- Toast de sucesso com confete ao gerar voucher (já existe Confetti — reutilizar)
-
----
-
-## Ordem de Entrega
-
-1. **Migração de banco** (CRM + loyalty + referral) — uma única migração consolidada
-2. **Edge function `admin-crm`**
-3. **CRM UI** (Funil → Timeline → Segmentos → Templates)
-4. **Modo Turista**: Fidelidade → Recomendações IA → Indicação → Histórico enriquecido → Polish UX
-
-Vou pausar para sua aprovação antes de implementar — depois disso, executo tudo em sequência sem novas perguntas.
+Já temos notas e log de mensagens. Adicionar:
+- Notas com **tags de menção** simples (#vip, #aniversario) que viram filtros
+- Linha do tempo unificada já existe — adicionar entradas de tarefas concluídas e mensagens agendadas
+- Botão "Copiar resumo do lead" para colar em conversas internas
 
 ---
 
-## Notas Técnicas
+## Implementação (ordem)
 
-- Drag-and-drop: `@dnd-kit/core` + `@dnd-kit/sortable`
-- Templates WhatsApp seguem padrão wa.me já estabelecido (memória `marketing-campaigns`)
-- Toda escrita passa por edge function — RLS bloqueia acesso direto, mantendo padrão de segurança da plataforma
-- IA via Lovable AI Gateway (sem chave do usuário)
-- Tudo respeita light mode e isolamento por `winery_id`
+```text
+1. Migração: crm_tasks + crm_scheduled_messages + lost_reason em crm_lead_state
+   + RLS "no direct" + cron job opcional para scheduled
+2. Edge admin-crm: novas ações (list_leads_paginated, list_tasks, upsert_task,
+   complete_task, list_scheduled, schedule_message, cancel_scheduled,
+   pending_to_send, mark_message_sent, query_segment, save_segment)
+3. UI:
+   - VirtualLeadList.tsx (virtualização + busca + filtros + paginação)
+   - SegmentsTab.tsx (construtor + segmentos salvos)
+   - TasksPanel.tsx (Hoje/Atrasadas/Próximas) integrado no topo do CRM
+   - ScheduleMessageModal.tsx
+   - TaskFormModal.tsx
+   - Bell de tarefas no AdminLayout
+4. Polimento: indicadores no card do funil, motivo de perda, persistência
+   de estado em sessionStorage
+```
+
+## Notas técnicas
+
+- Virtualização: `@tanstack/react-virtual` (~3kb) — mais simples que react-window e combina bem com tabelas
+- Toda escrita continua passando por edge function (RLS bloqueia direto)
+- Light mode + isolamento por `winery_id` mantidos
+- Sem nova dependência de envio de mensagem: tudo continua via `wa.me` (memória respeitada)
+- AI Gateway não é usado neste módulo (admin-only, sem conteúdo gerado)
+
+Aprove para eu começar pela migração do banco e seguir reto até o fim.
