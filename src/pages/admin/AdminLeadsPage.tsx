@@ -5,7 +5,7 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { formatCurrency } from "@/lib/currency";
-import { Download, Search, LayoutGrid, List, Filter, Send, MessageSquare, Layers, Calendar, Clock } from "lucide-react";
+import { Download, Search, LayoutGrid, List, Filter, Send, MessageSquare, Layers, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import PipelineBoard from "@/components/admin/crm/PipelineBoard";
 import LeadTimelineModal from "@/components/admin/crm/LeadTimelineModal";
