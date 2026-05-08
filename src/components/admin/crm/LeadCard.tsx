@@ -1,5 +1,5 @@
 import { useDraggable } from "@dnd-kit/core";
-import { Phone, Wine, Calendar, Tag } from "lucide-react";
+import { Phone, Wine, Calendar, Tag, AlertTriangle, Bell } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 
 export interface CrmLead {
@@ -18,13 +18,21 @@ export interface CrmLead {
   last_visit_at: string | null;
   assigned_admin_id: string | null;
   created_at: string;
+  stage_changed_at?: string | null;
+  lost_reason?: string | null;
+  next_task?: { due_at: string; title: string; overdue: boolean } | null;
+  birth_date?: string | null;
+  gender?: string | null;
+  income_class?: string | null;
 }
 
-const daysSince = (iso: string | null) => {
+const daysSince = (iso: string | null | undefined) => {
   if (!iso) return null;
-  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-  return d;
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
 };
+
+const STALE_DAYS = 7;
+const FINAL_STAGES = ["convertido", "perdido"];
 
 export default function LeadCard({ lead, currency, onOpen }: { lead: CrmLead; currency: string; onOpen: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
@@ -33,6 +41,8 @@ export default function LeadCard({ lead, currency, onOpen }: { lead: CrmLead; cu
     : undefined;
   const days = daysSince(lead.last_visit_at ?? lead.last_voucher_at ?? lead.created_at);
   const persona = lead.preferences_summary?.match(/Wine Persona:\s*([^(]+)/)?.[1]?.trim();
+  const stageDays = daysSince(lead.stage_changed_at);
+  const stale = !FINAL_STAGES.includes(lead.stage) && stageDays !== null && stageDays >= STALE_DAYS;
 
   return (
     <div
@@ -40,7 +50,7 @@ export default function LeadCard({ lead, currency, onOpen }: { lead: CrmLead; cu
       style={style}
       className={`bg-card border border-border rounded-lg p-3 cursor-grab active:cursor-grabbing transition-shadow ${
         isDragging ? "shadow-lg opacity-70" : "hover:shadow-md"
-      }`}
+      } ${stale ? "ring-1 ring-amber-300" : ""}`}
     >
       <div {...listeners} {...attributes} className="flex items-start justify-between gap-2 mb-2">
         <div className="min-w-0">
@@ -61,6 +71,17 @@ export default function LeadCard({ lead, currency, onOpen }: { lead: CrmLead; cu
           <span className="flex items-center gap-1"><Calendar className="w-2.5 h-2.5" />{days}d</span>
         )}
       </div>
+      {lead.next_task && (
+        <div className={`mt-2 flex items-center gap-1 text-[10px] px-1.5 py-1 rounded ${lead.next_task.overdue ? "bg-rose-50 text-rose-700" : "bg-blue-50 text-blue-700"}`}>
+          <Bell className="w-2.5 h-2.5" />
+          <span className="truncate">{lead.next_task.title}</span>
+        </div>
+      )}
+      {stale && (
+        <div className="mt-2 flex items-center gap-1 text-[10px] text-amber-700">
+          <AlertTriangle className="w-2.5 h-2.5" /> {stageDays}d parado
+        </div>
+      )}
       {lead.tags.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {lead.tags.slice(0, 3).map((t) => (

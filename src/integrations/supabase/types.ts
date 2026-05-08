@@ -304,7 +304,9 @@ export type Database = {
           estimated_value: number
           id: string
           lead_id: string
+          lost_reason: string | null
           stage: string
+          stage_changed_at: string
           tags: string[]
           updated_at: string
           winery_id: string
@@ -315,7 +317,9 @@ export type Database = {
           estimated_value?: number
           id?: string
           lead_id: string
+          lost_reason?: string | null
           stage?: string
+          stage_changed_at?: string
           tags?: string[]
           updated_at?: string
           winery_id: string
@@ -326,7 +330,9 @@ export type Database = {
           estimated_value?: number
           id?: string
           lead_id?: string
+          lost_reason?: string | null
           stage?: string
+          stage_changed_at?: string
           tags?: string[]
           updated_at?: string
           winery_id?: string
@@ -413,6 +419,90 @@ export type Database = {
           filters?: Json
           id?: string
           name?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
+      crm_scheduled_messages: {
+        Row: {
+          body_resolved: string
+          created_at: string
+          created_by: string
+          id: string
+          lead_id: string
+          scheduled_for: string
+          sent_at: string | null
+          status: string
+          template_id: string | null
+          winery_id: string
+        }
+        Insert: {
+          body_resolved: string
+          created_at?: string
+          created_by: string
+          id?: string
+          lead_id: string
+          scheduled_for: string
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          winery_id: string
+        }
+        Update: {
+          body_resolved?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          lead_id?: string
+          scheduled_for?: string
+          sent_at?: string | null
+          status?: string
+          template_id?: string | null
+          winery_id?: string
+        }
+        Relationships: []
+      }
+      crm_tasks: {
+        Row: {
+          admin_id: string
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_at: string
+          id: string
+          lead_id: string | null
+          status: string
+          title: string
+          type: string
+          winery_id: string
+        }
+        Insert: {
+          admin_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_at: string
+          id?: string
+          lead_id?: string | null
+          status?: string
+          title: string
+          type?: string
+          winery_id: string
+        }
+        Update: {
+          admin_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_at?: string
+          id?: string
+          lead_id?: string | null
+          status?: string
+          title?: string
+          type?: string
           winery_id?: string
         }
         Relationships: []

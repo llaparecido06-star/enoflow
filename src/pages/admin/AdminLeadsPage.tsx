@@ -1,32 +1,66 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { formatCurrency } from "@/lib/currency";
-import { Users, Download, Search, LayoutGrid, List, Filter, Send, MessageSquare, Tag } from "lucide-react";
+import { Download, Search, LayoutGrid, List, Filter, Send, MessageSquare, Layers, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import PipelineBoard from "@/components/admin/crm/PipelineBoard";
 import LeadTimelineModal from "@/components/admin/crm/LeadTimelineModal";
 import TemplatesManager from "@/components/admin/crm/TemplatesManager";
 import BulkSendModal from "@/components/admin/crm/BulkSendModal";
+import VirtualLeadList from "@/components/admin/crm/VirtualLeadList";
+import SegmentsTab, { applyFilters, type Filters as SegFilters } from "@/components/admin/crm/SegmentsTab";
+import TasksPanel from "@/components/admin/crm/TasksPanel";
+import ScheduledQueue from "@/components/admin/crm/ScheduledQueue";
 import type { CrmLead } from "@/components/admin/crm/LeadCard";
 
-type View = "pipeline" | "list" | "templates";
+type View = "pipeline" | "list" | "segments" | "agenda" | "templates";
+
+interface PersistedState {
+  search: string;
+  stageFilter: string;
+  minLtv: string;
+  tagFilter: string;
+  view: View;
+  pipelineFilters: SegFilters;
+}
+
+const STORAGE_PREFIX = "crm_state_";
 
 export default function AdminLeadsPage() {
   const { winery } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
   const qc = useQueryClient();
-  const [view, setView] = useState<View>("pipeline");
-  const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState("all");
+  const storageKey = `${STORAGE_PREFIX}${winery.id}`;
+
+  // ── Restore persisted state
+  const persisted: Partial<PersistedState> = (() => {
+    try { return JSON.parse(sessionStorage.getItem(storageKey) || "{}"); } catch { return {}; }
+  })();
+
+  const [view, setView] = useState<View>(persisted.view ?? "pipeline");
+  const [search, setSearch] = useState(persisted.search ?? "");
+  const [stageFilter, setStageFilter] = useState(persisted.stageFilter ?? "all");
+  const [minLtv, setMinLtv] = useState(persisted.minLtv ?? "");
+  const [tagFilter, setTagFilter] = useState(persisted.tagFilter ?? "");
+  const [showFilters, setShowFilters] = useState(false);
+  const [pipelineFilters, setPipelineFilters] = useState<SegFilters>(persisted.pipelineFilters ?? {});
   const [activeLead, setActiveLead] = useState<CrmLead | null>(null);
   const [bulkLeads, setBulkLeads] = useState<CrmLead[] | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [minLtv, setMinLtv] = useState("");
-  const [hasNps, setHasNps] = useState(false);
-  const [tagFilter, setTagFilter] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+
+  // Debounce search 300ms
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Persist
+  useEffect(() => {
+    sessionStorage.setItem(storageKey, JSON.stringify({ search, stageFilter, minLtv, tagFilter, view, pipelineFilters }));
+  }, [storageKey, search, stageFilter, minLtv, tagFilter, view, pipelineFilters]);
 
   const { data: leads = [], isLoading } = useQuery<CrmLead[]>({
     queryKey: ["crm-pipeline", winery.id],
@@ -38,24 +72,44 @@ export default function AdminLeadsPage() {
     },
   });
 
+  // Task counts (badge)
+  const { data: counts } = useQuery({
+    queryKey: ["crm-task-counts", winery.id],
+    queryFn: async () => {
+      const { data } = await invokeAuth("admin-crm", { action: "task_counts", winery_id: winery.id });
+      return data ?? {};
+    },
+    refetchInterval: 60000,
+  });
+
   const filtered = useMemo(() => {
     let r = leads;
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       r = r.filter((l) => l.name.toLowerCase().includes(q) || l.whatsapp.includes(q));
     }
     if (stageFilter !== "all") r = r.filter((l) => l.stage === stageFilter);
     if (minLtv) r = r.filter((l) => l.ltv >= Number(minLtv));
     if (tagFilter.trim()) r = r.filter((l) => l.tags.some((t) => t.toLowerCase().includes(tagFilter.toLowerCase())));
+    // Apply segment filters too (when set via "aplicar no funil")
+    if (Object.keys(pipelineFilters).length > 0) r = applyFilters(r, pipelineFilters);
     return r;
-  }, [leads, search, stageFilter, minLtv, tagFilter]);
+  }, [leads, debouncedSearch, stageFilter, minLtv, tagFilter, pipelineFilters]);
 
   const moveStage = async (leadId: string, stage: string) => {
-    // Optimistic update
+    let lost_reason: string | null = null;
+    if (stage === "perdido") {
+      lost_reason = window.prompt("Motivo da perda (opcional):") || null;
+    } else if (stage === "convertido") {
+      if (!confirm("Marcar este lead como Convertido?")) return;
+    }
     qc.setQueryData(["crm-pipeline", winery.id], (old: CrmLead[] = []) =>
-      old.map((l) => (l.id === leadId ? { ...l, stage } : l))
+      old.map((l) => (l.id === leadId ? { ...l, stage, lost_reason, stage_changed_at: new Date().toISOString() } : l))
     );
-    const { error } = await invokeAuth("admin-crm", { action: "move_stage", lead_id: leadId, stage, winery_id: winery.id });
+    const { error } = await invokeAuth("admin-crm", {
+      action: lost_reason ? "move_stage_with_reason" : "move_stage",
+      lead_id: leadId, stage, lost_reason, winery_id: winery.id,
+    });
     if (error) {
       toast.error("Erro ao mover");
       qc.invalidateQueries({ queryKey: ["crm-pipeline", winery.id] });
@@ -86,6 +140,11 @@ export default function AdminLeadsPage() {
 
   const totalLtv = leads.reduce((s, l) => s + l.ltv, 0);
 
+  const openLeadById = (id: string) => {
+    const l = leads.find((x) => x.id === id);
+    if (l) setActiveLead(l);
+  };
+
   return (
     <div>
       {/* Header */}
@@ -94,18 +153,23 @@ export default function AdminLeadsPage() {
           <h1 className="font-display text-2xl font-bold text-foreground">CRM</h1>
           <p className="text-sm text-muted-foreground">
             {leads.length} leads · LTV: {formatCurrency(totalLtv, winery.currency)}
+            {counts?.mineOverdue > 0 && (
+              <span className="ml-2 text-rose-600 font-medium">⚠ {counts.mineOverdue} tarefa{counts.mineOverdue > 1 ? "s" : ""} atrasada{counts.mineOverdue > 1 ? "s" : ""}</span>
+            )}
           </p>
         </div>
-        <div className="flex gap-2">
-          <div className="flex bg-secondary rounded-lg p-0.5">
+        <div className="flex flex-wrap gap-2">
+          <div className="flex bg-secondary rounded-lg p-0.5 flex-wrap">
             <ViewBtn icon={LayoutGrid} active={view === "pipeline"} onClick={() => setView("pipeline")} label="Funil" />
             <ViewBtn icon={List} active={view === "list"} onClick={() => setView("list")} label="Lista" />
+            <ViewBtn icon={Layers} active={view === "segments"} onClick={() => setView("segments")} label="Segmentos" />
+            <ViewBtn icon={Calendar} active={view === "agenda"} onClick={() => setView("agenda")} label="Agenda" badge={counts?.mineOverdue || counts?.today || 0} />
             <ViewBtn icon={MessageSquare} active={view === "templates"} onClick={() => setView("templates")} label="Templates" />
           </div>
         </div>
       </div>
 
-      {view !== "templates" && (
+      {(view === "pipeline" || view === "list") && (
         <div className="bg-card rounded-xl border border-border p-3 mb-4 flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[180px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -125,6 +189,11 @@ export default function AdminLeadsPage() {
             className={`flex items-center gap-1.5 border px-3 py-2 rounded-lg text-sm ${showFilters ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}>
             <Filter className="w-4 h-4" /> Mais filtros
           </button>
+          {Object.keys(pipelineFilters).length > 0 && (
+            <button onClick={() => setPipelineFilters({})} className="text-xs text-amber-700 bg-amber-50 border border-amber-300 px-2 py-1 rounded">
+              Segmento ativo · limpar
+            </button>
+          )}
           <button onClick={() => setBulkLeads(filtered)} disabled={filtered.length === 0}
             className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/30 px-3 py-2 rounded-lg text-sm disabled:opacity-40">
             <Send className="w-4 h-4" /> Envio em lote ({filtered.length})
@@ -135,7 +204,7 @@ export default function AdminLeadsPage() {
         </div>
       )}
 
-      {showFilters && view !== "templates" && (
+      {showFilters && (view === "pipeline" || view === "list") && (
         <div className="bg-card rounded-xl border border-border p-3 mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           <div>
             <label className="text-[10px] text-muted-foreground uppercase block mb-1">LTV mínimo</label>
@@ -161,46 +230,18 @@ export default function AdminLeadsPage() {
           onOpen={(l) => setActiveLead(l)}
         />
       ) : view === "list" ? (
-        <div className="bg-card rounded-xl border border-border overflow-x-auto">
-          <table className="w-full min-w-[700px]">
-            <thead>
-              <tr className="border-b border-border bg-secondary/50">
-                <Th>Nome</Th><Th>Estágio</Th><Th>Tags</Th>
-                <Th right>LTV</Th><Th center>Vouchers</Th><Th center>Visitas</Th><Th center>Selos</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((l) => (
-                <tr key={l.id} onClick={() => setActiveLead(l)} className="border-b border-border last:border-0 hover:bg-secondary/30 cursor-pointer">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center"><Users className="w-3.5 h-3.5 text-primary" /></div>
-                      <div>
-                        <p className="text-sm font-medium">{l.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{l.whatsapp}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3"><span className="text-[10px] uppercase tracking-wider bg-secondary px-2 py-0.5 rounded">{l.stage}</span></td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {l.tags.slice(0, 2).map((t) => (
-                        <span key={t} className="text-[9px] bg-secondary px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
-                          <Tag className="w-2 h-2" />{t}
-                        </span>
-                      ))}
-                      {l.tags.length > 2 && <span className="text-[9px] text-muted-foreground">+{l.tags.length - 2}</span>}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold">{l.ltv > 0 ? formatCurrency(l.ltv, winery.currency) : "—"}</td>
-                  <td className="px-4 py-3 text-center text-sm">{l.voucher_count || "—"}</td>
-                  <td className="px-4 py-3 text-center text-sm">{l.visit_count || "—"}</td>
-                  <td className="px-4 py-3 text-center text-sm">{l.loyalty_points || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filtered.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">Nenhum lead.</p>}
+        <VirtualLeadList leads={filtered} currency={winery.currency || "BRL"} onOpen={setActiveLead} />
+      ) : view === "segments" ? (
+        <SegmentsTab
+          leads={leads}
+          wineryId={winery.id}
+          currency={winery.currency || "BRL"}
+          onApplyToPipeline={(f) => { setPipelineFilters(f); setView("pipeline"); toast.success("Segmento aplicado ao funil"); }}
+        />
+      ) : view === "agenda" ? (
+        <div className="grid lg:grid-cols-2 gap-4">
+          <TasksPanel wineryId={winery.id} onLeadOpen={openLeadById} />
+          <ScheduledQueue wineryId={winery.id} />
         </div>
       ) : (
         <TemplatesManager wineryId={winery.id} />
@@ -212,7 +253,10 @@ export default function AdminLeadsPage() {
           wineryId={winery.id}
           currency={winery.currency || "BRL"}
           onClose={() => setActiveLead(null)}
-          onUpdate={() => qc.invalidateQueries({ queryKey: ["crm-pipeline", winery.id] })}
+          onUpdate={() => {
+            qc.invalidateQueries({ queryKey: ["crm-pipeline", winery.id] });
+            qc.invalidateQueries({ queryKey: ["crm-task-counts", winery.id] });
+          }}
         />
       )}
       {bulkLeads && (
@@ -222,14 +266,14 @@ export default function AdminLeadsPage() {
   );
 }
 
-function ViewBtn({ icon: Icon, active, onClick, label }: any) {
+function ViewBtn({ icon: Icon, active, onClick, label, badge }: any) {
   return (
     <button onClick={onClick}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${active ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
+      className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${active ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
       <Icon className="w-4 h-4" /> {label}
+      {badge > 0 && (
+        <span className="ml-1 text-[9px] bg-rose-500 text-white px-1.5 py-0.5 rounded-full leading-none">{badge}</span>
+      )}
     </button>
   );
-}
-function Th({ children, right, center }: any) {
-  return <th className={`px-4 py-3 text-xs font-medium text-muted-foreground ${right ? "text-right" : center ? "text-center" : "text-left"}`}>{children}</th>;
 }

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { X, Phone, Calendar, Wine, MapPin, Star, Heart, MessageSquare, Plus, Trash2, ExternalLink, Award } from "lucide-react";
+import { X, Phone, Calendar, Wine, MapPin, Star, Heart, MessageSquare, Plus, Trash2, ExternalLink, Award, Bell, CheckCircle2, Clock, Copy } from "lucide-react";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/currency";
 import type { CrmLead } from "./LeadCard";
+import TaskFormModal from "./TaskFormModal";
+import ScheduleMessageModal from "./ScheduleMessageModal";
 
 interface Props {
   lead: CrmLead;
@@ -16,11 +18,14 @@ interface Props {
 export default function LeadTimelineModal({ lead, wineryId, currency, onClose, onUpdate }: Props) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"timeline" | "notes" | "messages">("timeline");
+  const [tab, setTab] = useState<"timeline" | "notes" | "messages" | "tasks">("timeline");
   const [newNote, setNewNote] = useState("");
   const [newTag, setNewTag] = useState("");
   const [tags, setTags] = useState<string[]>(lead.tags);
   const [estValue, setEstValue] = useState(lead.estimated_value.toString());
+  const [showTask, setShowTask] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [tasks, setTasks] = useState<any[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -29,7 +34,30 @@ export default function LeadTimelineModal({ lead, wineryId, currency, onClose, o
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [lead.id]);
+  const loadTasks = async () => {
+    const { data: r } = await invokeAuth("admin-crm", { action: "list_tasks", scope: "lead", lead_id: lead.id, winery_id: wineryId });
+    setTasks(r?.tasks ?? []);
+  };
+
+  useEffect(() => { load(); loadTasks(); }, [lead.id]);
+
+  const completeTask = async (id: string) => {
+    await invokeAuth("admin-crm", { action: "complete_task", task_id: id, winery_id: wineryId });
+    toast.success("Concluída");
+    loadTasks(); load();
+  };
+
+  const copyResume = () => {
+    if (!data) return;
+    const lines = [
+      `${data.lead.name} (${data.lead.whatsapp})`,
+      data.lead.preferences_summary || "",
+      `Estágio: ${lead.stage} · ${lead.voucher_count} vouchers · LTV ${formatCurrency(lead.ltv, currency)} · ${lead.loyalty_points} selos`,
+      tags.length ? `Tags: ${tags.join(", ")}` : "",
+    ].filter(Boolean).join("\n");
+    navigator.clipboard.writeText(lines);
+    toast.success("Resumo copiado");
+  };
 
   const addNote = async () => {
     if (!newNote.trim()) return;
@@ -93,6 +121,19 @@ export default function LeadTimelineModal({ lead, wineryId, currency, onClose, o
             <button onClick={onClose} className="p-1 rounded-lg hover:bg-secondary"><X className="w-5 h-5" /></button>
           </div>
 
+          {/* Quick actions */}
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            <button onClick={() => setShowTask(true)} className="flex items-center gap-1 text-[11px] bg-primary/10 text-primary border border-primary/30 px-2 py-1 rounded-md">
+              <Bell className="w-3 h-3" /> Agendar follow-up
+            </button>
+            <button onClick={() => setShowSchedule(true)} className="flex items-center gap-1 text-[11px] bg-amber-500/10 text-amber-700 border border-amber-300 px-2 py-1 rounded-md">
+              <Clock className="w-3 h-3" /> Agendar mensagem
+            </button>
+            <button onClick={copyResume} className="flex items-center gap-1 text-[11px] border border-border px-2 py-1 rounded-md">
+              <Copy className="w-3 h-3" /> Copiar resumo
+            </button>
+          </div>
+
           {/* Quick stats */}
           <div className="grid grid-cols-4 gap-2 mt-3">
             <Stat icon={Wine} label="Vouchers" value={lead.voucher_count} />
@@ -103,10 +144,10 @@ export default function LeadTimelineModal({ lead, wineryId, currency, onClose, o
 
           {/* Tabs */}
           <div className="flex gap-1 mt-3 border-b border-border -mb-4">
-            {(["timeline", "notes", "messages"] as const).map((t) => (
+            {(["timeline", "tasks", "notes", "messages"] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)}
                 className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>
-                {t === "timeline" ? "Timeline" : t === "notes" ? "Notas" : "Mensagens"}
+                {t === "timeline" ? "Timeline" : t === "tasks" ? `Tarefas${tasks.filter(x=>x.status==='pendente').length ? ` (${tasks.filter(x=>x.status==='pendente').length})` : ""}` : t === "notes" ? "Notas" : "Mensagens"}
               </button>
             ))}
           </div>
@@ -203,10 +244,53 @@ export default function LeadTimelineModal({ lead, wineryId, currency, onClose, o
                   {(data.messages ?? []).length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhuma mensagem registrada.</p>}
                 </div>
               )}
+
+              {tab === "tasks" && (
+                <div className="space-y-2">
+                  {tasks.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhuma tarefa para este lead.</p>}
+                  {tasks.map((t) => {
+                    const overdue = t.status === "pendente" && new Date(t.due_at).getTime() < Date.now();
+                    const done = t.status === "feito";
+                    return (
+                      <div key={t.id} className={`flex items-start gap-2 rounded-lg p-3 text-sm ${done ? "bg-emerald-50" : overdue ? "bg-rose-50" : "bg-secondary/50"}`}>
+                        {!done && (
+                          <button onClick={() => completeTask(t.id)} className="text-emerald-600 mt-0.5">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${done ? "line-through text-muted-foreground" : ""}`}>{t.title}</p>
+                          <p className={`text-[10px] ${overdue ? "text-rose-600" : "text-muted-foreground"}`}>
+                            {new Date(t.due_at).toLocaleString("pt-BR")} · {t.type}
+                          </p>
+                          {t.description && <p className="text-xs mt-1">{t.description}</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
+
+      {showTask && (
+        <TaskFormModal
+          wineryId={wineryId}
+          leadId={lead.id}
+          leadName={lead.name}
+          onClose={() => setShowTask(false)}
+          onSaved={() => { loadTasks(); onUpdate(); }}
+        />
+      )}
+      {showSchedule && (
+        <ScheduleMessageModal
+          leads={[lead]}
+          wineryId={wineryId}
+          onClose={() => setShowSchedule(false)}
+        />
+      )}
     </div>
   );
 }
