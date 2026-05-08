@@ -40,10 +40,12 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false });
 
       const leadIds = (leads ?? []).map((l) => l.id);
-      const [statesRes, vouchersRes, capturesRes] = await Promise.all([
+      const nowIso = new Date().toISOString();
+      const [statesRes, vouchersRes, capturesRes, tasksRes] = await Promise.all([
         leadIds.length ? supabase.from("crm_lead_state").select("*").in("lead_id", leadIds) : { data: [] as any[] },
         leadIds.length ? supabase.from("vouchers").select("user_id, total, redeemed, created_at").in("user_id", leadIds).eq("winery_id", winery_id) : { data: [] as any[] },
         leadIds.length ? supabase.from("capture_history").select("user_id, created_at").in("user_id", leadIds).eq("winery_id", winery_id) : { data: [] as any[] },
+        leadIds.length ? supabase.from("crm_tasks").select("lead_id, due_at, title").in("lead_id", leadIds).eq("status", "pendente").order("due_at", { ascending: true }) : { data: [] as any[] },
       ]);
 
       const stateMap: Record<string, any> = {};
@@ -64,6 +66,11 @@ Deno.serve(async (req) => {
         m.count++;
         if (!m.last || c.created_at > m.last) m.last = c.created_at;
       }
+      const taskMap: Record<string, { due_at: string; title: string; overdue: boolean }> = {};
+      for (const t of (tasksRes.data as any[]) ?? []) {
+        if (!t.lead_id || taskMap[t.lead_id]) continue; // first/earliest only
+        taskMap[t.lead_id] = { due_at: t.due_at, title: t.title, overdue: t.due_at < nowIso };
+      }
 
       const enriched = (leads ?? []).map((l) => {
         const s = stateMap[l.id];
@@ -73,11 +80,14 @@ Deno.serve(async (req) => {
           assigned_admin_id: s?.assigned_admin_id ?? null,
           tags: s?.tags ?? [],
           estimated_value: s?.estimated_value ?? 0,
+          stage_changed_at: s?.stage_changed_at ?? null,
+          lost_reason: s?.lost_reason ?? null,
           ltv: ltvMap[l.id]?.total ?? 0,
           voucher_count: ltvMap[l.id]?.count ?? 0,
           last_voucher_at: ltvMap[l.id]?.last ?? null,
           visit_count: visitsMap[l.id]?.count ?? 0,
           last_visit_at: visitsMap[l.id]?.last ?? null,
+          next_task: taskMap[l.id] ?? null,
         };
       });
 
@@ -89,7 +99,7 @@ Deno.serve(async (req) => {
       const { lead_id, stage } = body;
       if (!lead_id || !STAGES.includes(stage)) return json({ error: "Invalid params" }, 400);
       await supabase.from("crm_lead_state").upsert(
-        { lead_id, winery_id, stage, updated_at: new Date().toISOString() },
+        { lead_id, winery_id, stage, stage_changed_at: new Date().toISOString(), updated_at: new Date().toISOString() },
         { onConflict: "lead_id" }
       );
       return json({ success: true });
