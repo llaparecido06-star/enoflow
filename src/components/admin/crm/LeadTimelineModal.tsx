@@ -121,6 +121,19 @@ export default function LeadTimelineModal({ lead, wineryId, currency, onClose, o
             <button onClick={onClose} className="p-1 rounded-lg hover:bg-secondary"><X className="w-5 h-5" /></button>
           </div>
 
+          {/* Quick actions */}
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            <button onClick={() => setShowTask(true)} className="flex items-center gap-1 text-[11px] bg-primary/10 text-primary border border-primary/30 px-2 py-1 rounded-md">
+              <Bell className="w-3 h-3" /> Agendar follow-up
+            </button>
+            <button onClick={() => setShowSchedule(true)} className="flex items-center gap-1 text-[11px] bg-amber-500/10 text-amber-700 border border-amber-300 px-2 py-1 rounded-md">
+              <Clock className="w-3 h-3" /> Agendar mensagem
+            </button>
+            <button onClick={copyResume} className="flex items-center gap-1 text-[11px] border border-border px-2 py-1 rounded-md">
+              <Copy className="w-3 h-3" /> Copiar resumo
+            </button>
+          </div>
+
           {/* Quick stats */}
           <div className="grid grid-cols-4 gap-2 mt-3">
             <Stat icon={Wine} label="Vouchers" value={lead.voucher_count} />
@@ -131,10 +144,10 @@ export default function LeadTimelineModal({ lead, wineryId, currency, onClose, o
 
           {/* Tabs */}
           <div className="flex gap-1 mt-3 border-b border-border -mb-4">
-            {(["timeline", "notes", "messages"] as const).map((t) => (
+            {(["timeline", "tasks", "notes", "messages"] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)}
                 className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground"}`}>
-                {t === "timeline" ? "Timeline" : t === "notes" ? "Notas" : "Mensagens"}
+                {t === "timeline" ? "Timeline" : t === "tasks" ? `Tarefas${tasks.filter(x=>x.status==='pendente').length ? ` (${tasks.filter(x=>x.status==='pendente').length})` : ""}` : t === "notes" ? "Notas" : "Mensagens"}
               </button>
             ))}
           </div>
