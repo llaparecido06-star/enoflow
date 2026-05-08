@@ -244,10 +244,53 @@ export default function LeadTimelineModal({ lead, wineryId, currency, onClose, o
                   {(data.messages ?? []).length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhuma mensagem registrada.</p>}
                 </div>
               )}
+
+              {tab === "tasks" && (
+                <div className="space-y-2">
+                  {tasks.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhuma tarefa para este lead.</p>}
+                  {tasks.map((t) => {
+                    const overdue = t.status === "pendente" && new Date(t.due_at).getTime() < Date.now();
+                    const done = t.status === "feito";
+                    return (
+                      <div key={t.id} className={`flex items-start gap-2 rounded-lg p-3 text-sm ${done ? "bg-emerald-50" : overdue ? "bg-rose-50" : "bg-secondary/50"}`}>
+                        {!done && (
+                          <button onClick={() => completeTask(t.id)} className="text-emerald-600 mt-0.5">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-medium ${done ? "line-through text-muted-foreground" : ""}`}>{t.title}</p>
+                          <p className={`text-[10px] ${overdue ? "text-rose-600" : "text-muted-foreground"}`}>
+                            {new Date(t.due_at).toLocaleString("pt-BR")} · {t.type}
+                          </p>
+                          {t.description && <p className="text-xs mt-1">{t.description}</p>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </>
           )}
         </div>
       </div>
+
+      {showTask && (
+        <TaskFormModal
+          wineryId={wineryId}
+          leadId={lead.id}
+          leadName={lead.name}
+          onClose={() => setShowTask(false)}
+          onSaved={() => { loadTasks(); onUpdate(); }}
+        />
+      )}
+      {showSchedule && (
+        <ScheduleMessageModal
+          leads={[lead]}
+          wineryId={wineryId}
+          onClose={() => setShowSchedule(false)}
+        />
+      )}
     </div>
   );
 }
