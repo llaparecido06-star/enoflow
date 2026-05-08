@@ -34,7 +34,30 @@ export default function LeadTimelineModal({ lead, wineryId, currency, onClose, o
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [lead.id]);
+  const loadTasks = async () => {
+    const { data: r } = await invokeAuth("admin-crm", { action: "list_tasks", scope: "lead", lead_id: lead.id, winery_id: wineryId });
+    setTasks(r?.tasks ?? []);
+  };
+
+  useEffect(() => { load(); loadTasks(); }, [lead.id]);
+
+  const completeTask = async (id: string) => {
+    await invokeAuth("admin-crm", { action: "complete_task", task_id: id, winery_id: wineryId });
+    toast.success("Concluída");
+    loadTasks(); load();
+  };
+
+  const copyResume = () => {
+    if (!data) return;
+    const lines = [
+      `${data.lead.name} (${data.lead.whatsapp})`,
+      data.lead.preferences_summary || "",
+      `Estágio: ${lead.stage} · ${lead.voucher_count} vouchers · LTV ${formatCurrency(lead.ltv, currency)} · ${lead.loyalty_points} selos`,
+      tags.length ? `Tags: ${tags.join(", ")}` : "",
+    ].filter(Boolean).join("\n");
+    navigator.clipboard.writeText(lines);
+    toast.success("Resumo copiado");
+  };
 
   const addNote = async () => {
     if (!newNote.trim()) return;
