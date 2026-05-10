@@ -4,19 +4,21 @@ import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
 import { useVoucherNotifications } from "@/hooks/useVoucherNotifications";
 import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare } from "lucide-react";
 import { useEffect, useMemo } from "react";
+import NotificationBell from "@/components/admin/crm/NotificationBell";
 
+// salesOnly excludes the item from sales-only sidebars
 const navItems = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "", minRole: "owner" as AdminRole },
-  { id: "wines", label: "Vinhos", icon: Wine, path: "/wines", minRole: "manager" as AdminRole },
-  { id: "packages", label: "Pacotes", icon: Package, path: "/packages", minRole: "manager" as AdminRole },
-  { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", minRole: "manager" as AdminRole },
-  { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "owner" as AdminRole },
-  { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", minRole: "owner" as AdminRole },
-  { id: "performance", label: "Performance", icon: Activity, path: "/performance", minRole: "owner" as AdminRole },
-  { id: "locations", label: "Locais", icon: MapPin, path: "/locations", minRole: "manager" as AdminRole },
-  { id: "training", label: "Treinamento", icon: Rocket, path: "/training", minRole: "staff" as AdminRole },
-  { id: "campaigns", label: "Campanhas", icon: MessageSquare, path: "/campaigns", minRole: "owner" as AdminRole },
-  { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", minRole: "staff" as AdminRole },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "", minRole: "owner" as AdminRole, salesOnly: false },
+  { id: "wines", label: "Vinhos", icon: Wine, path: "/wines", minRole: "manager" as AdminRole, salesOnly: false },
+  { id: "packages", label: "Pacotes", icon: Package, path: "/packages", minRole: "manager" as AdminRole, salesOnly: false },
+  { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", minRole: "manager" as AdminRole, salesOnly: false },
+  { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "sales" as AdminRole, salesOnly: true },
+  { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", minRole: "owner" as AdminRole, salesOnly: false },
+  { id: "performance", label: "Performance", icon: Activity, path: "/performance", minRole: "owner" as AdminRole, salesOnly: false },
+  { id: "locations", label: "Locais", icon: MapPin, path: "/locations", minRole: "manager" as AdminRole, salesOnly: false },
+  { id: "training", label: "Treinamento", icon: Rocket, path: "/training", minRole: "staff" as AdminRole, salesOnly: false },
+  { id: "campaigns", label: "Campanhas", icon: MessageSquare, path: "/campaigns", minRole: "owner" as AdminRole, salesOnly: false },
+  { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", minRole: "staff" as AdminRole, salesOnly: false },
 ];
 
 export default function AdminLayout() {
