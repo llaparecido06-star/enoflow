@@ -97,7 +97,7 @@ Deno.serve(async (req) => {
         taskMap[t.lead_id] = { due_at: t.due_at, title: t.title, overdue: t.due_at < nowIso };
       }
 
-      const enriched = (leads ?? []).map((l) => {
+      const enriched = visibleLeads.map((l) => {
         const s = stateMap[l.id];
         return {
           ...l,
