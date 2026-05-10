@@ -1,106 +1,187 @@
-# CRM Admin — Versão Definitiva
+## CRM Pro — versão "HubSpot-grade"
 
-Transformar o CRM em uma ferramenta de trabalho diária para a vinícola, capaz de operar com milhares de leads sem perda de performance, com segmentação salva, agenda de follow-ups, lembretes e mensagens agendadas.
-
----
-
-## 1. Visualização "Lista" performática (paginação + virtualização)
-
-Hoje a aba lista renderiza todos os leads de uma vez. Vamos reescrever:
-
-- **Busca** por nome / WhatsApp (debounce 300ms) — preserva estado entre abas
-- **Filtros rápidos**: estágio, persona, tag, responsável, ticket mín, recência
-- **Virtualização** com `@tanstack/react-virtual` (já é leve, sem nova dependência pesada) — renderiza apenas as linhas visíveis, suporta 10k+ leads sem travar
-- **Paginação no servidor** (limite 200 por página + cursor) na edge `admin-crm` ação `list_leads_paginated` para evitar trafegar tudo
-- **Estado persistido** no `sessionStorage` por vinícola (filtros + busca) — voltar para a aba mantém o que estava
-
-Cards densificados na lista: nome, persona, estágio, responsável, próximo follow-up, último contato, LTV.
-
-## 2. Aba "Segmentos"
-
-Nova aba dedicada que usa `crm_saved_segments` (já existe).
-
-- Construtor visual de filtros combináveis (AND): persona, faixa etária, gênero, classe de renda, ticket, NPS, recência, frequência, tags, estágio, vinhos favoritos, tem voucher pendente, tem aniversário no mês
-- **Salvar** segmento com nome → reaplica em 1 clique no Funil OU na Lista
-- **Ações em massa** sobre o segmento atual: aplicar tag, mover de estágio, atribuir responsável, exportar CSV, **enviar campanha WhatsApp em lote** (já existe BulkSendModal — reutilizar)
-- Lista lateral de segmentos salvos com contador "X leads agora"
-
-## 3. Tarefas, follow-ups e lembretes (novo coração do CRM)
-
-Hoje o CRM só registra histórico. Vinícola precisa de **agenda viva**.
-
-Nova tabela `crm_tasks`:
-```text
-id, winery_id, lead_id, admin_id (responsável),
-title, description, due_at, status (pendente|feito|cancelado),
-type (followup|ligacao|whatsapp|visita|outro),
-created_by, created_at, completed_at
-```
-
-Recursos:
-- Botão "Agendar follow-up" no card do lead e na timeline 360° → cria tarefa com data/hora e responsável
-- **Painel "Hoje / Atrasadas / Próximas"** no topo do CRM com badge de contagem
-- **Bell de notificações** no AdminLayout mostrando tarefas vencidas + criadas para o admin logado (poll a cada 60s)
-- Marcar tarefa como concluída registra na timeline do lead automaticamente
-- Fila inicial: tarefa criada automaticamente quando lead muda para "Contatado" sem follow-up nos últimos 7 dias (regra opcional configurável)
-
-## 4. Mensagens agendadas
-
-Hoje envio em lote é manual e imediato. Adicionar:
-
-Nova tabela `crm_scheduled_messages`:
-```text
-id, winery_id, lead_id, template_id, body_resolved,
-scheduled_for, status (pendente|enviada|cancelada|falhou),
-created_by, created_at, sent_at
-```
-
-- Modal "Agendar envio" no BulkSendModal e no card do lead: escolhe template + data/hora
-- **Edge function cron** `process-crm-scheduled` (a cada 5 min via `pg_cron`) gera log e marca como pendente de envio manual — ao atingir o horário aparece no painel "Para enviar agora" com 1 clique abre `wa.me` e marca como enviada
-- Memória `marketing-campaigns` exige envio manual via `wa.me` com delay → mantemos esse princípio: o agendamento prepara a fila, o admin aciona
-
-## 5. Pipeline polido
-
-- Estimativa de receita por estágio no header
-- Filtro do Funil por responsável e por segmento salvo
-- Drag-and-drop com confirmação para "Convertido" e "Perdido" (opcional motivo de perda — gravado em `crm_lead_state.tags` ou novo campo `lost_reason`)
-- Cards mostram badge "⚠️ X dias parado" quando lead estagnou >7 dias num estágio não-final
-- Indicador de tarefa pendente no card (📅 hoje / atrasada)
-
-## 6. Notas e timeline ricas
-
-Já temos notas e log de mensagens. Adicionar:
-- Notas com **tags de menção** simples (#vip, #aniversario) que viram filtros
-- Linha do tempo unificada já existe — adicionar entradas de tarefas concluídas e mensagens agendadas
-- Botão "Copiar resumo do lead" para colar em conversas internas
+Foco: completar o ciclo de vendas com **rastreio fim-a-fim de mensagens, calendário visual, lembretes ativos, papel de Atendente, ownership e fila de distribuição automática**, mantendo o padrão de segurança (RLS + Edge Functions) e UI light mode.
 
 ---
 
-## Implementação (ordem)
+### 1. Status de envio das mensagens agendadas
+
+**DB (`crm_scheduled_messages`)**
+- Já tem `status` (pendente/enviada/cancelada). Adicionar valores `erro` e coluna `error_reason TEXT`, `attempted_at TIMESTAMPTZ`.
+- Cada mudança de status grava entrada em `crm_message_log` (canal `whatsapp`, body, template_id) — isso aparece automaticamente no Timeline 360°.
+
+**Edge `admin-crm`**
+- `mark_scheduled_sent` → status=`enviada` + insere em `crm_message_log` + cria evento timeline "Mensagem enviada".
+- Nova action `mark_scheduled_error` (motivo) → status=`erro` + log timeline.
+- `cancel_scheduled` → log timeline "Mensagem cancelada".
+- `list_scheduled` retorna agrupado por status com badges.
+
+**UI `ScheduledQueue.tsx`**
+- 4 abas: **Para enviar agora · Pendentes · Enviadas (7d) · Erros**.
+- Cada item: badge colorido de status, botão "Re-tentar" em erros, "Marcar como enviada" / "Marcar como erro" no menu kebab.
+- Toast confirma e atualiza badge superior.
+
+**Timeline (`LeadTimelineModal.tsx`)**
+- Nova categoria de evento `message` com ícone Send + cor por status (verde=enviada, âmbar=pendente, vermelho=erro, cinza=cancelada).
+
+---
+
+### 2. Calendário de tarefas do CRM
+
+**Novo componente `TaskCalendar.tsx`** (mês + semana, vanilla — sem dep nova).
 
 ```text
-1. Migração: crm_tasks + crm_scheduled_messages + lost_reason em crm_lead_state
-   + RLS "no direct" + cron job opcional para scheduled
-2. Edge admin-crm: novas ações (list_leads_paginated, list_tasks, upsert_task,
-   complete_task, list_scheduled, schedule_message, cancel_scheduled,
-   pending_to_send, mark_message_sent, query_segment, save_segment)
-3. UI:
-   - VirtualLeadList.tsx (virtualização + busca + filtros + paginação)
-   - SegmentsTab.tsx (construtor + segmentos salvos)
-   - TasksPanel.tsx (Hoje/Atrasadas/Próximas) integrado no topo do CRM
-   - ScheduleMessageModal.tsx
-   - TaskFormModal.tsx
-   - Bell de tarefas no AdminLayout
-4. Polimento: indicadores no card do funil, motivo de perda, persistência
-   de estado em sessionStorage
+┌─ Out 2026 ─────────────────────┬ Filtros: [Tipo] [Atendente] [Status]
+│ Seg  Ter  Qua  Qui  Sex  Sáb  │ + Nova tarefa
+│  1    2    3 ●● 4    5    6   │
+│  …  ●●●            ●          │
+└────────────────────────────────┘
+Painel direito: tarefas do dia selecionado + botão "Adicionar neste dia"
 ```
 
-## Notas técnicas
+- Pontos coloridos por tipo (followup=azul, ligação=âmbar, visita=violeta, mensagem=verde).
+- Click no dia → abre painel lateral com lista + botão **+** que pré-preenche `due_at` com aquela data.
+- Filtros persistem em `sessionStorage`.
+- Aba **Agenda** ganha 3 sub-views: **Lista · Calendário · Agendadas** (ScheduledQueue).
 
-- Virtualização: `@tanstack/react-virtual` (~3kb) — mais simples que react-window e combina bem com tabelas
-- Toda escrita continua passando por edge function (RLS bloqueia direto)
-- Light mode + isolamento por `winery_id` mantidos
-- Sem nova dependência de envio de mensagem: tudo continua via `wa.me` (memória respeitada)
-- AI Gateway não é usado neste módulo (admin-only, sem conteúdo gerado)
+---
 
-Aprove para eu começar pela migração do banco e seguir reto até o fim.
+### 3. Lembretes automáticos / notificações
+
+**Novo bell `<NotificationBell />`** no `AdminLayout.tsx`
+- Polling a cada 60s via `admin-crm.notifications`.
+- Badge vermelho com contagem de: tarefas atrasadas (suas), mensagens prontas para envio, leads novos sem dono >2h.
+- Dropdown agrupado por categoria + "Marcar tudo como lido" (estado em `localStorage` por admin).
+
+**Tabela nova `crm_notification_prefs`**
+- `admin_id`, `winery_id`, `digest_frequency` (off/15min/hora/dia), `quiet_hours_start`, `quiet_hours_end`, `notify_overdue` bool, `notify_scheduled_ready` bool, `notify_new_lead` bool.
+
+**Edge `admin-crm.get_prefs` / `update_prefs`** + página de preferências em `AdminSettingsPage` (aba "Notificações CRM").
+
+**Lógica:**
+- Front respeita `quiet_hours` (silencia toast/badge piscante; ainda acumula contagem).
+- Tarefas atrasadas piscam o sino a cada novo intervalo de digest.
+- Toast nativo (`sonner`) ao chegar lead novo se aba ativa.
+
+---
+
+### 4. Papel "Atendente" (sales)
+
+**Migration**
+- Atualizar enum `admin_role`: adicionar valor `atendente` (mantém compat com `dono`/`gerente`/`funcionario`).
+- Mapeamento PT→EN: `atendente` → `sales` no front.
+
+**Permissões (centralizadas em `useAdminAuth`)**
+- `atendente` vê APENAS: `/admin/:slug/leads` (CRM) e seu perfil. Sem dashboard, sem vinhos, sem relatórios.
+- Filtragem servidor (`admin-crm.list_pipeline`): se role=atendente, retorna só leads onde `crm_lead_state.assigned_admin_id = me`.
+- `AdminStaffPage`: novo tipo no formulário.
+
+**Sidebar `AdminLayout`**: oculta itens fora do escopo do atendente.
+
+---
+
+### 5. Ownership de lead (assigned_admin_id)
+
+Já existe `crm_lead_state.assigned_admin_id`. Falta UI/lógica completa.
+
+**LeadCard / LeadTimelineModal**
+- Avatar + nome do dono no canto. Botão "Atribuir" → dropdown com staff ativo da vinícola.
+- "Reivindicar" se sem dono.
+- Filtro novo na barra: **Responsável: [Todos | Sem dono | Eu | <staff>]**.
+
+**Edge `admin-crm.assign_lead`**
+- Valida que `assignee` é admin da mesma `winery_id`.
+- Insere log no timeline ("Lead atribuído a X por Y").
+- `dono`/`gerente` podem reatribuir qualquer lead; `atendente` só pode pegar leads sem dono (claim) — não pode passar para outro.
+
+**Filtro automático para atendente**: já descrito no item 4.
+
+---
+
+### 6. Fila de distribuição automática (round-robin)
+
+**Tabela nova `crm_assignment_queue`**
+- `winery_id` (uniq), `enabled` bool default false, `mode` enum (`round_robin`|`load_balanced`), `last_assigned_admin_id` uuid, `updated_at`.
+
+**Tabela nova `crm_assignment_queue_members`**
+- `winery_id`, `admin_id`, `position` int, `active` bool. Uniq (winery_id, admin_id).
+
+**Edge `admin-crm`**
+- `get_queue` / `set_queue_enabled` / `set_queue_mode` / `add_member` / `remove_member` / `reorder_members`.
+- Helper `pickNextAssignee(winery_id)`:
+  - **round_robin**: próximo após `last_assigned_admin_id` na lista ativa.
+  - **load_balanced**: admin ativo com menos leads abertos (stage ≠ convertido/perdido).
+- Chamado automaticamente quando lead novo entra (hook em `tourist-actions` quando cria `users_leads` → cria `crm_lead_state` com `assigned_admin_id` se queue.enabled).
+- Toggle `manual_override` no lead: ao atribuir manualmente, lead sai da rotação.
+
+**UI nova aba `/admin/:slug/leads` → Configurações** (ícone gear, visível só p/ dono/gerente)
+- Switch "Distribuição automática"
+- Modo (radio)
+- Lista drag-to-reorder de membros + add/remove
+- Preview: "Próximo lead irá para: João"
+
+---
+
+### 7. Polimento UI/UX nível HubSpot
+
+**Pipeline**
+- Header com mini-funnel chart (conversion stage→stage), valor estimado total, ticket médio.
+- Cards mostram avatar do dono, próxima tarefa pendente, último contato (`X dias atrás`), tags coloridas.
+- Hover: ações rápidas inline (📞 ligar via wa.me, ✉ template rápido, ⏰ agendar).
+- Stale > 7d: borda âmbar + tooltip explicando.
+
+**Lista virtualizada**
+- Colunas configuráveis (mostrar/ocultar via popover).
+- Ordenação por LTV/recência/prox. tarefa.
+- Seleção múltipla → barra de ações em massa fixa no rodapé (atribuir, mover estágio, agendar mensagem, exportar, taggear).
+
+**LeadTimelineModal**
+- Layout 2 colunas: esquerda = perfil + ações rápidas (assign, próximo task, schedule msg, mover stage), direita = timeline unificada (notas, vouchers, visitas, ratings, msgs, tasks, atribuições) com filtros por tipo.
+- Ação "Resumo do lead" (texto pronto p/ copiar).
+
+**Atalhos teclado**
+- `n` nova tarefa · `m` agendar msg · `a` atribuir · `1..5` mover estágio · `/` busca.
+
+**Empty/loading/error states** com ilustrações simples (lucide icons + texto).
+
+---
+
+### Arquivos a criar/editar
+
+**Migrations**
+- `add_atendente_role + crm_assignment_queue + crm_assignment_queue_members + crm_notification_prefs + scheduled_messages.error_reason`
+
+**Edge functions**
+- `admin-crm/index.ts` (extensão grande: notifications, assign_lead, queue CRUD, mark_scheduled_error, prefs)
+- `tourist-actions/index.ts` (hook auto-assign ao criar lead)
+
+**Componentes novos**
+- `src/components/admin/crm/TaskCalendar.tsx`
+- `src/components/admin/crm/NotificationBell.tsx`
+- `src/components/admin/crm/AssignLeadPopover.tsx`
+- `src/components/admin/crm/AssignmentQueueSettings.tsx`
+- `src/components/admin/crm/CrmSettingsTab.tsx`
+- `src/components/admin/crm/NotificationPrefsForm.tsx`
+
+**Editar**
+- `AdminLayout.tsx` (bell, role gate)
+- `AdminLeadsPage.tsx` (sub-views agenda, settings tab, filtro responsável, atalhos)
+- `LeadCard.tsx` / `LeadTimelineModal.tsx` (owner, ações, atribuição)
+- `VirtualLeadList.tsx` (seleção múltipla, colunas)
+- `ScheduledQueue.tsx` (4 abas, status badges, retry)
+- `TasksPanel.tsx` (link p/ calendário)
+- `useAdminAuth.ts` (role atendente)
+- `AdminStaffPage.tsx` (opção atendente)
+- `AdminSettingsPage.tsx` (tab notif. CRM)
+- `src/integrations/supabase/types.ts` (auto)
+
+---
+
+### Restrições mantidas
+- Light mode global.
+- Toda escrita via Edge Functions auth (RLS bloqueia direto).
+- WhatsApp = `wa.me` manual (sem API oficial).
+- Isolamento `winery_id` em todas as queries.
+- Nenhuma chamada a IA Gateway adicionada.
+
+Tudo isso vira a entrega em uma única leva. Após aprovação eu rodo a migration, escrevo o código e ajusto types.
