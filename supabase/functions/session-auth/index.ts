@@ -245,6 +245,56 @@ Deno.serve(async (req) => {
           .single();
         if (error) throw error;
         lead = data;
+
+        // Auto-assign via queue (round-robin / load-balanced)
+        try {
+          const { data: q } = await supabase
+            .from("crm_assignment_queue")
+            .select("enabled, mode, last_assigned_admin_id")
+            .eq("winery_id", winery_id)
+            .maybeSingle();
+          if (q?.enabled) {
+            const { data: members } = await supabase
+              .from("crm_assignment_queue_members")
+              .select("admin_id, position")
+              .eq("winery_id", winery_id)
+              .eq("active", true)
+              .order("position", { ascending: true });
+            const ids = (members ?? []).map((m: any) => m.admin_id);
+            let pick: string | null = null;
+            if (ids.length) {
+              if (q.mode === "load_balanced") {
+                const { data: states } = await supabase
+                  .from("crm_lead_state")
+                  .select("assigned_admin_id, stage")
+                  .eq("winery_id", winery_id)
+                  .in("assigned_admin_id", ids);
+                const counts: Record<string, number> = {};
+                for (const id of ids) counts[id] = 0;
+                for (const s of states ?? []) {
+                  if (s.stage === "convertido" || s.stage === "perdido") continue;
+                  if (s.assigned_admin_id) counts[s.assigned_admin_id] = (counts[s.assigned_admin_id] || 0) + 1;
+                }
+                pick = ids.reduce((best, id) => (counts[id] < counts[best] ? id : best), ids[0]);
+              } else {
+                const lastIdx = q.last_assigned_admin_id ? ids.indexOf(q.last_assigned_admin_id) : -1;
+                pick = ids[(lastIdx + 1) % ids.length];
+              }
+            }
+            if (pick) {
+              await supabase.from("crm_lead_state").upsert(
+                { lead_id: lead!.id, winery_id, assigned_admin_id: pick, stage: "novo", updated_at: new Date().toISOString() },
+                { onConflict: "lead_id" }
+              );
+              await supabase.from("crm_assignment_queue").update({
+                last_assigned_admin_id: pick,
+                updated_at: new Date().toISOString(),
+              }).eq("winery_id", winery_id);
+            }
+          }
+        } catch (err) {
+          console.error("auto-assign failed:", err);
+        }
       } else if (!existing.accepted_terms && body.accepted_terms === true) {
         await supabase
           .from("users_leads")
