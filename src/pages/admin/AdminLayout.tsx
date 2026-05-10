@@ -185,6 +185,9 @@ export default function AdminLayout() {
 
       {/* Content */}
       <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
+        <div className="flex justify-end mb-2">
+          <NotificationBell wineryId={winery.id} basePath={basePath} />
+        </div>
         <Outlet context={{ winery, admin, hasPermission }} />
       </main>
     </div>
