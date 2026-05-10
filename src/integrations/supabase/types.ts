@@ -270,6 +270,63 @@ export type Database = {
           },
         ]
       }
+      crm_assignment_queue: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          last_assigned_admin_id: string | null
+          mode: string
+          updated_at: string
+          winery_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_assigned_admin_id?: string | null
+          mode?: string
+          updated_at?: string
+          winery_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_assigned_admin_id?: string | null
+          mode?: string
+          updated_at?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
+      crm_assignment_queue_members: {
+        Row: {
+          active: boolean
+          admin_id: string
+          created_at: string
+          id: string
+          position: number
+          winery_id: string
+        }
+        Insert: {
+          active?: boolean
+          admin_id: string
+          created_at?: string
+          id?: string
+          position?: number
+          winery_id: string
+        }
+        Update: {
+          active?: boolean
+          admin_id?: string
+          created_at?: string
+          id?: string
+          position?: number
+          winery_id?: string
+        }
+        Relationships: []
+      }
       crm_lead_notes: {
         Row: {
           admin_id: string
@@ -399,6 +456,45 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_notification_prefs: {
+        Row: {
+          admin_id: string
+          digest_frequency: string
+          id: string
+          notify_new_lead: boolean
+          notify_overdue: boolean
+          notify_scheduled_ready: boolean
+          quiet_hours_end: number | null
+          quiet_hours_start: number | null
+          updated_at: string
+          winery_id: string
+        }
+        Insert: {
+          admin_id: string
+          digest_frequency?: string
+          id?: string
+          notify_new_lead?: boolean
+          notify_overdue?: boolean
+          notify_scheduled_ready?: boolean
+          quiet_hours_end?: number | null
+          quiet_hours_start?: number | null
+          updated_at?: string
+          winery_id: string
+        }
+        Update: {
+          admin_id?: string
+          digest_frequency?: string
+          id?: string
+          notify_new_lead?: boolean
+          notify_overdue?: boolean
+          notify_scheduled_ready?: boolean
+          quiet_hours_end?: number | null
+          quiet_hours_start?: number | null
+          updated_at?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
       crm_saved_segments: {
         Row: {
           created_at: string
@@ -425,10 +521,13 @@ export type Database = {
       }
       crm_scheduled_messages: {
         Row: {
+          attempted_at: string | null
           body_resolved: string
           created_at: string
           created_by: string
+          error_reason: string | null
           id: string
+          last_status_change_by: string | null
           lead_id: string
           scheduled_for: string
           sent_at: string | null
@@ -437,10 +536,13 @@ export type Database = {
           winery_id: string
         }
         Insert: {
+          attempted_at?: string | null
           body_resolved: string
           created_at?: string
           created_by: string
+          error_reason?: string | null
           id?: string
+          last_status_change_by?: string | null
           lead_id: string
           scheduled_for: string
           sent_at?: string | null
@@ -449,10 +551,13 @@ export type Database = {
           winery_id: string
         }
         Update: {
+          attempted_at?: string | null
           body_resolved?: string
           created_at?: string
           created_by?: string
+          error_reason?: string | null
           id?: string
+          last_status_change_by?: string | null
           lead_id?: string
           scheduled_for?: string
           sent_at?: string | null
@@ -1190,6 +1295,8 @@ export type Database = {
         | "owner"
         | "manager"
         | "staff"
+        | "sales"
+        | "atendente"
       automation_status: "sent" | "scheduled"
       plan_level: "bronze" | "silver" | "gold"
       trigger_type: "D+1" | "D+15"
@@ -1328,6 +1435,8 @@ export const Constants = {
         "owner",
         "manager",
         "staff",
+        "sales",
+        "atendente",
       ],
       automation_status: ["sent", "scheduled"],
       plan_level: ["bronze", "silver", "gold"],
