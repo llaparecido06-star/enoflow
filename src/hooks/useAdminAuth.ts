@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { setSessionToken, clearSessionToken } from "@/lib/auth-api";
 
-export type AdminRole = "staff" | "manager" | "owner" | "master";
+export type AdminRole = "staff" | "sales" | "manager" | "owner" | "master";
 
 export interface AdminUser {
   id: string;
