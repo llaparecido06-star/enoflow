@@ -45,10 +45,10 @@ export default function AdminLayout() {
     }
   }, [admin, isLoading, authLoading, navigate]);
 
-  const visibleNav = useMemo(
-    () => navItems.filter((n) => hasPermission(n.minRole)),
-    [hasPermission]
-  );
+  const visibleNav = useMemo(() => {
+    if (admin?.role === "sales") return navItems.filter((n) => n.salesOnly);
+    return navItems.filter((n) => hasPermission(n.minRole));
+  }, [hasPermission, admin?.role]);
 
   // Redirect staff/manager to default page
   useEffect(() => {
