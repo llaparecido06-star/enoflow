@@ -100,6 +100,7 @@ export default function AdminLayout() {
 
   const roleLabel: Record<AdminRole, string> = {
     staff: "Staff",
+    sales: "Atendente",
     manager: "Manager",
     owner: "Owner",
     master: "Master",
