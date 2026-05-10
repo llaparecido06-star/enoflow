@@ -63,8 +63,17 @@ Deno.serve(async (req) => {
         leadIds.length ? supabase.from("crm_tasks").select("lead_id, due_at, title").in("lead_id", leadIds).eq("status", "pendente").order("due_at", { ascending: true }) : { data: [] as any[] },
       ]);
 
+      // Sales role: limit to leads assigned to me
+      let visibleLeads = leads ?? [];
+      if (isSales) {
+        const myStateRows = leadIds.length
+          ? (await supabase.from("crm_lead_state").select("lead_id").in("lead_id", leadIds).eq("assigned_admin_id", admin_id)).data ?? []
+          : [];
+        const mine = new Set((myStateRows as any[]).map((r) => r.lead_id));
+        visibleLeads = visibleLeads.filter((l) => mine.has(l.id));
+      }
+      const visibleIds = visibleLeads.map((l) => l.id);
       const stateMap: Record<string, any> = {};
-      for (const s of (statesRes.data as any[]) ?? []) stateMap[s.lead_id] = s;
 
       const ltvMap: Record<string, { total: number; count: number; last: string | null }> = {};
       for (const v of (vouchersRes.data as any[]) ?? []) {
