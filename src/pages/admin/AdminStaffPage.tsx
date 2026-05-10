@@ -18,6 +18,7 @@ interface StaffMember {
 
 const roleLabels: Record<string, string> = {
   staff: "Funcionário",
+  sales: "Atendente (CRM)",
   manager: "Gerente",
   owner: "Dono",
   master: "Master",
