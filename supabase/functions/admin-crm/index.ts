@@ -74,6 +74,7 @@ Deno.serve(async (req) => {
       }
       const visibleIds = visibleLeads.map((l) => l.id);
       const stateMap: Record<string, any> = {};
+      for (const s of (statesRes.data as any[]) ?? []) stateMap[s.lead_id] = s;
 
       const ltvMap: Record<string, { total: number; count: number; last: string | null }> = {};
       for (const v of (vouchersRes.data as any[]) ?? []) {
