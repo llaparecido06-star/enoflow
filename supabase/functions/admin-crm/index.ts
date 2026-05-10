@@ -27,8 +27,23 @@ Deno.serve(async (req) => {
     if (session.type === "admin" && admin.winery_id !== winery_id) {
       return json({ error: "Não autorizado" }, 403);
     }
-    if (!hasMinRole(admin.role, "manager")) {
+    // Sales/atendente has access only to lead-centric actions; manager+ has full access.
+    const ROLE_ALIAS: Record<string, string> = { atendente: "sales", funcionario: "staff", gerente: "manager", dono: "owner" };
+    const normRole = ROLE_ALIAS[admin.role] || admin.role;
+    const SALES_ALLOWED = new Set([
+      "list_pipeline", "lead_360", "move_stage", "move_stage_with_reason", "update_state",
+      "add_note", "delete_note", "list_tasks", "upsert_task", "complete_task", "delete_task",
+      "task_counts", "list_scheduled", "schedule_messages", "mark_scheduled_sent",
+      "mark_scheduled_error", "cancel_scheduled", "log_message", "list_templates",
+      "list_segments", "list_staff", "assign_lead", "claim_lead", "notifications",
+      "get_prefs", "update_prefs", "get_queue",
+    ]);
+    const isSales = normRole === "sales";
+    if (!isSales && !hasMinRole(admin.role, "manager")) {
       return json({ error: "Sem permissão" }, 403);
+    }
+    if (isSales && !SALES_ALLOWED.has(body.action)) {
+      return json({ error: "Sem permissão para esta ação" }, 403);
     }
 
     // ─── list_pipeline: leads enriched + state
@@ -48,6 +63,16 @@ Deno.serve(async (req) => {
         leadIds.length ? supabase.from("crm_tasks").select("lead_id, due_at, title").in("lead_id", leadIds).eq("status", "pendente").order("due_at", { ascending: true }) : { data: [] as any[] },
       ]);
 
+      // Sales role: limit to leads assigned to me
+      let visibleLeads = leads ?? [];
+      if (isSales) {
+        const myStateRows = leadIds.length
+          ? (await supabase.from("crm_lead_state").select("lead_id").in("lead_id", leadIds).eq("assigned_admin_id", admin_id)).data ?? []
+          : [];
+        const mine = new Set((myStateRows as any[]).map((r) => r.lead_id));
+        visibleLeads = visibleLeads.filter((l) => mine.has(l.id));
+      }
+      const visibleIds = visibleLeads.map((l) => l.id);
       const stateMap: Record<string, any> = {};
       for (const s of (statesRes.data as any[]) ?? []) stateMap[s.lead_id] = s;
 
@@ -72,7 +97,7 @@ Deno.serve(async (req) => {
         taskMap[t.lead_id] = { due_at: t.due_at, title: t.title, overdue: t.due_at < nowIso };
       }
 
-      const enriched = (leads ?? []).map((l) => {
+      const enriched = visibleLeads.map((l) => {
         const s = stateMap[l.id];
         return {
           ...l,
@@ -446,6 +471,243 @@ Deno.serve(async (req) => {
         { onConflict: "lead_id" }
       );
       return json({ success: true });
+    }
+
+    // ─── ASSIGNMENT ──────────────────────────────────────────────
+    if (action === "assign_lead") {
+      const { lead_id, assignee_id } = body;
+      if (!lead_id) return json({ error: "lead_id required" }, 400);
+      // Sales can only claim if currently unassigned & to themselves
+      const { data: cur } = await supabase
+        .from("crm_lead_state")
+        .select("assigned_admin_id")
+        .eq("lead_id", lead_id)
+        .maybeSingle();
+      if (isSales) {
+        if (assignee_id && assignee_id !== admin_id) return json({ error: "Atendente só pode reivindicar para si" }, 403);
+        if (cur?.assigned_admin_id && cur.assigned_admin_id !== admin_id) return json({ error: "Lead já tem dono" }, 403);
+      }
+      const target = assignee_id ?? null;
+      if (target) {
+        const { data: tgt } = await supabase.from("admin_users").select("id, name, winery_id").eq("id", target).maybeSingle();
+        if (!tgt || tgt.winery_id !== winery_id) return json({ error: "Atendente inválido" }, 400);
+      }
+      await supabase.from("crm_lead_state").upsert(
+        { lead_id, winery_id, assigned_admin_id: target, updated_at: new Date().toISOString() },
+        { onConflict: "lead_id" }
+      );
+      // Log timeline
+      const note = target
+        ? `→ Lead atribuído a outro atendente`
+        : `→ Lead desatribuído`;
+      await supabase.from("crm_lead_notes").insert({ lead_id, winery_id, admin_id, body: note });
+      return json({ success: true });
+    }
+
+    if (action === "claim_lead") {
+      const { lead_id } = body;
+      if (!lead_id) return json({ error: "lead_id required" }, 400);
+      const { data: cur } = await supabase
+        .from("crm_lead_state")
+        .select("assigned_admin_id")
+        .eq("lead_id", lead_id)
+        .maybeSingle();
+      if (cur?.assigned_admin_id && cur.assigned_admin_id !== admin_id) {
+        return json({ error: "Lead já tem dono" }, 409);
+      }
+      await supabase.from("crm_lead_state").upsert(
+        { lead_id, winery_id, assigned_admin_id: admin_id, updated_at: new Date().toISOString() },
+        { onConflict: "lead_id" }
+      );
+      await supabase.from("crm_lead_notes").insert({ lead_id, winery_id, admin_id, body: "→ Lead reivindicado" });
+      return json({ success: true });
+    }
+
+    // ─── ASSIGNMENT QUEUE ────────────────────────────────────────
+    if (action === "get_queue") {
+      const [{ data: q }, { data: members }] = await Promise.all([
+        supabase.from("crm_assignment_queue").select("*").eq("winery_id", winery_id).maybeSingle(),
+        supabase.from("crm_assignment_queue_members").select("*").eq("winery_id", winery_id).order("position", { ascending: true }),
+      ]);
+      // Enrich members with admin names
+      const adminIds = (members ?? []).map((m: any) => m.admin_id);
+      let nameMap: Record<string, { name: string; role: string }> = {};
+      if (adminIds.length) {
+        const { data: admins } = await supabase.from("admin_users").select("id, name, role").in("id", adminIds);
+        for (const a of admins ?? []) nameMap[a.id] = { name: a.name, role: a.role };
+      }
+      // Compute open lead counts per assignee
+      const counts: Record<string, number> = {};
+      const { data: openStates } = await supabase
+        .from("crm_lead_state")
+        .select("assigned_admin_id, stage")
+        .eq("winery_id", winery_id);
+      for (const s of openStates ?? []) {
+        if (!s.assigned_admin_id) continue;
+        if (s.stage === "convertido" || s.stage === "perdido") continue;
+        counts[s.assigned_admin_id] = (counts[s.assigned_admin_id] || 0) + 1;
+      }
+      return json({
+        success: true,
+        queue: q ?? { enabled: false, mode: "round_robin" },
+        members: (members ?? []).map((m: any) => ({
+          ...m,
+          admin_name: nameMap[m.admin_id]?.name ?? "—",
+          admin_role: nameMap[m.admin_id]?.role ?? "",
+          open_leads: counts[m.admin_id] ?? 0,
+        })),
+      });
+    }
+
+    if (action === "set_queue") {
+      if (!hasMinRole(admin.role, "manager")) return json({ error: "Sem permissão" }, 403);
+      const { enabled, mode } = body;
+      const payload: any = { winery_id, updated_at: new Date().toISOString() };
+      if (typeof enabled === "boolean") payload.enabled = enabled;
+      if (mode === "round_robin" || mode === "load_balanced") payload.mode = mode;
+      await supabase.from("crm_assignment_queue").upsert(payload, { onConflict: "winery_id" });
+      return json({ success: true });
+    }
+
+    if (action === "queue_add_member") {
+      if (!hasMinRole(admin.role, "manager")) return json({ error: "Sem permissão" }, 403);
+      const { admin_id: target } = body;
+      if (!target) return json({ error: "admin_id required" }, 400);
+      const { data: tgt } = await supabase.from("admin_users").select("id, winery_id, is_active").eq("id", target).maybeSingle();
+      if (!tgt || tgt.winery_id !== winery_id) return json({ error: "Inválido" }, 400);
+      const { data: maxRow } = await supabase
+        .from("crm_assignment_queue_members")
+        .select("position")
+        .eq("winery_id", winery_id)
+        .order("position", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const nextPos = ((maxRow as any)?.position ?? -1) + 1;
+      await supabase.from("crm_assignment_queue_members").upsert(
+        { winery_id, admin_id: target, position: nextPos, active: true },
+        { onConflict: "winery_id,admin_id" }
+      );
+      return json({ success: true });
+    }
+
+    if (action === "queue_remove_member") {
+      if (!hasMinRole(admin.role, "manager")) return json({ error: "Sem permissão" }, 403);
+      const { admin_id: target } = body;
+      if (!target) return json({ error: "admin_id required" }, 400);
+      await supabase.from("crm_assignment_queue_members").delete().eq("winery_id", winery_id).eq("admin_id", target);
+      return json({ success: true });
+    }
+
+    if (action === "queue_toggle_member") {
+      if (!hasMinRole(admin.role, "manager")) return json({ error: "Sem permissão" }, 403);
+      const { admin_id: target, active } = body;
+      if (!target) return json({ error: "admin_id required" }, 400);
+      await supabase.from("crm_assignment_queue_members")
+        .update({ active: !!active })
+        .eq("winery_id", winery_id).eq("admin_id", target);
+      return json({ success: true });
+    }
+
+    if (action === "queue_reorder") {
+      if (!hasMinRole(admin.role, "manager")) return json({ error: "Sem permissão" }, 403);
+      const { order } = body; // array of admin_ids
+      if (!Array.isArray(order)) return json({ error: "order required" }, 400);
+      for (let i = 0; i < order.length; i++) {
+        await supabase.from("crm_assignment_queue_members")
+          .update({ position: i })
+          .eq("winery_id", winery_id).eq("admin_id", order[i]);
+      }
+      return json({ success: true });
+    }
+
+    // ─── SCHEDULED MESSAGES — error tracking ──────────────────────
+    if (action === "mark_scheduled_error") {
+      const { message_id, reason } = body;
+      if (!message_id) return json({ error: "message_id required" }, 400);
+      const { data: msg } = await supabase
+        .from("crm_scheduled_messages")
+        .update({
+          status: "erro",
+          error_reason: reason ? String(reason).slice(0, 500) : "Falha no envio",
+          attempted_at: new Date().toISOString(),
+          last_status_change_by: admin_id,
+        })
+        .eq("id", message_id)
+        .eq("winery_id", winery_id)
+        .select()
+        .single();
+      if (msg?.lead_id) {
+        await supabase.from("crm_message_log").insert({
+          lead_id: msg.lead_id,
+          winery_id,
+          admin_id,
+          template_id: msg.template_id,
+          channel: "whatsapp",
+          body: `[ERRO] ${msg.body_resolved}\nMotivo: ${reason || "—"}`,
+        });
+      }
+      return json({ success: true });
+    }
+
+    if (action === "retry_scheduled") {
+      const { message_id } = body;
+      if (!message_id) return json({ error: "message_id required" }, 400);
+      await supabase.from("crm_scheduled_messages")
+        .update({ status: "pendente", error_reason: null, last_status_change_by: admin_id })
+        .eq("id", message_id)
+        .eq("winery_id", winery_id);
+      return json({ success: true });
+    }
+
+    // ─── NOTIFICATIONS ────────────────────────────────────────────
+    if (action === "notifications") {
+      const now = new Date();
+      const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+
+      const [tasksR, scheduledR, leadsR, prefsR] = await Promise.all([
+        supabase.from("crm_tasks").select("id, title, due_at, lead_id").eq("winery_id", winery_id).eq("admin_id", admin_id).eq("status", "pendente").order("due_at", { ascending: true }).limit(50),
+        supabase.from("crm_scheduled_messages").select("id, lead_id, scheduled_for, status").eq("winery_id", winery_id).eq("status", "pendente").lte("scheduled_for", now.toISOString()).limit(50),
+        supabase.from("crm_lead_state").select("lead_id, assigned_admin_id, created_at").eq("winery_id", winery_id).is("assigned_admin_id", null).order("created_at", { ascending: false }).limit(50),
+        supabase.from("crm_notification_prefs").select("*").eq("admin_id", admin_id).maybeSingle(),
+      ]);
+      const overdueTasks = (tasksR.data ?? []).filter((t: any) => t.due_at < now.toISOString());
+      const todayTasks = (tasksR.data ?? []).filter((t: any) => t.due_at >= now.toISOString() && t.due_at <= todayEnd.toISOString());
+      return json({
+        success: true,
+        overdue_tasks: overdueTasks,
+        today_tasks: todayTasks,
+        ready_messages: scheduledR.data ?? [],
+        unassigned_leads: isSales ? [] : (leadsR.data ?? []),
+        prefs: prefsR.data ?? null,
+      });
+    }
+
+    if (action === "get_prefs") {
+      const { data } = await supabase.from("crm_notification_prefs").select("*").eq("admin_id", admin_id).maybeSingle();
+      return json({ success: true, prefs: data });
+    }
+
+    if (action === "update_prefs") {
+      const { digest_frequency, quiet_hours_start, quiet_hours_end, notify_overdue, notify_scheduled_ready, notify_new_lead } = body;
+      const payload: any = { admin_id, winery_id, updated_at: new Date().toISOString() };
+      if (digest_frequency) payload.digest_frequency = String(digest_frequency).slice(0, 20);
+      if (quiet_hours_start !== undefined) payload.quiet_hours_start = quiet_hours_start;
+      if (quiet_hours_end !== undefined) payload.quiet_hours_end = quiet_hours_end;
+      if (typeof notify_overdue === "boolean") payload.notify_overdue = notify_overdue;
+      if (typeof notify_scheduled_ready === "boolean") payload.notify_scheduled_ready = notify_scheduled_ready;
+      if (typeof notify_new_lead === "boolean") payload.notify_new_lead = notify_new_lead;
+      await supabase.from("crm_notification_prefs").upsert(payload, { onConflict: "admin_id" });
+      return json({ success: true });
+    }
+
+    // ─── List staff filtered (sales also need to see names of own owner)
+    if (action === "list_admins_active") {
+      const { data } = await supabase
+        .from("admin_users")
+        .select("id, name, role")
+        .eq("winery_id", winery_id)
+        .eq("is_active", true);
+      return json({ success: true, admins: data ?? [] });
     }
 
     return json({ error: "Unknown action" }, 400);

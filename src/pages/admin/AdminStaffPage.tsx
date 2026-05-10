@@ -18,6 +18,7 @@ interface StaffMember {
 
 const roleLabels: Record<string, string> = {
   staff: "Funcionário",
+  sales: "Atendente (CRM)",
   manager: "Gerente",
   owner: "Dono",
   master: "Master",
@@ -265,6 +266,7 @@ export default function AdminStaffPage() {
                 <select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
                   className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20">
                   <option value="staff">Funcionário — Apenas vouchers</option>
+                  <option value="sales">Atendente — Acesso só ao CRM (leads atribuídos)</option>
                   <option value="manager">Gerente — Vinhos, pacotes e cardápio</option>
                 </select>
               </div>

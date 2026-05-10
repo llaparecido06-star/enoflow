@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     // ─── ACTION: create
     if (action === "create") {
       if (!name || !email || !password || !role) return json({ error: "name, email, password, role required" }, 400);
-      const allowedRoles = ["staff", "manager"];
+      const allowedRoles = ["staff", "manager", "sales"];
       if (!allowedRoles.includes(role)) return json({ error: "Owners podem criar apenas staff e manager" }, 400);
       if (typeof name !== "string" || name.trim().length === 0 || name.length > 100) return json({ error: "Nome inválido" }, 400);
       if (typeof email !== "string" || email.length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Email inválido" }, 400);
@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
         const { data: hashResult } = await supabase.rpc("hash_password", { p_password: password.slice(0, 100) });
         if (hashResult) updates.password_hash = hashResult;
       }
-      if (role && ["staff", "manager"].includes(role)) updates.role = role;
+      if (role && ["staff", "manager", "sales"].includes(role)) updates.role = role;
 
       if (Object.keys(updates).length === 0) return json({ error: "Nada para atualizar" }, 400);
 
