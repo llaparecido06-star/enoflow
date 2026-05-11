@@ -5,7 +5,7 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { formatCurrency } from "@/lib/currency";
-import { Download, Search, LayoutGrid, List, Filter, Send, MessageSquare, Layers, Calendar } from "lucide-react";
+import { Download, Search, LayoutGrid, List, Filter, Send, MessageSquare, Layers, Calendar, Settings } from "lucide-react";
 import { toast } from "sonner";
 import PipelineBoard from "@/components/admin/crm/PipelineBoard";
 import LeadTimelineModal from "@/components/admin/crm/LeadTimelineModal";
@@ -15,9 +15,12 @@ import VirtualLeadList from "@/components/admin/crm/VirtualLeadList";
 import SegmentsTab, { applyFilters, type Filters as SegFilters } from "@/components/admin/crm/SegmentsTab";
 import TasksPanel from "@/components/admin/crm/TasksPanel";
 import ScheduledQueue from "@/components/admin/crm/ScheduledQueue";
+import TaskCalendar from "@/components/admin/crm/TaskCalendar";
+import AssignmentQueueSettings from "@/components/admin/crm/AssignmentQueueSettings";
 import type { CrmLead } from "@/components/admin/crm/LeadCard";
 
-type View = "pipeline" | "list" | "segments" | "agenda" | "templates";
+type View = "pipeline" | "list" | "segments" | "agenda" | "templates" | "settings";
+type AgendaView = "list" | "calendar" | "scheduled";
 
 interface PersistedState {
   search: string;
