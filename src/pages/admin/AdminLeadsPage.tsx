@@ -5,7 +5,7 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { formatCurrency } from "@/lib/currency";
-import { Download, Search, LayoutGrid, List, Filter, Send, MessageSquare, Layers, Calendar } from "lucide-react";
+import { Download, Search, LayoutGrid, List, Filter, Send, MessageSquare, Layers, Calendar, Settings } from "lucide-react";
 import { toast } from "sonner";
 import PipelineBoard from "@/components/admin/crm/PipelineBoard";
 import LeadTimelineModal from "@/components/admin/crm/LeadTimelineModal";
@@ -15,9 +15,12 @@ import VirtualLeadList from "@/components/admin/crm/VirtualLeadList";
 import SegmentsTab, { applyFilters, type Filters as SegFilters } from "@/components/admin/crm/SegmentsTab";
 import TasksPanel from "@/components/admin/crm/TasksPanel";
 import ScheduledQueue from "@/components/admin/crm/ScheduledQueue";
+import TaskCalendar from "@/components/admin/crm/TaskCalendar";
+import AssignmentQueueSettings from "@/components/admin/crm/AssignmentQueueSettings";
 import type { CrmLead } from "@/components/admin/crm/LeadCard";
 
-type View = "pipeline" | "list" | "segments" | "agenda" | "templates";
+type View = "pipeline" | "list" | "segments" | "agenda" | "templates" | "settings";
+type AgendaView = "list" | "calendar" | "scheduled";
 
 interface PersistedState {
   search: string;
@@ -31,9 +34,10 @@ interface PersistedState {
 const STORAGE_PREFIX = "crm_state_";
 
 export default function AdminLeadsPage() {
-  const { winery } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
+  const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
   const qc = useQueryClient();
   const storageKey = `${STORAGE_PREFIX}${winery.id}`;
+  const canManage = admin?.role === "owner" || admin?.role === "manager" || admin?.role === "master";
 
   // ── Restore persisted state
   const persisted: Partial<PersistedState> = (() => {
@@ -41,6 +45,7 @@ export default function AdminLeadsPage() {
   })();
 
   const [view, setView] = useState<View>(persisted.view ?? "pipeline");
+  const [agendaView, setAgendaView] = useState<AgendaView>("list");
   const [search, setSearch] = useState(persisted.search ?? "");
   const [stageFilter, setStageFilter] = useState(persisted.stageFilter ?? "all");
   const [minLtv, setMinLtv] = useState(persisted.minLtv ?? "");
@@ -165,6 +170,7 @@ export default function AdminLeadsPage() {
             <ViewBtn icon={Layers} active={view === "segments"} onClick={() => setView("segments")} label="Segmentos" />
             <ViewBtn icon={Calendar} active={view === "agenda"} onClick={() => setView("agenda")} label="Agenda" badge={counts?.mineOverdue || counts?.today || 0} />
             <ViewBtn icon={MessageSquare} active={view === "templates"} onClick={() => setView("templates")} label="Templates" />
+            {canManage && <ViewBtn icon={Settings} active={view === "settings"} onClick={() => setView("settings")} label="Config" />}
           </div>
         </div>
       </div>
@@ -239,10 +245,29 @@ export default function AdminLeadsPage() {
           onApplyToPipeline={(f) => { setPipelineFilters(f); setView("pipeline"); toast.success("Segmento aplicado ao funil"); }}
         />
       ) : view === "agenda" ? (
-        <div className="grid lg:grid-cols-2 gap-4">
-          <TasksPanel wineryId={winery.id} onLeadOpen={openLeadById} />
-          <ScheduledQueue wineryId={winery.id} />
+        <div className="space-y-3">
+          <div className="flex bg-secondary rounded-lg p-0.5 w-fit">
+            <SubBtn active={agendaView === "list"} onClick={() => setAgendaView("list")} label="Lista" />
+            <SubBtn active={agendaView === "calendar"} onClick={() => setAgendaView("calendar")} label="Calendário" />
+            <SubBtn active={agendaView === "scheduled"} onClick={() => setAgendaView("scheduled")} label="Mensagens agendadas" />
+          </div>
+          {agendaView === "list" ? (
+            <div className="grid lg:grid-cols-2 gap-4">
+              <TasksPanel wineryId={winery.id} onLeadOpen={openLeadById} />
+              <ScheduledQueue wineryId={winery.id} />
+            </div>
+          ) : agendaView === "calendar" ? (
+            <TaskCalendar wineryId={winery.id} onLeadOpen={openLeadById} />
+          ) : (
+            <ScheduledQueue wineryId={winery.id} />
+          )}
         </div>
+      ) : view === "settings" ? (
+        canManage ? (
+          <AssignmentQueueSettings wineryId={winery.id} />
+        ) : (
+          <p className="text-center text-sm text-muted-foreground py-12">Sem permissão.</p>
+        )
       ) : (
         <TemplatesManager wineryId={winery.id} />
       )}
@@ -274,6 +299,15 @@ function ViewBtn({ icon: Icon, active, onClick, label, badge }: any) {
       {badge > 0 && (
         <span className="ml-1 text-[9px] bg-rose-500 text-white px-1.5 py-0.5 rounded-full leading-none">{badge}</span>
       )}
+    </button>
+  );
+}
+
+function SubBtn({ active, onClick, label }: any) {
+  return (
+    <button onClick={onClick}
+      className={`px-3 py-1.5 rounded-md text-xs transition-colors ${active ? "bg-card shadow-sm font-medium" : "text-muted-foreground"}`}>
+      {label}
     </button>
   );
 }

@@ -9,6 +9,7 @@ interface Props {
   leadName?: string | null;
   taskId?: string | null;
   initial?: { title?: string; description?: string; due_at?: string; type?: string; assigned_admin_id?: string };
+  presetDueAt?: Date;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -21,11 +22,15 @@ const TYPES = [
   { id: "outro", label: "Outro" },
 ];
 
-export default function TaskFormModal({ wineryId, leadId, leadName, taskId, initial, onClose, onSaved }: Props) {
+export default function TaskFormModal({ wineryId, leadId, leadName, taskId, initial, presetDueAt, onClose, onSaved }: Props) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [dueAt, setDueAt] = useState(
-    initial?.due_at ? toLocal(initial.due_at) : toLocal(new Date(Date.now() + 24 * 3600 * 1000).toISOString())
+    initial?.due_at
+      ? toLocal(initial.due_at)
+      : presetDueAt
+      ? toLocal(new Date(presetDueAt.getFullYear(), presetDueAt.getMonth(), presetDueAt.getDate(), 9, 0).toISOString())
+      : toLocal(new Date(Date.now() + 24 * 3600 * 1000).toISOString())
   );
   const [type, setType] = useState(initial?.type ?? "followup");
   const [assignedTo, setAssignedTo] = useState(initial?.assigned_admin_id ?? "");
