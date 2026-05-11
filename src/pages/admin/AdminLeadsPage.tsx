@@ -170,6 +170,7 @@ export default function AdminLeadsPage() {
             <ViewBtn icon={Layers} active={view === "segments"} onClick={() => setView("segments")} label="Segmentos" />
             <ViewBtn icon={Calendar} active={view === "agenda"} onClick={() => setView("agenda")} label="Agenda" badge={counts?.mineOverdue || counts?.today || 0} />
             <ViewBtn icon={MessageSquare} active={view === "templates"} onClick={() => setView("templates")} label="Templates" />
+            {canManage && <ViewBtn icon={Settings} active={view === "settings"} onClick={() => setView("settings")} label="Config" />}
           </div>
         </div>
       </div>
