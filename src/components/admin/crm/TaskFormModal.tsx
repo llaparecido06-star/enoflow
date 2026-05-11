@@ -9,6 +9,7 @@ interface Props {
   leadName?: string | null;
   taskId?: string | null;
   initial?: { title?: string; description?: string; due_at?: string; type?: string; assigned_admin_id?: string };
+  presetDueAt?: Date;
   onClose: () => void;
   onSaved: () => void;
 }
