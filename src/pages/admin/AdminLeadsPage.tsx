@@ -245,10 +245,29 @@ export default function AdminLeadsPage() {
           onApplyToPipeline={(f) => { setPipelineFilters(f); setView("pipeline"); toast.success("Segmento aplicado ao funil"); }}
         />
       ) : view === "agenda" ? (
-        <div className="grid lg:grid-cols-2 gap-4">
-          <TasksPanel wineryId={winery.id} onLeadOpen={openLeadById} />
-          <ScheduledQueue wineryId={winery.id} />
+        <div className="space-y-3">
+          <div className="flex bg-secondary rounded-lg p-0.5 w-fit">
+            <SubBtn active={agendaView === "list"} onClick={() => setAgendaView("list")} label="Lista" />
+            <SubBtn active={agendaView === "calendar"} onClick={() => setAgendaView("calendar")} label="Calendário" />
+            <SubBtn active={agendaView === "scheduled"} onClick={() => setAgendaView("scheduled")} label="Mensagens agendadas" />
+          </div>
+          {agendaView === "list" ? (
+            <div className="grid lg:grid-cols-2 gap-4">
+              <TasksPanel wineryId={winery.id} onLeadOpen={openLeadById} />
+              <ScheduledQueue wineryId={winery.id} />
+            </div>
+          ) : agendaView === "calendar" ? (
+            <TaskCalendar wineryId={winery.id} onLeadOpen={openLeadById} />
+          ) : (
+            <ScheduledQueue wineryId={winery.id} />
+          )}
         </div>
+      ) : view === "settings" ? (
+        canManage ? (
+          <AssignmentQueueSettings wineryId={winery.id} />
+        ) : (
+          <p className="text-center text-sm text-muted-foreground py-12">Sem permissão.</p>
+        )
       ) : (
         <TemplatesManager wineryId={winery.id} />
       )}
