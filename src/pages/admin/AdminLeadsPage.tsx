@@ -34,9 +34,10 @@ interface PersistedState {
 const STORAGE_PREFIX = "crm_state_";
 
 export default function AdminLeadsPage() {
-  const { winery } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
+  const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
   const qc = useQueryClient();
   const storageKey = `${STORAGE_PREFIX}${winery.id}`;
+  const canManage = admin?.role === "owner" || admin?.role === "manager" || admin?.role === "master";
 
   // ── Restore persisted state
   const persisted: Partial<PersistedState> = (() => {
