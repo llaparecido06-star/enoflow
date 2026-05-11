@@ -302,3 +302,12 @@ function ViewBtn({ icon: Icon, active, onClick, label, badge }: any) {
     </button>
   );
 }
+
+function SubBtn({ active, onClick, label }: any) {
+  return (
+    <button onClick={onClick}
+      className={`px-3 py-1.5 rounded-md text-xs transition-colors ${active ? "bg-card shadow-sm font-medium" : "text-muted-foreground"}`}>
+      {label}
+    </button>
+  );
+}
