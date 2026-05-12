@@ -814,6 +814,102 @@ export type Database = {
           },
         ]
       }
+      reservation_slots: {
+        Row: {
+          active: boolean
+          capacity: number
+          capture_point_id: string | null
+          created_at: string
+          end_time: string
+          id: string
+          price: number
+          start_time: string
+          updated_at: string
+          weekday: number
+          winery_id: string
+        }
+        Insert: {
+          active?: boolean
+          capacity?: number
+          capture_point_id?: string | null
+          created_at?: string
+          end_time: string
+          id?: string
+          price?: number
+          start_time: string
+          updated_at?: string
+          weekday: number
+          winery_id: string
+        }
+        Update: {
+          active?: boolean
+          capacity?: number
+          capture_point_id?: string | null
+          created_at?: string
+          end_time?: string
+          id?: string
+          price?: number
+          start_time?: string
+          updated_at?: string
+          weekday?: number
+          winery_id?: string
+        }
+        Relationships: []
+      }
+      reservations: {
+        Row: {
+          assigned_admin_id: string | null
+          capture_point_id: string | null
+          contact_name: string | null
+          contact_whatsapp: string | null
+          created_at: string
+          id: string
+          lead_id: string | null
+          notes: string | null
+          party_size: number
+          scheduled_at: string
+          slot_id: string | null
+          source: string
+          status: string
+          updated_at: string
+          winery_id: string
+        }
+        Insert: {
+          assigned_admin_id?: string | null
+          capture_point_id?: string | null
+          contact_name?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          party_size?: number
+          scheduled_at: string
+          slot_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          winery_id: string
+        }
+        Update: {
+          assigned_admin_id?: string | null
+          capture_point_id?: string | null
+          contact_name?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          notes?: string | null
+          party_size?: number
+          scheduled_at?: string
+          slot_id?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
       staff_login_activity: {
         Row: {
           action: string
@@ -862,6 +958,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stock_movements: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          delta: number
+          id: string
+          note: string | null
+          reason: string
+          voucher_id: string | null
+          wine_id: string
+          winery_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          delta: number
+          id?: string
+          note?: string | null
+          reason?: string
+          voucher_id?: string | null
+          wine_id: string
+          winery_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          delta?: number
+          id?: string
+          note?: string | null
+          reason?: string
+          voucher_id?: string | null
+          wine_id?: string
+          winery_id?: string
+        }
+        Relationships: []
       }
       subscription_plans: {
         Row: {
@@ -1016,6 +1148,7 @@ export type Database = {
       }
       vouchers: {
         Row: {
+          channel: string
           code: string
           created_at: string
           id: string
@@ -1027,6 +1160,7 @@ export type Database = {
           winery_id: string
         }
         Insert: {
+          channel?: string
           code: string
           created_at?: string
           id?: string
@@ -1038,6 +1172,7 @@ export type Database = {
           winery_id: string
         }
         Update: {
+          channel?: string
           code?: string
           created_at?: string
           id?: string
@@ -1067,10 +1202,17 @@ export type Database = {
       }
       wineries: {
         Row: {
+          address: string | null
+          business_hours: Json
+          contact_email: string | null
+          contact_phone: string | null
           created_at: string
           currency: string
+          default_language: string
           enabled_modules: string[]
           id: string
+          instagram_url: string | null
+          lgpd_policy_url: string | null
           logo_url: string | null
           max_locations: number
           name: string
@@ -1080,13 +1222,21 @@ export type Database = {
           slug: string
           status: string
           subscription_value: number
+          supported_languages: string[]
           updated_at: string
         }
         Insert: {
+          address?: string | null
+          business_hours?: Json
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           currency?: string
+          default_language?: string
           enabled_modules?: string[]
           id?: string
+          instagram_url?: string | null
+          lgpd_policy_url?: string | null
           logo_url?: string | null
           max_locations?: number
           name: string
@@ -1096,13 +1246,21 @@ export type Database = {
           slug: string
           status?: string
           subscription_value?: number
+          supported_languages?: string[]
           updated_at?: string
         }
         Update: {
+          address?: string | null
+          business_hours?: Json
+          contact_email?: string | null
+          contact_phone?: string | null
           created_at?: string
           currency?: string
+          default_language?: string
           enabled_modules?: string[]
           id?: string
+          instagram_url?: string | null
+          lgpd_policy_url?: string | null
           logo_url?: string | null
           max_locations?: number
           name?: string
@@ -1112,6 +1270,7 @@ export type Database = {
           slug?: string
           status?: string
           subscription_value?: number
+          supported_languages?: string[]
           updated_at?: string
         }
         Relationships: []
@@ -1140,6 +1299,9 @@ export type Database = {
           sensory_body: number
           sensory_sweetness: number
           serving_temp: string | null
+          stock_min: number
+          stock_qty: number
+          track_stock: boolean
           type: string
           winery_id: string
           year: number | null
@@ -1167,6 +1329,9 @@ export type Database = {
           sensory_body?: number
           sensory_sweetness?: number
           serving_temp?: string | null
+          stock_min?: number
+          stock_qty?: number
+          track_stock?: boolean
           type: string
           winery_id: string
           year?: number | null
@@ -1194,6 +1359,9 @@ export type Database = {
           sensory_body?: number
           sensory_sweetness?: number
           serving_temp?: string | null
+          stock_min?: number
+          stock_qty?: number
+          track_stock?: boolean
           type?: string
           winery_id?: string
           year?: number | null
