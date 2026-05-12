@@ -267,9 +267,21 @@ export default function AdminLeadsPage() {
             <ScheduledQueue wineryId={winery.id} />
           )}
         </div>
+      ) : view === "postsale" ? (
+        <PostSaleExportBar wineryId={winery.id} winerySlug={winery.slug} wineryCurrency={winery.currency || "BRL"} />
       ) : view === "settings" ? (
         canManage ? (
-          <AssignmentQueueSettings wineryId={winery.id} />
+          <div className="space-y-3">
+            <div className="flex bg-secondary rounded-lg p-0.5 w-fit">
+              <SubBtn active={settingsView === "queue"} onClick={() => setSettingsView("queue")} label="Distribuição de leads" />
+              <SubBtn active={settingsView === "notifications"} onClick={() => setSettingsView("notifications")} label="Notificações" />
+            </div>
+            {settingsView === "queue" ? (
+              <AssignmentQueueSettings wineryId={winery.id} />
+            ) : (
+              <NotificationPrefsForm wineryId={winery.id} adminId={admin.id} />
+            )}
+          </div>
         ) : (
           <p className="text-center text-sm text-muted-foreground py-12">Sem permissão.</p>
         )
