@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Star, Send, X } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
 interface NpsModalProps {
-  onSubmit: (score: number) => void;
+  onSubmit: (score: number, comment: string) => void;
   onSkip: () => void;
 }
 
 export default function NpsModal({ onSubmit, onSkip }: NpsModalProps) {
   const { t } = useI18n();
   const [score, setScore] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
 
   const labels = ["😡", "😞", "😕", "😐", "😐", "🙂", "🙂", "😊", "😄", "🤩", "🥳"];
   const colors = [
@@ -32,12 +33,12 @@ export default function NpsModal({ onSubmit, onSkip }: NpsModalProps) {
         animate={{ scale: 1, y: 0 }}
         className="bg-card w-full max-w-sm mx-4 rounded-2xl border border-border/30 p-6 luxury-shadow relative"
       >
-        <button onClick={onSkip} className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-muted">
+        <button onClick={onSkip} aria-label="Fechar" className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-muted">
           <X className="w-4 h-4 text-muted-foreground" />
         </button>
 
         <div className="text-center mb-5">
-          <Star className="w-8 h-8 text-gold mx-auto mb-2" />
+          <Star className="w-8 h-8 text-gold mx-auto mb-2" aria-hidden="true" />
           <h2 className="font-display text-lg font-bold text-foreground">{t("nps.how_was_experience")}</h2>
           <p className="text-xs text-muted-foreground mt-1">
             {t("nps.recommend_scale")}
@@ -49,6 +50,7 @@ export default function NpsModal({ onSubmit, onSkip }: NpsModalProps) {
             <button
               key={i}
               onClick={() => setScore(i)}
+              aria-label={`Nota ${i}`}
               className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${
                 score === i
                   ? `${colors[i]} text-white scale-110 ring-2 ring-gold/50`
@@ -64,9 +66,22 @@ export default function NpsModal({ onSubmit, onSkip }: NpsModalProps) {
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-4"
+            className="text-center mb-3"
           >
             <span className="text-3xl">{labels[score]}</span>
+          </motion.div>
+        )}
+
+        {score !== null && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value.slice(0, 300))}
+              placeholder="Conte um pouco mais (opcional)…"
+              rows={2}
+              maxLength={300}
+              className="w-full mb-3 rounded-xl border border-border bg-background p-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
           </motion.div>
         )}
 
@@ -78,11 +93,11 @@ export default function NpsModal({ onSubmit, onSkip }: NpsModalProps) {
             {t("nps.skip")}
           </button>
           <button
-            onClick={() => score !== null && onSubmit(score)}
+            onClick={() => score !== null && onSubmit(score, comment.trim())}
             disabled={score === null}
             className="flex-1 py-2.5 rounded-xl text-sm bg-gold text-gold-foreground font-medium hover:bg-gold/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
           >
-            <Send className="w-3.5 h-3.5" />
+            <Send className="w-3.5 h-3.5" aria-hidden="true" />
             {t("nps.submit")}
           </button>
         </div>
