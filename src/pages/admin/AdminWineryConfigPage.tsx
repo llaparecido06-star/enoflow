@@ -101,17 +101,22 @@ function SectionCard({ icon: Icon, title, fields, onSave }: any) {
 function HoursCard({ hours, onSave }: any) {
   const [h, setH] = useState<any>(hours);
   return (
-    <div className="bg-card border border-border rounded-xl p-4 mb-4">
-      <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Clock className="w-4 h-4 text-primary" /> Horário de funcionamento</h3>
+    <div className="admin-card admin-card-hover p-5 mb-4">
+      <h3 className="admin-section-title flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Clock className="w-4 h-4 text-primary" />
+        </div>
+        Horário de funcionamento
+      </h3>
       <div className="space-y-2">
         {DAYS.map((d) => (
           <div key={d.id} className="flex items-center gap-2">
-            <span className="text-xs w-20 text-muted-foreground">{d.label}</span>
-            <input value={h[d.id] ?? ""} onChange={(e) => setH({ ...h, [d.id]: e.target.value })} placeholder="09:00-18:00 ou Fechado" className="flex-1 border border-border rounded-lg px-3 py-1.5 text-sm bg-background" />
+            <span className="text-xs w-20 text-muted-foreground font-medium">{d.label}</span>
+            <input value={h[d.id] ?? ""} onChange={(e) => setH({ ...h, [d.id]: e.target.value })} placeholder="09:00-18:00 ou Fechado" className="flex-1 border border-border rounded-lg px-3 py-1.5 text-sm bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
           </div>
         ))}
       </div>
-      <button onClick={() => onSave(h)} className="mt-3 bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm">Salvar</button>
+      <button onClick={() => onSave(h)} className="mt-4 inline-flex items-center gap-2 gradient-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-card hover:shadow-elevated hover:scale-[1.02] transition-all">Salvar</button>
     </div>
   );
 }
@@ -122,33 +127,38 @@ function I18nCard({ cfg, onSave }: any) {
   const [currency, setCurrency] = useState(cfg.currency ?? "BRL");
   const toggle = (id: string) => setSupported((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
   return (
-    <div className="bg-card border border-border rounded-xl p-4 mb-4">
-      <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Globe className="w-4 h-4 text-primary" /> Idiomas & Moeda</h3>
+    <div className="admin-card admin-card-hover p-5 mb-4">
+      <h3 className="admin-section-title flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Globe className="w-4 h-4 text-primary" />
+        </div>
+        Idiomas & Moeda
+      </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
-          <label className="text-[10px] text-muted-foreground uppercase block mb-1">Idioma padrão</label>
-          <select value={defLang} onChange={(e) => setDefLang(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background">
+          <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1.5">Idioma padrão</label>
+          <select value={defLang} onChange={(e) => setDefLang(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 outline-none transition-all">
             {LANGS.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-[10px] text-muted-foreground uppercase block mb-1">Moeda</label>
-          <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background">
+          <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1.5">Moeda</label>
+          <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 outline-none transition-all">
             {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
       </div>
       <div className="mt-3">
-        <label className="text-[10px] text-muted-foreground uppercase block mb-1.5">Idiomas suportados</label>
+        <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1.5">Idiomas suportados</label>
         <div className="flex flex-wrap gap-1.5">
           {LANGS.map((l) => (
-            <button key={l.id} type="button" onClick={() => toggle(l.id)} className={`text-xs px-2.5 py-1 rounded-full border ${supported.includes(l.id) ? "bg-primary text-primary-foreground border-primary" : "border-border"}`}>
+            <button key={l.id} type="button" onClick={() => toggle(l.id)} className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${supported.includes(l.id) ? "bg-foreground text-background border-foreground shadow-card" : "border-border text-muted-foreground hover:bg-muted/60"}`}>
               {l.label}
             </button>
           ))}
         </div>
       </div>
-      <button onClick={() => onSave({ default_language: defLang, supported_languages: supported, currency })} className="mt-3 bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm">Salvar</button>
+      <button onClick={() => onSave({ default_language: defLang, supported_languages: supported, currency })} className="mt-4 inline-flex items-center gap-2 gradient-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-card hover:shadow-elevated hover:scale-[1.02] transition-all">Salvar</button>
     </div>
   );
 }
