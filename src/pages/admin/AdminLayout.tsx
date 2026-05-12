@@ -122,46 +122,49 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
-      <aside className="hidden md:flex w-60 flex-col bg-sidebar border-r border-sidebar-border">
-        <div className="p-4 border-b border-sidebar-border">
+      <aside className="hidden md:flex w-64 flex-col gradient-sidebar border-r border-sidebar-border">
+        <div className="p-4 border-b border-sidebar-border/60">
           <div className="flex items-center gap-3">
             {winery.logo_url ? (
-              <img src={winery.logo_url} alt={winery.name} className="w-9 h-9 rounded-lg object-cover" />
+              <img src={winery.logo_url} alt={winery.name} className="w-10 h-10 rounded-xl object-cover ring-2 ring-background shadow-card" />
             ) : (
               <div
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-bold"
-                style={{ backgroundColor: winery.primary_color, color: '#fff' }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white shadow-card"
+                style={{ background: `linear-gradient(135deg, ${winery.primary_color}, ${winery.primary_color}cc)` }}
               >
                 {winery.name.charAt(0)}
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="font-display text-sm font-semibold text-sidebar-foreground truncate">{winery.name}</p>
-              <p className="text-[10px] text-sidebar-foreground/60">{admin.name} · {roleLabel[admin.role]}</p>
+              <p className="font-display text-sm font-semibold text-sidebar-foreground truncate tracking-tight">{winery.name}</p>
+              <p className="text-[10px] text-sidebar-foreground/60 truncate">{admin.name} · {roleLabel[admin.role]}</p>
             </div>
           </div>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto scrollbar-hide">
           {visibleNav.map((item) => {
             const isActive = activeItem === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => navigate(basePath + item.path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 relative ${
                   isActive
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    ? "bg-card text-sidebar-primary font-medium shadow-card"
+                    : "text-sidebar-foreground/70 hover:bg-card/60 hover:text-sidebar-foreground"
                 }`}
               >
-                <item.icon className="w-4 h-4" />
-                {item.label}
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full gradient-primary" />
+                )}
+                <item.icon className={`w-4 h-4 transition-transform ${isActive ? "scale-110" : "group-hover:scale-105"}`} />
+                <span className="truncate">{item.label}</span>
               </button>
             );
           })}
         </nav>
-        <div className="p-3 border-t border-sidebar-border">
-          <button onClick={() => { logout(); navigate("/admin/login"); }} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive/80 hover:bg-destructive/10 transition-colors">
+        <div className="p-3 border-t border-sidebar-border/60">
+          <button onClick={() => { logout(); navigate("/admin/login"); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-destructive/80 hover:bg-destructive/10 transition-colors">
             <LogOut className="w-4 h-4" />
             Sair
           </button>
