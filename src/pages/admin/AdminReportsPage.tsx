@@ -47,30 +47,32 @@ export default function AdminReportsPage() {
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Relatórios</h1>
-          <p className="text-sm text-muted-foreground">Pós-venda e automações</p>
+          <h1 className="admin-page-title flex items-center gap-2"><BarChart3 className="w-7 h-7 text-primary" />Relatórios</h1>
+          <p className="text-sm text-muted-foreground mt-1">Pós-venda e automações</p>
         </div>
         <button
           onClick={runAutomations}
           disabled={processing}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
         >
           {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
           Processar D+1 / D+15
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-card rounded-xl border border-border p-4">
+          <div key={stat.label} className="admin-kpi admin-card-hover p-5">
             <div className="flex items-center gap-2 mb-2">
-              <stat.icon className={`w-4 h-4 ${stat.color}`} />
-              <span className="text-[11px] text-muted-foreground">{stat.label}</span>
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <stat.icon className={`w-4 h-4 ${stat.color}`} />
+              </div>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{stat.label}</span>
             </div>
-            <p className="font-display text-xl font-bold text-foreground">{stat.value}</p>
+            <p className="font-display text-2xl font-bold text-foreground">{stat.value}</p>
           </div>
         ))}
       </div>
