@@ -112,6 +112,10 @@ const App = () => {
                 <Route path="training" element={<AdminTrainingPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="campaigns" element={<AdminCampaignsPage />} />
+                <Route path="reservations" element={<AdminReservationsPage />} />
+                <Route path="stock" element={<AdminStockPage />} />
+                <Route path="finance" element={<AdminFinancePage />} />
+                <Route path="config" element={<AdminWineryConfigPage />} />
               </Route>
 
               {/* Privacy */}
