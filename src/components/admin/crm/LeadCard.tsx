@@ -34,6 +34,17 @@ const daysSince = (iso: string | null | undefined) => {
 const STALE_DAYS = 7;
 const FINAL_STAGES = ["convertido", "perdido"];
 
+const ageFrom = (iso?: string | null): number | null => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  const diff = Date.now() - d.getTime();
+  const age = Math.floor(diff / (365.25 * 86400000));
+  return age > 0 && age < 120 ? age : null;
+};
+
+const GENDER_ICON: Record<string, string> = { masculino: "♂", feminino: "♀", nao_informar: "" };
+
 export default function LeadCard({ lead, currency, onOpen }: { lead: CrmLead; currency: string; onOpen: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform
@@ -43,6 +54,13 @@ export default function LeadCard({ lead, currency, onOpen }: { lead: CrmLead; cu
   const persona = lead.preferences_summary?.match(/Wine Persona:\s*([^(]+)/)?.[1]?.trim();
   const stageDays = daysSince(lead.stage_changed_at);
   const stale = !FINAL_STAGES.includes(lead.stage) && stageDays !== null && stageDays >= STALE_DAYS;
+  const age = ageFrom(lead.birth_date);
+  const genderIcon = lead.gender ? GENDER_ICON[lead.gender] ?? "" : "";
+  const demoChips = [
+    age ? `${age}a` : null,
+    genderIcon || null,
+    lead.income_class ? `R:${lead.income_class}` : null,
+  ].filter(Boolean) as string[];
 
   return (
     <div
