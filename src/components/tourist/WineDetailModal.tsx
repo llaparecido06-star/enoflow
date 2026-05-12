@@ -200,6 +200,8 @@ export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "B
       {reviewOpen && (
         <PublicReviewModal
           wineName={wine.name}
+          initialStars={myReview?.stars}
+          initialComment={myReview?.comment ?? ""}
           onClose={() => setReviewOpen(false)}
           onSubmit={async (stars, comment) => {
             try {
@@ -210,6 +212,7 @@ export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "B
                 comment,
               });
               if (res.error || res.data?.error) throw new Error(res.data?.error || "Erro");
+              setMyReview({ stars, comment: comment?.trim() || null });
               toast.success("Avaliação enviada. Obrigado!");
               setReviewOpen(false);
             } catch {
