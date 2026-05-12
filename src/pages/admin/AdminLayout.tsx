@@ -91,10 +91,17 @@ export default function AdminLayout() {
     }
   }, [admin, isLoading, authLoading, navigate]);
 
-  const visibleNav = useMemo(() => {
-    if (admin?.role === "sales") return navItems.filter((n) => n.salesOnly);
-    return navItems.filter((n) => can(admin?.role, n.cap));
+  const visibleGroups = useMemo(() => {
+    return navGroups
+      .map((g) => ({
+        ...g,
+        items: admin?.role === "sales"
+          ? g.items.filter((n) => n.salesOnly)
+          : g.items.filter((n) => can(admin?.role, n.cap)),
+      }))
+      .filter((g) => g.items.length > 0);
   }, [admin?.role]);
+  const visibleNav = useMemo(() => visibleGroups.flatMap((g) => g.items), [visibleGroups]);
 
   // Redirect staff/manager to default page
   useEffect(() => {
