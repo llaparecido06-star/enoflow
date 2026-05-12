@@ -6,7 +6,7 @@ import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { can } from "@/lib/admin/permissions";
-import { Star, MessageSquare, AlertTriangle, Smile, Frown, Meh, EyeOff, Eye } from "lucide-react";
+import { Star, MessageSquare, AlertTriangle, Smile, Frown, Meh, EyeOff, Eye, History, ChevronDown, ChevronRight } from "lucide-react";
 
 export default function AdminReviewsPage() {
   const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
