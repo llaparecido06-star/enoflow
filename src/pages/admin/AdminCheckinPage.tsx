@@ -155,19 +155,19 @@ export default function AdminCheckinPage() {
           </Section>
 
           <button disabled={loading || cart.length === 0} onClick={issueVoucher}
-            className="fixed bottom-20 left-4 right-4 max-w-md mx-auto h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg">
+            className="fixed bottom-20 left-4 right-4 max-w-md mx-auto h-14 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-50 shadow-elevated active:scale-95 transition-all z-30">
             <QrCode className="w-5 h-5" /> Emitir voucher · {formatCurrency(total, winery.currency)}
           </button>
         </div>
       )}
 
       {step === "done" && voucher && (
-        <div className="bg-card border border-border rounded-2xl p-5 text-center space-y-3">
-          <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 flex items-center justify-center"><Check className="w-8 h-8 text-emerald-600" /></div>
+        <div className="admin-card p-6 text-center space-y-3">
+          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-emerald-100 to-emerald-50 flex items-center justify-center ring-4 ring-emerald-200/50"><Check className="w-10 h-10 text-emerald-600" /></div>
           <h2 className="font-display text-xl font-bold">Voucher emitido</h2>
-          <p className="text-3xl font-bold tracking-wider text-primary">{voucher.code}</p>
-          <p className="text-sm text-muted-foreground">Total: <span className="font-semibold">{formatCurrency(voucher.total, winery.currency)}</span></p>
-          <button onClick={reset} className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold">Novo check-in</button>
+          <p className="text-3xl font-bold tracking-wider text-primary font-mono">{voucher.code}</p>
+          <p className="text-sm text-muted-foreground">Total: <span className="font-semibold text-foreground">{formatCurrency(voucher.total, winery.currency)}</span></p>
+          <button onClick={reset} className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold shadow-card hover:shadow-elevated active:scale-95 transition-all">Novo check-in</button>
         </div>
       )}
     </div>
