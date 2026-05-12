@@ -147,13 +147,35 @@ export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "B
             </div>
           )}
 
-          {/* Public review CTA */}
-          <button
-            onClick={() => setReviewOpen(true)}
-            className="w-full mt-2 mb-3 flex items-center justify-center gap-2 py-2 rounded-xl border border-dashed border-border text-xs text-muted-foreground hover:bg-secondary/40 transition-colors"
-          >
-            <MessageSquarePlus className="w-3.5 h-3.5" /> Avaliar este vinho
-          </button>
+          {/* My public review */}
+          {myReview ? (
+            <div className="mb-3 rounded-xl border border-gold/30 bg-gold/5 p-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] uppercase tracking-widest font-bold text-gold">Sua avaliação</span>
+                <button
+                  onClick={() => setReviewOpen(true)}
+                  className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                >
+                  <Pencil className="w-3 h-3" /> Editar
+                </button>
+              </div>
+              <div className="flex gap-0.5 mb-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className={`w-3.5 h-3.5 ${i < myReview.stars ? "fill-gold text-gold" : "text-muted-foreground/20"}`} />
+                ))}
+              </div>
+              {myReview.comment && (
+                <p className="text-xs text-foreground/80 leading-relaxed">"{myReview.comment}"</p>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => setReviewOpen(true)}
+              className="w-full mt-2 mb-3 flex items-center justify-center gap-2 py-2 rounded-xl border border-dashed border-border text-xs text-muted-foreground hover:bg-secondary/40 transition-colors"
+            >
+              <MessageSquarePlus className="w-3.5 h-3.5" /> Avaliar este vinho
+            </button>
+          )}
 
           {/* Price + Add to cart */}
           <div className="flex items-center justify-between pt-3 border-t border-border/30">
