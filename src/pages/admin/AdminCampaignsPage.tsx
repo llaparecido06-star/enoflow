@@ -247,7 +247,7 @@ export default function AdminCampaignsPage() {
       ) : (
         <div className="grid gap-4">
           {campaigns.map((c) => (
-            <div key={c.id} className="border rounded-xl p-4 bg-card">
+            <div key={c.id} className="admin-card admin-card-hover p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
