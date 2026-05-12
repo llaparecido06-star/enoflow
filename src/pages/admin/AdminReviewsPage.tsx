@@ -90,6 +90,7 @@ export default function AdminReviewsPage() {
     toast.success(next ? "Avaliação ocultada" : "Avaliação reexibida");
     qc.invalidateQueries({ queryKey: ["reviews", winery.id] });
     qc.invalidateQueries({ queryKey: ["reviews-moderation-history", winery.id] });
+  };
 
   return (
     <div className="space-y-6 max-w-6xl">
