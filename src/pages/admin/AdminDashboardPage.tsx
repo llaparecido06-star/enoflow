@@ -200,23 +200,26 @@ export default function AdminDashboardPage() {
 function BiPieCard({ title, data, emptyMsg }: { title: string; data: { name: string; value: number }[]; emptyMsg: string }) {
   if (!data.length) {
     return (
-      <div className="bg-card rounded-xl border border-border p-5 flex flex-col items-center justify-center min-h-[220px]">
+      <div className="admin-card p-6 flex flex-col items-center justify-center min-h-[240px]">
+        <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center mb-2">
+          <BarChart3 className="w-5 h-5 text-muted-foreground" />
+        </div>
         <p className="text-sm text-muted-foreground">{emptyMsg}</p>
       </div>
     );
   }
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
-      <h3 className="font-display text-sm font-semibold text-foreground mb-3">{title}</h3>
-      <div className="h-48">
+    <div className="admin-card admin-card-hover p-6">
+      <h3 className="admin-section-title mb-4">{title}</h3>
+      <div className="h-52">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={10}>
+            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={35} paddingAngle={2} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={10}>
               {data.map((_, i) => (
-                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="hsl(var(--card))" strokeWidth={2} />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid hsl(var(--border))" }} />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -227,21 +230,24 @@ function BiPieCard({ title, data, emptyMsg }: { title: string; data: { name: str
 function BiBarCard({ title, data, emptyMsg }: { title: string; data: { name: string; value: number }[]; emptyMsg: string }) {
   if (!data.length) {
     return (
-      <div className="bg-card rounded-xl border border-border p-5 flex flex-col items-center justify-center min-h-[220px]">
+      <div className="admin-card p-6 flex flex-col items-center justify-center min-h-[240px]">
+        <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center mb-2">
+          <BarChart3 className="w-5 h-5 text-muted-foreground" />
+        </div>
         <p className="text-sm text-muted-foreground">{emptyMsg}</p>
       </div>
     );
   }
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
-      <h3 className="font-display text-sm font-semibold text-foreground mb-3">{title}</h3>
-      <div className="h-48">
+    <div className="admin-card admin-card-hover p-6">
+      <h3 className="admin-section-title mb-4">{title}</h3>
+      <div className="h-52">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ left: 0 }}>
-            <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={80} />
-            <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+            <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} axisLine={false} tickLine={false} />
+            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={90} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12, border: "1px solid hsl(var(--border))" }} cursor={{ fill: "hsl(var(--muted) / 0.4)" }} />
+            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
