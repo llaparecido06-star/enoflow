@@ -53,6 +53,9 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
   const [statusFilter, setStatusFilter] = useState<string>(persisted.statusFilter ?? "pendente");
   const [showNew, setShowNew] = useState(false);
   const [newPreset, setNewPreset] = useState<Date | null>(null);
+  const [editing, setEditing] = useState<Task | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ typeFilter, assigneeFilter, statusFilter }));
@@ -117,6 +120,23 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
     setShowNew(true);
   };
 
+  const handleDrop = async (dayKey: string) => {
+    const id = dragId;
+    setDragId(null);
+    setDragOverKey(null);
+    if (!id) return;
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    const orig = new Date(task.due_at);
+    const [y, m, dd] = dayKey.split("-").map(Number);
+    const newDate = new Date(y, m - 1, dd, orig.getHours(), orig.getMinutes());
+    if (newDate.toISOString().slice(0, 10) === task.due_at.slice(0, 10)) return;
+    // optimistic
+    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, due_at: newDate.toISOString() } : t));
+    const { error } = await invokeAuth("admin-crm", { action: "move_task", task_id: id, due_at: newDate.toISOString(), winery_id: wineryId });
+    if (error) { toast.error("Erro ao mover"); load(); } else { toast.success("Reagendada"); }
+  };
+
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 p-3 border-b border-border bg-secondary/30">
@@ -167,12 +187,17 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
               const isSel = isSameDay(d, selected);
               const isToday = isSameDay(d, new Date());
               return (
-                <button
+                <div
                   key={key + d.getTime()}
                   onClick={() => setSelected(d)}
-                  className={`relative h-16 sm:h-20 rounded-md border text-left p-1 transition-colors ${
+                  onDragOver={(e) => { e.preventDefault(); setDragOverKey(key); }}
+                  onDragLeave={() => setDragOverKey((k) => (k === key ? null : k))}
+                  onDrop={() => handleDrop(key)}
+                  className={`relative h-16 sm:h-20 rounded-md border text-left p-1 transition-colors cursor-pointer ${
                     isSel ? "border-primary ring-1 ring-primary" : "border-border hover:bg-secondary/40"
-                  } ${inMonth ? "bg-background" : "bg-secondary/20 text-muted-foreground"}`}
+                  } ${inMonth ? "bg-background" : "bg-secondary/20 text-muted-foreground"} ${
+                    dragOverKey === key ? "bg-primary/10 border-primary" : ""
+                  }`}
                 >
                   <div className={`text-[11px] font-medium ${isToday ? "text-primary" : ""}`}>{d.getDate()}</div>
                   <div className="absolute bottom-1 left-1 right-1 flex flex-wrap gap-0.5">
@@ -181,7 +206,7 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
                     ))}
                     {ts.length > 4 && <span className="text-[9px] text-muted-foreground">+{ts.length - 4}</span>}
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -213,12 +238,17 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
               {dayTasks.map((t) => {
                 const ov = new Date(t.due_at) < new Date() && t.status === "pendente";
                 return (
-                  <div key={t.id} className="flex items-start gap-2 p-2 border border-border rounded-md hover:bg-secondary/30">
+                  <div
+                    key={t.id}
+                    draggable
+                    onDragStart={() => setDragId(t.id)}
+                    onDragEnd={() => { setDragId(null); setDragOverKey(null); }}
+                    className={`flex items-start gap-2 p-2 border border-border rounded-md hover:bg-secondary/30 cursor-grab active:cursor-grabbing ${dragId === t.id ? "opacity-50" : ""}`}
+                  >
                     <span className={`w-2 h-2 mt-1.5 rounded-full ${TYPE_COLOR[t.type] || "bg-gray-400"}`} />
                     <button
-                      onClick={() => t.lead_id && onLeadOpen?.(t.lead_id)}
-                      disabled={!t.lead_id}
-                      className="flex-1 text-left min-w-0 disabled:cursor-default"
+                      onClick={() => setEditing(t)}
+                      className="flex-1 text-left min-w-0"
                     >
                       <p className="text-sm font-medium truncate">{t.title}</p>
                       <p className={`text-[10px] ${ov ? "text-rose-600" : "text-muted-foreground"}`}>
@@ -227,6 +257,9 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
                         {t.status === "feito" && " · ✓"}
                       </p>
                     </button>
+                    {t.lead_id && (
+                      <button onClick={() => onLeadOpen?.(t.lead_id!)} title="Abrir lead" className="text-[10px] text-primary underline">lead</button>
+                    )}
                     {t.status === "pendente" && (
                       <button onClick={() => complete(t.id)} title="Concluir" className="text-emerald-600">
                         <CheckCircle2 className="w-4 h-4" />
@@ -248,6 +281,15 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
           wineryId={wineryId}
           presetDueAt={newPreset ?? undefined}
           onClose={() => { setShowNew(false); setNewPreset(null); }}
+          onSaved={load}
+        />
+      )}
+      {editing && (
+        <TaskFormModal
+          wineryId={wineryId}
+          taskId={editing.id}
+          initial={{ title: editing.title, due_at: editing.due_at, type: editing.type, assigned_admin_id: editing.admin_id }}
+          onClose={() => setEditing(null)}
           onSaved={load}
         />
       )}

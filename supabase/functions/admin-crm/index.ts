@@ -33,10 +33,11 @@ Deno.serve(async (req) => {
     const SALES_ALLOWED = new Set([
       "list_pipeline", "lead_360", "move_stage", "move_stage_with_reason", "update_state",
       "add_note", "delete_note", "list_tasks", "upsert_task", "complete_task", "delete_task",
-      "task_counts", "list_scheduled", "schedule_messages", "mark_scheduled_sent",
-      "mark_scheduled_error", "cancel_scheduled", "log_message", "list_templates",
+      "move_task", "task_counts", "list_scheduled", "schedule_messages", "mark_scheduled_sent",
+      "mark_scheduled_error", "cancel_scheduled", "retry_scheduled", "log_message", "list_templates",
       "list_segments", "list_staff", "assign_lead", "claim_lead", "notifications",
-      "get_prefs", "update_prefs", "get_queue",
+      "get_prefs", "update_prefs", "get_queue", "export_postsale",
+      "bulk_cancel_scheduled", "bulk_mark_error", "bulk_mark_sent",
     ]);
     const isSales = normRole === "sales";
     if (!isSales && !hasMinRole(admin.role, "manager")) {
@@ -708,6 +709,126 @@ Deno.serve(async (req) => {
         .eq("winery_id", winery_id)
         .eq("is_active", true);
       return json({ success: true, admins: data ?? [] });
+    }
+
+    // ─── MOVE TASK (drag-and-drop) ──────────────────────────────
+    if (action === "move_task") {
+      const { task_id, due_at } = body;
+      if (!task_id || !due_at) return json({ error: "task_id and due_at required" }, 400);
+      const iso = new Date(due_at).toISOString();
+      // sales can only move their own
+      const filter = supabase.from("crm_tasks").update({ due_at: iso }).eq("id", task_id).eq("winery_id", winery_id);
+      if (isSales) filter.eq("admin_id", admin_id);
+      const { error } = await filter;
+      if (error) throw error;
+      return json({ success: true });
+    }
+
+    // ─── BULK SCHEDULED OPERATIONS ──────────────────────────────
+    if (action === "bulk_cancel_scheduled") {
+      const { message_ids } = body;
+      if (!Array.isArray(message_ids) || message_ids.length === 0) return json({ error: "message_ids required" }, 400);
+      await supabase.from("crm_scheduled_messages")
+        .update({ status: "cancelada", last_status_change_by: admin_id })
+        .in("id", message_ids).eq("winery_id", winery_id);
+      return json({ success: true, count: message_ids.length });
+    }
+
+    if (action === "bulk_mark_error") {
+      const { message_ids, reason } = body;
+      if (!Array.isArray(message_ids) || message_ids.length === 0) return json({ error: "message_ids required" }, 400);
+      await supabase.from("crm_scheduled_messages")
+        .update({
+          status: "erro",
+          error_reason: reason ? String(reason).slice(0, 500) : "Falha em lote",
+          attempted_at: new Date().toISOString(),
+          last_status_change_by: admin_id,
+        })
+        .in("id", message_ids).eq("winery_id", winery_id);
+      return json({ success: true, count: message_ids.length });
+    }
+
+    if (action === "bulk_mark_sent") {
+      const { message_ids } = body;
+      if (!Array.isArray(message_ids) || message_ids.length === 0) return json({ error: "message_ids required" }, 400);
+      const { data: msgs } = await supabase.from("crm_scheduled_messages")
+        .select("id, lead_id, template_id, body_resolved")
+        .in("id", message_ids).eq("winery_id", winery_id);
+      await supabase.from("crm_scheduled_messages")
+        .update({ status: "enviada", sent_at: new Date().toISOString(), last_status_change_by: admin_id })
+        .in("id", message_ids).eq("winery_id", winery_id);
+      if (msgs && msgs.length) {
+        await supabase.from("crm_message_log").insert(
+          msgs.map((m: any) => ({
+            lead_id: m.lead_id, winery_id, admin_id,
+            template_id: m.template_id, channel: "whatsapp", body: m.body_resolved,
+          }))
+        );
+      }
+      return json({ success: true, count: msgs?.length ?? 0 });
+    }
+
+    // ─── POST-SALE CSV EXPORT (D+1 / D+15) ──────────────────────
+    if (action === "export_postsale") {
+      const { from, to, statuses } = body; // statuses: string[]
+      const fromIso = from ? new Date(from).toISOString() : new Date(Date.now() - 90 * 86400 * 1000).toISOString();
+      const toIso = to ? new Date(to).toISOString() : new Date().toISOString();
+
+      const { data: vouchers } = await supabase
+        .from("vouchers")
+        .select("id, user_id, code, total, redeemed, nps_score, created_at, items")
+        .eq("winery_id", winery_id)
+        .gte("created_at", fromIso)
+        .lte("created_at", toIso)
+        .order("created_at", { ascending: false });
+
+      const leadIds = Array.from(new Set((vouchers ?? []).map((v: any) => v.user_id)));
+      const [{ data: leads }, { data: messages }] = await Promise.all([
+        leadIds.length ? supabase.from("users_leads").select("id, name, whatsapp").in("id", leadIds) : Promise.resolve({ data: [] as any[] }),
+        leadIds.length ? supabase.from("crm_message_log").select("lead_id, sent_at, body").in("lead_id", leadIds).eq("winery_id", winery_id) : Promise.resolve({ data: [] as any[] }),
+      ]);
+      const leadMap: Record<string, any> = {};
+      for (const l of leads ?? []) leadMap[l.id] = l;
+
+      const msgsByLead: Record<string, any[]> = {};
+      for (const m of messages ?? []) (msgsByLead[m.lead_id] ||= []).push(m);
+
+      const rows: any[] = [];
+      const now = Date.now();
+      for (const v of vouchers ?? []) {
+        const lead = leadMap[v.user_id];
+        if (!lead) continue;
+        const created = new Date(v.created_at).getTime();
+        const d1 = (now - created) >= 86400 * 1000;
+        const d15 = (now - created) >= 15 * 86400 * 1000;
+        const sent = msgsByLead[v.user_id] ?? [];
+        const sentD1 = sent.some((m: any) => Math.abs(new Date(m.sent_at).getTime() - (created + 86400 * 1000)) <= 2 * 86400 * 1000);
+        const sentD15 = sent.some((m: any) => Math.abs(new Date(m.sent_at).getTime() - (created + 15 * 86400 * 1000)) <= 5 * 86400 * 1000);
+        const statusD1 = sentD1 ? "enviado" : d1 ? "pendente" : "—";
+        const statusD15 = sentD15 ? "enviado" : d15 ? "pendente" : "—";
+        const npsStatus = v.nps_score == null ? "não respondido" : String(v.nps_score);
+        const voucherStatus = v.redeemed ? "resgatado" : "não resgatado";
+
+        // filter by status set if provided
+        if (Array.isArray(statuses) && statuses.length > 0) {
+          const tags = new Set<string>();
+          if (sentD1) tags.add("d1_enviado");
+          if (sentD15) tags.add("d15_enviado");
+          if (v.nps_score != null) tags.add("nps_respondido");
+          if (v.redeemed) tags.add("voucher_resgatado");
+          if (!sentD1 && !sentD15) tags.add("sem_retorno");
+          if (!statuses.some((s: string) => tags.has(s))) continue;
+        }
+
+        rows.push({
+          nome: lead.name, whatsapp: lead.whatsapp,
+          data_visita: new Date(v.created_at).toLocaleDateString("pt-BR"),
+          voucher_code: v.code, total: Number(v.total || 0).toFixed(2),
+          voucher_status: voucherStatus, nps: npsStatus,
+          status_d1: statusD1, status_d15: statusD15,
+        });
+      }
+      return json({ success: true, rows, count: rows.length });
     }
 
     return json({ error: "Unknown action" }, 400);
