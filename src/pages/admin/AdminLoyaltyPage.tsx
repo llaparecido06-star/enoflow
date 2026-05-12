@@ -78,10 +78,10 @@ function RewardsTab({ rewards, canManage, wineryId, onChange }: any) {
 
   return (
     <div className="space-y-3">
-      {canManage && <button onClick={() => setEditing(empty)} className="text-sm px-3 py-2 rounded-lg bg-primary text-primary-foreground inline-flex items-center gap-1"><Plus className="w-4 h-4" />Nova recompensa</button>}
+      {canManage && <button onClick={() => setEditing(empty)} className="text-sm px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground inline-flex items-center gap-1.5 shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all font-medium"><Plus className="w-4 h-4" />Nova recompensa</button>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {rewards.map((r: any) => (
-          <div key={r.id} className="rounded-xl bg-card border border-border p-3 flex gap-3">
+          <div key={r.id} className="admin-card admin-card-hover p-3 flex gap-3">
             {r.image_url ? <img src={r.image_url} className="w-14 h-14 rounded-md object-cover" /> : <div className="w-14 h-14 rounded-md bg-muted flex items-center justify-center"><Gift className="w-6 h-6 text-muted-foreground" /></div>}
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{r.title}</p>
@@ -141,10 +141,10 @@ function TiersTab({ tiers, canManage, wineryId, onChange }: any) {
 
   return (
     <div className="space-y-3">
-      {canManage && <button onClick={() => setEditing(empty)} className="text-sm px-3 py-2 rounded-lg bg-primary text-primary-foreground inline-flex items-center gap-1"><Plus className="w-4 h-4" />Novo nível</button>}
+      {canManage && <button onClick={() => setEditing(empty)} className="text-sm px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground inline-flex items-center gap-1.5 shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all font-medium"><Plus className="w-4 h-4" />Novo nível</button>}
       <div className="space-y-2">
         {tiers.sort((a: any, b: any) => a.min_points - b.min_points).map((t: any) => (
-          <div key={t.id} className="rounded-xl bg-card border border-border p-3 flex items-center gap-3">
+          <div key={t.id} className="admin-card admin-card-hover p-3 flex items-center gap-3">
             <div className="w-3 h-10 rounded" style={{ backgroundColor: t.color }} />
             <div className="flex-1">
               <p className="font-medium">{t.name}</p>
@@ -191,7 +191,7 @@ function RulesTab({ rules, canManage, wineryId, onChange }: any) {
     onChange();
   };
   return (
-    <div className="rounded-xl bg-card border border-border p-4 space-y-3 max-w-md">
+    <div className="admin-card admin-card-hover p-4 space-y-3 max-w-md">
       <Field label="Pontos por moeda gasta (R$1 =)" value={form.points_per_currency} onChange={(v) => setForm({ ...form, points_per_currency: v })} disabled={!canManage} />
       <Field label="Pontos por visita (check-in)" value={form.points_per_visit} onChange={(v) => setForm({ ...form, points_per_visit: v })} disabled={!canManage} />
       <Field label="Pontos por indicação" value={form.points_per_referral} onChange={(v) => setForm({ ...form, points_per_referral: v })} disabled={!canManage} />
@@ -215,7 +215,7 @@ function RedemptionsTab({ redemptions, canManage, wineryId, onChange }: any) {
     onChange();
   };
   return (
-    <div className="rounded-xl bg-card border border-border overflow-hidden">
+    <div className="admin-card admin-card-hover overflow-hidden">
       <ul className="divide-y divide-border">
         {redemptions.length === 0 && <li className="p-6 text-center text-sm text-muted-foreground">Nenhum resgate solicitado.</li>}
         {redemptions.map((r: any) => (
