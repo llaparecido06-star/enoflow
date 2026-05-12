@@ -1,187 +1,140 @@
-## CRM Pro — versão "HubSpot-grade"
+## CRM Pro — Finalização Hubspot-grade
 
-Foco: completar o ciclo de vendas com **rastreio fim-a-fim de mensagens, calendário visual, lembretes ativos, papel de Atendente, ownership e fila de distribuição automática**, mantendo o padrão de segurança (RLS + Edge Functions) e UI light mode.
-
----
-
-### 1. Status de envio das mensagens agendadas
-
-**DB (`crm_scheduled_messages`)**
-- Já tem `status` (pendente/enviada/cancelada). Adicionar valores `erro` e coluna `error_reason TEXT`, `attempted_at TIMESTAMPTZ`.
-- Cada mudança de status grava entrada em `crm_message_log` (canal `whatsapp`, body, template_id) — isso aparece automaticamente no Timeline 360°.
-
-**Edge `admin-crm`**
-- `mark_scheduled_sent` → status=`enviada` + insere em `crm_message_log` + cria evento timeline "Mensagem enviada".
-- Nova action `mark_scheduled_error` (motivo) → status=`erro` + log timeline.
-- `cancel_scheduled` → log timeline "Mensagem cancelada".
-- `list_scheduled` retorna agrupado por status com badges.
-
-**UI `ScheduledQueue.tsx`**
-- 4 abas: **Para enviar agora · Pendentes · Enviadas (7d) · Erros**.
-- Cada item: badge colorido de status, botão "Re-tentar" em erros, "Marcar como enviada" / "Marcar como erro" no menu kebab.
-- Toast confirma e atualiza badge superior.
-
-**Timeline (`LeadTimelineModal.tsx`)**
-- Nova categoria de evento `message` com ícone Send + cor por status (verde=enviada, âmbar=pendente, vermelho=erro, cinza=cancelada).
+Esta é a rodada final que fecha todas as pontas em aberto do CRM e da experiência admin. Tudo segue o padrão atual: Edge Functions com `_shared/auth.ts`, light mode, isolamento por `winery_id`, WhatsApp por `wa.me`.
 
 ---
 
-### 2. Calendário de tarefas do CRM
+### 1. Exportação CSV de pós-venda (D+1 / D+15)
 
-**Novo componente `TaskCalendar.tsx`** (mês + semana, vanilla — sem dep nova).
+**Onde**: Aba "Pós-venda" do CRM (já existe na página de Leads) e Dashboard Admin.
 
-```text
-┌─ Out 2026 ─────────────────────┬ Filtros: [Tipo] [Atendente] [Status]
-│ Seg  Ter  Qua  Qui  Sex  Sáb  │ + Nova tarefa
-│  1    2    3 ●● 4    5    6   │
-│  …  ●●●            ●          │
-└────────────────────────────────┘
-Painel direito: tarefas do dia selecionado + botão "Adicionar neste dia"
-```
+- Novo componente `PostSaleExportBar.tsx` com:
+  - Date range picker (período)
+  - Multi-select de status: D+1 enviado, D+15 enviado, NPS respondido, voucher resgatado, sem retorno
+  - Botão **Exportar CSV** → chama `admin-crm.export_postsale`
+- Edge action `export_postsale` retorna CSV (text/csv) com colunas: nome, whatsapp, data visita, voucher_code, total, nps, status_d1, status_d15, observações.
+- Download client-side via Blob.
 
-- Pontos coloridos por tipo (followup=azul, ligação=âmbar, visita=violeta, mensagem=verde).
-- Click no dia → abre painel lateral com lista + botão **+** que pré-preenche `due_at` com aquela data.
-- Filtros persistem em `sessionStorage`.
-- Aba **Agenda** ganha 3 sub-views: **Lista · Calendário · Agendadas** (ScheduledQueue).
+### 2. Notificações e preferências por funcionário
 
----
+**DB**: tabela `crm_notification_prefs` já existe.
 
-### 3. Lembretes automáticos / notificações
+- Nova aba **Notificações** dentro de `AdminLeadsPage` (sub-tab em Configurações) para staff individual:
+  - Frequência do digest (off / 5min / 15min / 1h / digest diário)
+  - Quiet hours (start/end inteiros 0–23)
+  - Toggles: tarefas atrasadas, mensagens prontas, leads novos sem dono
+- `admin-crm.get_prefs` / `update_prefs` (já existem) + UI completa.
+- `NotificationBell` respeita quiet hours (não pisca, só acumula badge).
+- Badge por staff: contagem persistida em `localStorage` com `lastSeenAt`.
+- Toast `sonner` para alertas urgentes (tarefa vencida agora, msg pronta) só fora do quiet hours.
 
-**Novo bell `<NotificationBell />`** no `AdminLayout.tsx`
-- Polling a cada 60s via `admin-crm.notifications`.
-- Badge vermelho com contagem de: tarefas atrasadas (suas), mensagens prontas para envio, leads novos sem dono >2h.
-- Dropdown agrupado por categoria + "Marcar tudo como lido" (estado em `localStorage` por admin).
+### 3. Calendário CRUD com drag-and-drop
 
-**Tabela nova `crm_notification_prefs`**
-- `admin_id`, `winery_id`, `digest_frequency` (off/15min/hora/dia), `quiet_hours_start`, `quiet_hours_end`, `notify_overdue` bool, `notify_scheduled_ready` bool, `notify_new_lead` bool.
+Em `TaskCalendar.tsx`:
 
-**Edge `admin-crm.get_prefs` / `update_prefs`** + página de preferências em `AdminSettingsPage` (aba "Notificações CRM").
+- Visão **Semana** ganha grade por hora (07h–22h).
+- Drag-and-drop nativo HTML5 (sem libs novas):
+  - Arrastar task entre dias → atualiza `due_at` (mantém hora original)
+  - Arrastar entre slots de hora (na visão semana) → atualiza data+hora
+  - Visual: opacidade no drag, slot destaca ao hover
+- Click no card → abre `TaskFormModal` (edição completa)
+- Botão **+** em cada dia/slot → cria com preset (já parcial; concluir)
+- Suporta mensagens agendadas (`crm_scheduled_messages`) como itens do calendário com ícone diferente; drag move `scheduled_for`.
+- Nova edge action `move_task` (valida winery_id + ownership) e `reschedule_message`.
 
-**Lógica:**
-- Front respeita `quiet_hours` (silencia toast/badge piscante; ainda acumula contagem).
-- Tarefas atrasadas piscam o sino a cada novo intervalo de digest.
-- Toast nativo (`sonner`) ao chegar lead novo se aba ativa.
+### 4. ScheduledQueue — filtros avançados + ações em lote
 
----
+Em `ScheduledQueue.tsx`:
 
-### 4. Papel "Atendente" (sales)
+- Barra de filtros: busca livre (texto/whatsapp/nome), select de atendente, date range, status (já existe).
+- Coluna de checkbox por linha + "Selecionar todos" da aba ativa.
+- Barra fixa de ação em massa no rodapé quando ≥1 selecionada:
+  - **Enviar agora (abrir wa.me em sequência)** com confirm modal
+  - **Cancelar selecionadas**
+  - **Marcar como erro em massa** (com motivo)
+  - **Reatribuir atendente** (só dono/gerente)
+- Edge actions novas: `bulk_cancel_scheduled`, `bulk_mark_error`, `bulk_reassign_scheduled`.
 
-**Migration**
-- Atualizar enum `admin_role`: adicionar valor `atendente` (mantém compat com `dono`/`gerente`/`funcionario`).
-- Mapeamento PT→EN: `atendente` → `sales` no front.
+### 5. Lembretes automáticos (recorrência)
 
-**Permissões (centralizadas em `useAdminAuth`)**
-- `atendente` vê APENAS: `/admin/:slug/leads` (CRM) e seu perfil. Sem dashboard, sem vinhos, sem relatórios.
-- Filtragem servidor (`admin-crm.list_pipeline`): se role=atendente, retorna só leads onde `crm_lead_state.assigned_admin_id = me`.
-- `AdminStaffPage`: novo tipo no formulário.
+- `NotificationBell` faz polling 60s em `admin-crm.notifications`.
+- Backend retorna 3 buckets: `overdue_tasks`, `ready_messages`, `unassigned_leads`.
+- Front mantém `lastNotifiedAt` por bucket no localStorage; respeita `digest_frequency` da preferência:
+  - off → só badge (sem toast)
+  - 5min/15min/1h/diário → toast sonner se passou o intervalo
+- Badge no item do sidebar "Leads" com a contagem total.
 
-**Sidebar `AdminLayout`**: oculta itens fora do escopo do atendente.
+### 6. Auto-assign de lead via QR code
 
----
+Já há esqueleto em `session-auth/index.ts`. Vamos:
 
-### 5. Ownership de lead (assigned_admin_id)
+- Mover a lógica para helper `pickNextAssignee(supabase, winery_id)` em `_shared/auth.ts` (ou novo `_shared/crm.ts`).
+- Garantir chamada em **dois pontos**:
+  1. `session-auth` (signup tourist via QR) — já está
+  2. `tourist-actions.register_lead` (fluxo do app via QR) — adicionar
+- Modos: `round_robin` (sequencial via `last_assigned_admin_id`) e `load_balanced` (admin ativo com menos leads abertos).
+- Após escolher, atualiza `crm_lead_state.assigned_admin_id` + `crm_assignment_queue.last_assigned_admin_id` + grava timeline "Lead atribuído automaticamente a X (via QR <capture_point>)".
+- Se queue desabilitada ou sem membros ativos → lead fica sem dono (atendente pode reivindicar).
 
-Já existe `crm_lead_state.assigned_admin_id`. Falta UI/lógica completa.
+### 7. Revisão geral do admin (PC + mobile)
 
-**LeadCard / LeadTimelineModal**
-- Avatar + nome do dono no canto. Botão "Atribuir" → dropdown com staff ativo da vinícola.
-- "Reivindicar" se sem dono.
-- Filtro novo na barra: **Responsável: [Todos | Sem dono | Eu | <staff>]**.
+**Limpeza de abas**:
+- Remover/agrupar abas redundantes:
+  - **"Treinamento"** → mover para um item dentro de Configurações (não justifica item primário)
+  - **"Locais"** → renomear para "Pontos de Captura" (terminologia consistente com QR codes)
+  - **"Performance"** → mantém, mas vira sub-aba de **Equipe** (Equipe / Atividade / Performance)
+- Sidebar fica: Dashboard · Vinhos · Pacotes · Cardápio · **Leads (CRM)** · Equipe · Pontos · Campanhas · Vouchers
+- Adicionar nova: **Pós-venda** como sub-aba dentro de Leads (não item separado)
+- Mover "Configurações" como engrenagem no topo (não item de sidebar)
 
-**Edge `admin-crm.assign_lead`**
-- Valida que `assignee` é admin da mesma `winery_id`.
-- Insere log no timeline ("Lead atribuído a X por Y").
-- `dono`/`gerente` podem reatribuir qualquer lead; `atendente` só pode pegar leads sem dono (claim) — não pode passar para outro.
+**Mobile**:
+- Bottom nav atual mostra todos os itens em scroll — substituir por: Dashboard · Leads · Vinhos · Mais (sheet com restante).
+- Componente `MobileMoreSheet.tsx` (Sheet do shadcn) listando os itens secundários.
+- Header mobile: nome da vinícola + sino + avatar (menu com Sair).
+- Conteúdo: `pb-24` em mobile para folga; `LeadCard` mais compacto em <768px (já parcial).
 
-**Filtro automático para atendente**: já descrito no item 4.
+**PC**:
+- Sidebar permanece, com ícones consistentes (lucide).
+- Header com breadcrumb (`Vinícola › Leads › Pipeline`) e sino + avatar à direita.
+- Larguras max-w-7xl para conteúdo, padding consistente.
 
----
-
-### 6. Fila de distribuição automática (round-robin)
-
-**Tabela nova `crm_assignment_queue`**
-- `winery_id` (uniq), `enabled` bool default false, `mode` enum (`round_robin`|`load_balanced`), `last_assigned_admin_id` uuid, `updated_at`.
-
-**Tabela nova `crm_assignment_queue_members`**
-- `winery_id`, `admin_id`, `position` int, `active` bool. Uniq (winery_id, admin_id).
-
-**Edge `admin-crm`**
-- `get_queue` / `set_queue_enabled` / `set_queue_mode` / `add_member` / `remove_member` / `reorder_members`.
-- Helper `pickNextAssignee(winery_id)`:
-  - **round_robin**: próximo após `last_assigned_admin_id` na lista ativa.
-  - **load_balanced**: admin ativo com menos leads abertos (stage ≠ convertido/perdido).
-- Chamado automaticamente quando lead novo entra (hook em `tourist-actions` quando cria `users_leads` → cria `crm_lead_state` com `assigned_admin_id` se queue.enabled).
-- Toggle `manual_override` no lead: ao atribuir manualmente, lead sai da rotação.
-
-**UI nova aba `/admin/:slug/leads` → Configurações** (ícone gear, visível só p/ dono/gerente)
-- Switch "Distribuição automática"
-- Modo (radio)
-- Lista drag-to-reorder de membros + add/remove
-- Preview: "Próximo lead irá para: João"
-
----
-
-### 7. Polimento UI/UX nível HubSpot
-
-**Pipeline**
-- Header com mini-funnel chart (conversion stage→stage), valor estimado total, ticket médio.
-- Cards mostram avatar do dono, próxima tarefa pendente, último contato (`X dias atrás`), tags coloridas.
-- Hover: ações rápidas inline (📞 ligar via wa.me, ✉ template rápido, ⏰ agendar).
-- Stale > 7d: borda âmbar + tooltip explicando.
-
-**Lista virtualizada**
-- Colunas configuráveis (mostrar/ocultar via popover).
-- Ordenação por LTV/recência/prox. tarefa.
-- Seleção múltipla → barra de ações em massa fixa no rodapé (atribuir, mover estágio, agendar mensagem, exportar, taggear).
-
-**LeadTimelineModal**
-- Layout 2 colunas: esquerda = perfil + ações rápidas (assign, próximo task, schedule msg, mover stage), direita = timeline unificada (notas, vouchers, visitas, ratings, msgs, tasks, atribuições) com filtros por tipo.
-- Ação "Resumo do lead" (texto pronto p/ copiar).
-
-**Atalhos teclado**
-- `n` nova tarefa · `m` agendar msg · `a` atribuir · `1..5` mover estágio · `/` busca.
-
-**Empty/loading/error states** com ilustrações simples (lucide icons + texto).
+**Atendente (sales)**:
+- Sidebar mostra só: Leads, e dentro de leads vê Pipeline/Lista/Agenda/Pós-venda (sem Configurações/Segmentos/Templates).
+- No mobile, bottom nav só com Leads + Sair.
 
 ---
 
-### Arquivos a criar/editar
-
-**Migrations**
-- `add_atendente_role + crm_assignment_queue + crm_assignment_queue_members + crm_notification_prefs + scheduled_messages.error_reason`
+### Arquivos
 
 **Edge functions**
-- `admin-crm/index.ts` (extensão grande: notifications, assign_lead, queue CRUD, mark_scheduled_error, prefs)
-- `tourist-actions/index.ts` (hook auto-assign ao criar lead)
+- `admin-crm/index.ts` — adicionar: `export_postsale`, `move_task`, `reschedule_message`, `bulk_cancel_scheduled`, `bulk_mark_error`, `bulk_reassign_scheduled`. Refatorar notifications para retornar buckets.
+- `tourist-actions/index.ts` — chamar `pickNextAssignee` em `register_lead`.
+- `_shared/crm.ts` — novo helper compartilhado.
 
 **Componentes novos**
-- `src/components/admin/crm/TaskCalendar.tsx`
-- `src/components/admin/crm/NotificationBell.tsx`
-- `src/components/admin/crm/AssignLeadPopover.tsx`
-- `src/components/admin/crm/AssignmentQueueSettings.tsx`
-- `src/components/admin/crm/CrmSettingsTab.tsx`
+- `src/components/admin/crm/PostSaleExportBar.tsx`
 - `src/components/admin/crm/NotificationPrefsForm.tsx`
+- `src/components/admin/AdminHeader.tsx` (sino + avatar + breadcrumb)
+- `src/components/admin/MobileMoreSheet.tsx`
 
-**Editar**
-- `AdminLayout.tsx` (bell, role gate)
-- `AdminLeadsPage.tsx` (sub-views agenda, settings tab, filtro responsável, atalhos)
-- `LeadCard.tsx` / `LeadTimelineModal.tsx` (owner, ações, atribuição)
-- `VirtualLeadList.tsx` (seleção múltipla, colunas)
-- `ScheduledQueue.tsx` (4 abas, status badges, retry)
-- `TasksPanel.tsx` (link p/ calendário)
-- `useAdminAuth.ts` (role atendente)
-- `AdminStaffPage.tsx` (opção atendente)
-- `AdminSettingsPage.tsx` (tab notif. CRM)
-- `src/integrations/supabase/types.ts` (auto)
+**Componentes editados**
+- `src/components/admin/crm/TaskCalendar.tsx` — drag-and-drop, visão semana com slots
+- `src/components/admin/crm/ScheduledQueue.tsx` — filtros, seleção múltipla, ações em massa
+- `src/components/admin/crm/NotificationBell.tsx` — respeitar prefs e digest
+- `src/components/admin/crm/TaskFormModal.tsx` — modo edição
+- `src/pages/admin/AdminLayout.tsx` — nova sidebar, header, mobile sheet
+- `src/pages/admin/AdminLeadsPage.tsx` — sub-aba Pós-venda + Notificações em Configurações
+- `src/pages/admin/AdminStaffPerformancePage.tsx` — virar sub-aba de Equipe (rotear via `AdminStaffPage`)
+
+**Migrations**: nenhuma nova (todas as tabelas já existem).
 
 ---
 
 ### Restrições mantidas
-- Light mode global.
-- Toda escrita via Edge Functions auth (RLS bloqueia direto).
-- WhatsApp = `wa.me` manual (sem API oficial).
-- Isolamento `winery_id` em todas as queries.
-- Nenhuma chamada a IA Gateway adicionada.
+- Light mode (já enforced).
+- Toda escrita via Edge Functions auth.
+- WhatsApp via `wa.me`.
+- Isolamento `winery_id`.
+- Sem novas libs (drag-and-drop nativo HTML5; sonner já instalado).
 
-Tudo isso vira a entrega em uma única leva. Após aprovação eu rodo a migration, escrevo o código e ajusto types.
+Após aprovação eu implemento em uma única leva: refator de sidebar + header, calendário com DnD, ScheduledQueue avançada, export CSV, prefs de notificação, auto-assign no `tourist-actions`, e ajuste mobile.
