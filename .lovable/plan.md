@@ -1,113 +1,100 @@
+# Bloco Médio Impacto + Permissões por Cargo
 
-# Bloco Crítico — 4 módulos novos no Admin
-
-Vou implementar os 4 módulos críticos em sequência, no mesmo bloco. Cada módulo segue o padrão já existente (Edge Function `_shared/auth.ts`, RLS bloqueada + actions, light mode, isolamento por `winery_id`, mobile-first).
-
----
-
-## 1. Reservas & Agendamentos
-
-**Objetivo:** captar e gerenciar reservas de degustação/visita com horário, capacidade e sommelier responsável.
-
-**Banco** — novas tabelas:
-- `reservation_slots` — `winery_id`, `capture_point_id`, `weekday` (0-6), `start_time`, `end_time`, `capacity`, `price` (opcional), `active`
-- `reservations` — `winery_id`, `lead_id` (FK lógico → `users_leads`), `slot_id`, `scheduled_at` (timestamptz), `party_size`, `status` (`pendente`/`confirmada`/`cancelada`/`compareceu`/`noshow`), `assigned_admin_id`, `notes`, `source` (`admin`/`tourist`/`whatsapp`)
-
-**UI Admin:**
-- Nova aba `/admin/:slug/reservations` na sidebar (ícone CalendarCheck)
-- Sub-views: **Hoje** (lista cronológica), **Semana** (grade horários × dias), **Configurar slots** (recorrência semanal por ponto de captura)
-- Card de reserva: nome, telefone, party_size, sommelier, status, ações (confirmar, marcar comparecimento, cancelar, abrir lead no CRM)
-- Integração CRM: ao criar reserva o lead vira `qualificado`; comparecimento gera entry no timeline
-
-**UI Turista (mini):** botão "Reservar visita" no `/v/:slug` que abre modal com slots disponíveis, cria reserva + lead. (Implementação tourista enxuta — só captura, sem pagamento.)
-
-**Edge function:** `admin-reservations` com actions `list_slots`, `upsert_slot`, `delete_slot`, `list_reservations`, `create_reservation`, `update_status`, `assign`, `available_slots` (pública para turista).
+Sequência: (1) Reviews & NPS, (2) Fidelidade, (3) Eventos, (4) Importação CSV, (5) Permissões por cargo.
 
 ---
 
-## 2. Estoque de Vinhos
-
-**Objetivo:** controle de garrafas por vinho, alertas de ruptura, baixa automática ao gerar voucher.
+## 1. Reviews & NPS consolidado
 
 **Banco:**
-- Adicionar em `wines`: `stock_qty` (int, default 0), `stock_min` (int, default 0), `track_stock` (bool, default false)
-- `stock_movements` — `winery_id`, `wine_id`, `delta` (int, pode ser negativo), `reason` (`entrada`/`venda`/`ajuste`/`perda`/`devolucao`), `voucher_id` (nullable), `admin_id`, `note`
+- Nova tabela `wine_reviews` (winery_id, wine_id, user_id, stars 1–5, comment, public_response, responded_by, responded_at, created_at).
+- Aproveitar `vouchers.nps_score` já existente para NPS de visita.
+- Nova tabela `nps_responses` (winery_id, voucher_id, user_id, score, comment, created_at) para registrar comentário aberto pós-NPS (hoje só temos score).
 
-**UI Admin:**
-- Nova aba **Estoque** dentro de `AdminWinesPage` (ou rota dedicada `/admin/:slug/stock`)
-- Tabela com: vinho, qty atual, mínimo, status (OK/Baixo/Esgotado), ações rápidas (+/− com motivo, ajuste manual)
-- Modal "Entrada de estoque" (compra/produção) e "Baixa manual"
-- Filtros: só com track_stock, status do estoque
-- Histórico de movimentos por vinho
+**Edge function `admin-reviews`:** list_wine_reviews, respond_review, list_nps, nps_summary (NPS = promotores−detratores), low_score_alerts.
 
-**Automação:** ao gerar voucher (em `tourist-actions`), debitar `stock_qty` dos itens vendidos quando `track_stock=true`. Se zerar, bloquear venda futura e disparar toast no painel admin via NotificationBell (nova bucket `low_stock`).
+**UI `/admin/:slug/reviews`:**
+- Cards: NPS geral, total avaliações de vinhos, média de estrelas, alertas (score ≤ 6).
+- Tabs: "Vinhos" (lista com filtro por vinho, média, comentários, botão "Responder publicamente") e "Visita / NPS" (lista voucher → score → comentário).
 
-**Edge function:** `admin-stock` com `list_stock`, `adjust`, `bulk_entry`, `movements`, `set_tracking`.
+**Tourist:** adicionar campo opcional de comentário no fluxo de rating já existente e na tela de NPS pós-visita.
 
 ---
 
-## 3. Financeiro / Faturamento
+## 2. Fidelidade / Pontos
 
-**Objetivo:** consolidar receita por canal e período, comissão da plataforma e exportação contábil.
+**Banco:**
+- `loyalty_rewards` já existe → expandir com `points_cost`, `active`, `image_url`, `category`.
+- Nova tabela `loyalty_tiers` (winery_id, name, min_points, perks jsonb, color).
+- Nova tabela `loyalty_redemptions` (winery_id, user_id, reward_id, points_spent, status, created_at, redeemed_at).
 
-**Banco:** sem tabela nova — derivar de `vouchers.items` + `vouchers.total` + `wines.on_tasting/on_restaurant/on_shop`. Adicionar coluna `vouchers.channel` (`tasting`/`restaurant`/`shop`/`mixed`) preenchida no momento da geração para evitar recálculo.
+**Edge function `admin-loyalty`:** crud_rewards, crud_tiers, list_redemptions, approve_redemption, points_rules (config: pontos por R$, por visita, por indicação — salva em `wineries.business_hours`-like jsonb `loyalty_rules`).
 
-**UI Admin:**
-- Nova aba `/admin/:slug/finance` (ícone DollarSign, role ≥ manager)
-- KPIs topo: Receita do mês, Ticket médio, Vouchers resgatados, Comissão plataforma
-- Gráfico por canal (degustação/restaurante/loja) — usar recharts já no projeto
-- Tabela de movimentos: data, voucher, canal, total, status (resgatado/pendente), comissão
-- Filtros: período, canal, status
-- Exportação CSV/PDF contábil (CSV primeiro; PDF fica para "ajustes finos")
+**UI `/admin/:slug/loyalty`:** abas Recompensas, Níveis (Bronze/Prata/Ouro custom), Regras (pontos por R$, visita, indicação), Resgates pendentes.
 
-**Edge function:** `admin-finance` com `summary`, `transactions`, `export_csv`.
+**Tourist:** vitrine "Programa de Fidelidade" mostrando saldo, nível atual, próximas recompensas (resgate via wa.me para sommelier).
 
 ---
 
-## 4. Configurações da Vinícola (página unificada)
+## 3. Eventos
 
-**Objetivo:** uma única tela para o dono editar identidade, idiomas, moeda, horários e LGPD.
+**Banco:**
+- Nova tabela `events` (winery_id, capture_point_id, title, description, cover_url, starts_at, ends_at, capacity, price, status, rsvp_count).
+- Nova tabela `event_rsvps` (event_id, winery_id, lead_id, contact_name, contact_whatsapp, party_size, status, created_at).
 
-**Banco:** adicionar em `wineries`:
-- `business_hours` (jsonb) — `{ "mon": "09:00-18:00", "tue": "...", ... }`
-- `contact_phone`, `contact_email`, `address`, `instagram_url`
-- `lgpd_policy_url` (já há política no fluxo, falta campo na vinícola)
-- `default_language` (text, default 'pt-BR'), `supported_languages` (text[])
+**Edge function `admin-events`:** crud_events, list_rsvps, confirm_rsvp, cancel_rsvp, export_csv. Cada RSVP cria/atualiza lead em `users_leads` automaticamente (mesmo padrão do CRM).
 
-**UI Admin:**
-- Nova rota `/admin/:slug/settings-winery` (substitui parte do que hoje está em `/settings` que é Vouchers — renomeio aquele para "Vouchers" e crio "Configurações")
-- Seções colapsáveis:
-  - Identidade (logo, primary_color, nome, slug — readonly)
-  - Contato (telefone, email, endereço, Instagram)
-  - Horários de funcionamento (7 inputs)
-  - Idiomas e moeda
-  - LGPD (link da política, texto exibido no login)
-- Salvar parcial por seção (botão por bloco) para evitar formulário gigante
+**UI `/admin/:slug/events`:** lista de eventos (passado/futuro), criar evento, página de RSVPs por evento.
 
-**Edge function:** atualizar `admin-wineries` (ou criar `admin-winery-config`) com `get_config`, `update_config`.
+**Tourist:** rota pública `/winery/:slug/events` e card "Próximos eventos" no portal do turista.
 
 ---
 
-## Navegação consolidada
+## 4. Importação CSV em massa
 
-Sidebar após este bloco (PC + mobile sheet):
-```
-Dashboard · Vinhos · Estoque · Pacotes · Cardápio · Reservas · CRM (Leads)
-Equipe · Pontos · Campanhas · Vouchers · Financeiro · Configurações · Treinamento
-```
+**Edge function `admin-import`:** action `import_wines` (validar headers, dry-run, retornar erros linha a linha), `import_leads` (histórico CRM), `import_menu`. Tudo via JSON parseado no front (papaparse já comum no stack — se ausente, instalar).
 
-Mobile bottom nav permanece com 4 primários + "Mais" — adiciono **Reservas** ao topo de prioridade (alto valor diário).
+**UI `/admin/:slug/import`:** wizard 3 passos (upload → preview/validação → confirmar). Templates CSV para download por entidade.
 
 ---
 
-## Ordem de entrega neste bloco
+## 5. Permissões por cargo (ajuste fino)
 
-1. Migration única com todas as tabelas + colunas novas
-2. Edge functions (`admin-reservations`, `admin-stock`, `admin-finance`, extensão `admin-wineries`)
-3. UI Admin de cada módulo
-4. Hook do voucher para debitar estoque automaticamente
-5. Adicionar low_stock no NotificationBell
+**Mapeamento atualizado** (roles existentes: master, dono→owner, gerente→manager, funcionario→staff):
 
-**Fora deste bloco** (vão para o intermediário): Reviews/NPS dashboard, Fidelidade UI, Eventos, Importação CSV. **Fora dos ajustes finos:** logs de auditoria, integrações externas, PDF mensal automático, fichas técnicas PDF, multi-idioma UI, app sommelier mobile.
+| Módulo | dono | gerente | funcionario |
+|---|---|---|---|
+| Dashboard / KPIs | ✅ | ✅ | ⚠️ próprio |
+| Vinhos / Pacotes / Cardápio | ✅ | ✅ | 👁️ leitura |
+| **Estoque (ajuste)** | ✅ | ✅ | ⚠️ apenas +/− venda |
+| **Financeiro** | ✅ | ✅ | ❌ |
+| **Reservas** | ✅ | ✅ | ✅ (atribuídas) |
+| CRM | ✅ | ✅ | ⚠️ leads atribuídos |
+| **Reviews/NPS** | ✅ | ✅ | 👁️ |
+| **Fidelidade** | ✅ | ✅ | 👁️ |
+| **Eventos** | ✅ | ✅ | ⚠️ RSVPs |
+| **Importação CSV** | ✅ | ❌ | ❌ |
+| Equipe | ✅ | ⚠️ funcionários | ❌ |
+| Campanhas | ✅ | ✅ | ❌ |
+| Vouchers | ✅ | ✅ | ✅ emitir |
+| Config. vinícola | ✅ | ⚠️ horários/contato | ❌ |
+| Treinamento | ✅ | ✅ | ✅ |
 
-Aprova para eu começar?
+**Implementação:**
+- Criar `src/lib/admin/permissions.ts` com matriz acima e helper `can(role, capability)`.
+- Atualizar `AdminLayout` sidebar/bottom-nav para esconder itens conforme `can()`.
+- Cada Edge function valida `requireCapability(role, capability)` em `_shared/auth.ts`.
+- Página `/admin/:slug/team` mostra matriz somente leitura para o dono visualizar.
+
+---
+
+## Ordem de execução
+
+1. Migration única com todas as tabelas + colunas extras.
+2. `permissions.ts` + atualização de `_shared/auth.ts`.
+3. 4 Edge functions novas (`admin-reviews`, `admin-loyalty`, `admin-events`, `admin-import`).
+4. 4 páginas admin + integração tourist (eventos, fidelidade, review com comentário).
+5. Sidebar/bottom-nav + matriz visível em Equipe.
+
+## Fora deste bloco
+Ajustes finos (logs auditoria, integrações externas, PDF mensal, fichas técnicas PDF, multi-idioma UI por campo, app sommelier) ficam para o próximo ciclo.
