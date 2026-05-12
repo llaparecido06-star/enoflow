@@ -121,7 +121,7 @@ function TabBtn({ active, onClick, label, icon: Icon }: any) {
 function ReservationCard({ r, onStatus }: { r: any; onStatus: (id: string, s: string) => void }) {
   const date = new Date(r.scheduled_at);
   return (
-    <div className="bg-card border border-border rounded-xl p-3 flex flex-col sm:flex-row sm:items-center gap-3">
+    <div className="admin-card admin-card-hover p-4 flex flex-col sm:flex-row sm:items-center gap-3">
       <div className="flex items-center gap-2 sm:w-32">
         <Clock className="w-4 h-4 text-muted-foreground" />
         <div>
