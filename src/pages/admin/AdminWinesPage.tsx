@@ -126,6 +126,12 @@ export default function AdminWinesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
+                <button onClick={() => handleSheet(wine)} title="Ficha técnica PDF" className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                  <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+                <button onClick={() => setTranslateWine(wine)} title="Traduções" className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                  <Languages className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
                 <button onClick={() => setFormWine(wine)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
                   <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
