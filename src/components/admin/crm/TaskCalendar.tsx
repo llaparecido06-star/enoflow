@@ -187,12 +187,17 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
               const isSel = isSameDay(d, selected);
               const isToday = isSameDay(d, new Date());
               return (
-                <button
+                <div
                   key={key + d.getTime()}
                   onClick={() => setSelected(d)}
-                  className={`relative h-16 sm:h-20 rounded-md border text-left p-1 transition-colors ${
+                  onDragOver={(e) => { e.preventDefault(); setDragOverKey(key); }}
+                  onDragLeave={() => setDragOverKey((k) => (k === key ? null : k))}
+                  onDrop={() => handleDrop(key)}
+                  className={`relative h-16 sm:h-20 rounded-md border text-left p-1 transition-colors cursor-pointer ${
                     isSel ? "border-primary ring-1 ring-primary" : "border-border hover:bg-secondary/40"
-                  } ${inMonth ? "bg-background" : "bg-secondary/20 text-muted-foreground"}`}
+                  } ${inMonth ? "bg-background" : "bg-secondary/20 text-muted-foreground"} ${
+                    dragOverKey === key ? "bg-primary/10 border-primary" : ""
+                  }`}
                 >
                   <div className={`text-[11px] font-medium ${isToday ? "text-primary" : ""}`}>{d.getDate()}</div>
                   <div className="absolute bottom-1 left-1 right-1 flex flex-wrap gap-0.5">
@@ -201,7 +206,7 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
                     ))}
                     {ts.length > 4 && <span className="text-[9px] text-muted-foreground">+{ts.length - 4}</span>}
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
