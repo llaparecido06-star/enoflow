@@ -15,6 +15,7 @@ export default function AdminReviewsPage() {
   const [tab, setTab] = useState<"wines" | "nps">("wines");
   const [responding, setResponding] = useState<any>(null);
   const [responseText, setResponseText] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Filters
   const [wineFilter, setWineFilter] = useState<string>("");
