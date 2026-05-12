@@ -33,10 +33,11 @@ Deno.serve(async (req) => {
     const SALES_ALLOWED = new Set([
       "list_pipeline", "lead_360", "move_stage", "move_stage_with_reason", "update_state",
       "add_note", "delete_note", "list_tasks", "upsert_task", "complete_task", "delete_task",
-      "task_counts", "list_scheduled", "schedule_messages", "mark_scheduled_sent",
-      "mark_scheduled_error", "cancel_scheduled", "log_message", "list_templates",
+      "move_task", "task_counts", "list_scheduled", "schedule_messages", "mark_scheduled_sent",
+      "mark_scheduled_error", "cancel_scheduled", "retry_scheduled", "log_message", "list_templates",
       "list_segments", "list_staff", "assign_lead", "claim_lead", "notifications",
-      "get_prefs", "update_prefs", "get_queue",
+      "get_prefs", "update_prefs", "get_queue", "export_postsale",
+      "bulk_cancel_scheduled", "bulk_mark_error", "bulk_mark_sent",
     ]);
     const isSales = normRole === "sales";
     if (!isSales && !hasMinRole(admin.role, "manager")) {
