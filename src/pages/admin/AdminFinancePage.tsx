@@ -151,15 +151,15 @@ export default function AdminFinancePage() {
 
 function Kpi({ icon: Icon, label, value, tone }: any) {
   const colors: Record<string, string> = {
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    blue: "bg-blue-50 text-blue-700 border-blue-200",
-    amber: "bg-amber-50 text-amber-700 border-amber-200",
-    rose: "bg-rose-50 text-rose-700 border-rose-200",
+    emerald: "from-emerald-50 to-emerald-100/40 text-emerald-700 ring-emerald-200/60",
+    blue: "from-blue-50 to-blue-100/40 text-blue-700 ring-blue-200/60",
+    amber: "from-amber-50 to-amber-100/40 text-amber-700 ring-amber-200/60",
+    rose: "from-rose-50 to-rose-100/40 text-rose-700 ring-rose-200/60",
   };
   return (
-    <div className={`rounded-xl border p-3 ${colors[tone]}`}>
-      <div className="flex items-center gap-1.5 text-[10px] uppercase opacity-80"><Icon className="w-3 h-3" /> {label}</div>
-      <div className="text-lg font-bold mt-1 truncate">{value}</div>
+    <div className={`rounded-xl ring-1 p-4 bg-gradient-to-br ${colors[tone]} shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all`}>
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold opacity-80"><Icon className="w-3.5 h-3.5" /> {label}</div>
+      <div className="text-xl font-bold mt-1.5 truncate">{value}</div>
     </div>
   );
 }
