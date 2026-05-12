@@ -55,6 +55,48 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          admin_id: string | null
+          admin_name: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: string
+          metadata: Json | null
+          winery_id: string
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          admin_name?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+          winery_id: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          admin_name?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+          winery_id?: string
+        }
+        Relationships: []
+      }
       automations: {
         Row: {
           commission_value: number | null
@@ -1447,6 +1489,8 @@ export type Database = {
           currency: string
           default_language: string
           enabled_modules: string[]
+          facebook_url: string | null
+          google_business_url: string | null
           id: string
           instagram_url: string | null
           lgpd_policy_url: string | null
@@ -1461,7 +1505,9 @@ export type Database = {
           status: string
           subscription_value: number
           supported_languages: string[]
+          tripadvisor_url: string | null
           updated_at: string
+          youtube_url: string | null
         }
         Insert: {
           address?: string | null
@@ -1472,6 +1518,8 @@ export type Database = {
           currency?: string
           default_language?: string
           enabled_modules?: string[]
+          facebook_url?: string | null
+          google_business_url?: string | null
           id?: string
           instagram_url?: string | null
           lgpd_policy_url?: string | null
@@ -1486,7 +1534,9 @@ export type Database = {
           status?: string
           subscription_value?: number
           supported_languages?: string[]
+          tripadvisor_url?: string | null
           updated_at?: string
+          youtube_url?: string | null
         }
         Update: {
           address?: string | null
@@ -1497,6 +1547,8 @@ export type Database = {
           currency?: string
           default_language?: string
           enabled_modules?: string[]
+          facebook_url?: string | null
+          google_business_url?: string | null
           id?: string
           instagram_url?: string | null
           lgpd_policy_url?: string | null
@@ -1511,7 +1563,9 @@ export type Database = {
           status?: string
           subscription_value?: number
           supported_languages?: string[]
+          tripadvisor_url?: string | null
           updated_at?: string
+          youtube_url?: string | null
         }
         Relationships: []
       }
@@ -1542,6 +1596,7 @@ export type Database = {
           stock_min: number
           stock_qty: number
           track_stock: boolean
+          translations: Json
           type: string
           winery_id: string
           year: number | null
@@ -1572,6 +1627,7 @@ export type Database = {
           stock_min?: number
           stock_qty?: number
           track_stock?: boolean
+          translations?: Json
           type: string
           winery_id: string
           year?: number | null
@@ -1602,6 +1658,7 @@ export type Database = {
           stock_min?: number
           stock_qty?: number
           track_stock?: boolean
+          translations?: Json
           type?: string
           winery_id?: string
           year?: number | null

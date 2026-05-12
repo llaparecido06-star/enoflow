@@ -1,100 +1,87 @@
-# Bloco Médio Impacto + Permissões por Cargo
+# Bloco Ajustes Finos
 
-Sequência: (1) Reviews & NPS, (2) Fidelidade, (3) Eventos, (4) Importação CSV, (5) Permissões por cargo.
-
----
-
-## 1. Reviews & NPS consolidado
-
-**Banco:**
-- Nova tabela `wine_reviews` (winery_id, wine_id, user_id, stars 1–5, comment, public_response, responded_by, responded_at, created_at).
-- Aproveitar `vouchers.nps_score` já existente para NPS de visita.
-- Nova tabela `nps_responses` (winery_id, voucher_id, user_id, score, comment, created_at) para registrar comentário aberto pós-NPS (hoje só temos score).
-
-**Edge function `admin-reviews`:** list_wine_reviews, respond_review, list_nps, nps_summary (NPS = promotores−detratores), low_score_alerts.
-
-**UI `/admin/:slug/reviews`:**
-- Cards: NPS geral, total avaliações de vinhos, média de estrelas, alertas (score ≤ 6).
-- Tabs: "Vinhos" (lista com filtro por vinho, média, comentários, botão "Responder publicamente") e "Visita / NPS" (lista voucher → score → comentário).
-
-**Tourist:** adicionar campo opcional de comentário no fluxo de rating já existente e na tela de NPS pós-visita.
+Seis itens listados anteriormente, escopados de forma pragmática para serem entregues juntos.
 
 ---
 
-## 2. Fidelidade / Pontos
+## 1. Logs de auditoria
 
-**Banco:**
-- `loyalty_rewards` já existe → expandir com `points_cost`, `active`, `image_url`, `category`.
-- Nova tabela `loyalty_tiers` (winery_id, name, min_points, perks jsonb, color).
-- Nova tabela `loyalty_redemptions` (winery_id, user_id, reward_id, points_spent, status, created_at, redeemed_at).
+**Banco:** nova tabela `audit_logs` (winery_id, admin_id, entity, entity_id, action, before, after, created_at).
 
-**Edge function `admin-loyalty`:** crud_rewards, crud_tiers, list_redemptions, approve_redemption, points_rules (config: pontos por R$, por visita, por indicação — salva em `wineries.business_hours`-like jsonb `loyalty_rules`).
+**Hook universal:** helper `logAudit()` em `_shared/audit.ts` chamado a partir das principais edge functions (admin-wines mutações, admin-stock adjust/bulk, admin-finance N/A, admin-loyalty mutações, admin-events upsert/delete, admin-leads stage change, admin-winery-config update).
 
-**UI `/admin/:slug/loyalty`:** abas Recompensas, Níveis (Bronze/Prata/Ouro custom), Regras (pontos por R$, visita, indicação), Resgates pendentes.
-
-**Tourist:** vitrine "Programa de Fidelidade" mostrando saldo, nível atual, próximas recompensas (resgate via wa.me para sommelier).
+**UI:** nova página `/admin/:slug/audit` com tabela filtrada por entidade/admin/data + exportar CSV. Capability `audit.view` (owner+).
 
 ---
 
-## 3. Eventos
+## 2. Integrações externas (links públicos)
 
-**Banco:**
-- Nova tabela `events` (winery_id, capture_point_id, title, description, cover_url, starts_at, ends_at, capacity, price, status, rsvp_count).
-- Nova tabela `event_rsvps` (event_id, winery_id, lead_id, contact_name, contact_whatsapp, party_size, status, created_at).
+Sem OAuth — apenas links e exibição.
 
-**Edge function `admin-events`:** crud_events, list_rsvps, confirm_rsvp, cancel_rsvp, export_csv. Cada RSVP cria/atualiza lead em `users_leads` automaticamente (mesmo padrão do CRM).
+**Banco:** adicionar em `wineries` colunas `google_business_url`, `tripadvisor_url`, `facebook_url`, `youtube_url` (instagram_url já existe).
 
-**UI `/admin/:slug/events`:** lista de eventos (passado/futuro), criar evento, página de RSVPs por evento.
+**UI admin:** seção "Redes & Reviews externas" em `AdminWineryConfigPage`.
 
-**Tourist:** rota pública `/winery/:slug/events` e card "Próximos eventos" no portal do turista.
+**UI turista:** rodapé com ícones clicáveis quando preenchidos. Card "Avalie no Google/TripAdvisor" no fim do fluxo NPS.
 
 ---
 
-## 4. Importação CSV em massa
+## 3. Relatório mensal em PDF
 
-**Edge function `admin-import`:** action `import_wines` (validar headers, dry-run, retornar erros linha a linha), `import_leads` (histórico CRM), `import_menu`. Tudo via JSON parseado no front (papaparse já comum no stack — se ausente, instalar).
+Geração on-demand no Dashboard. Sem agendamento por email (ficaria pra um cronjob futuro).
 
-**UI `/admin/:slug/import`:** wizard 3 passos (upload → preview/validação → confirmar). Templates CSV para download por entidade.
+**Cliente:** botão "Exportar relatório PDF" no `AdminDashboardPage`. Usa `jspdf` (instalar). Inclui KPIs do mês: receita por canal, leads, NPS, top vinhos, top vouchers.
+
+**Dados:** já vêm de `admin-finance` + `admin-dashboard` existentes; agrega no front.
 
 ---
 
-## 5. Permissões por cargo (ajuste fino)
+## 4. Fichas técnicas em PDF (por vinho)
 
-**Mapeamento atualizado** (roles existentes: master, dono→owner, gerente→manager, funcionario→staff):
+**Cliente:** botão "Ficha técnica PDF" no card de cada vinho em `AdminWinesPage` e em `WineDetailModal` do turista. Usa o mesmo `jspdf`.
 
-| Módulo | dono | gerente | funcionario |
-|---|---|---|---|
-| Dashboard / KPIs | ✅ | ✅ | ⚠️ próprio |
-| Vinhos / Pacotes / Cardápio | ✅ | ✅ | 👁️ leitura |
-| **Estoque (ajuste)** | ✅ | ✅ | ⚠️ apenas +/− venda |
-| **Financeiro** | ✅ | ✅ | ❌ |
-| **Reservas** | ✅ | ✅ | ✅ (atribuídas) |
-| CRM | ✅ | ✅ | ⚠️ leads atribuídos |
-| **Reviews/NPS** | ✅ | ✅ | 👁️ |
-| **Fidelidade** | ✅ | ✅ | 👁️ |
-| **Eventos** | ✅ | ✅ | ⚠️ RSVPs |
-| **Importação CSV** | ✅ | ❌ | ❌ |
-| Equipe | ✅ | ⚠️ funcionários | ❌ |
-| Campanhas | ✅ | ✅ | ❌ |
-| Vouchers | ✅ | ✅ | ✅ emitir |
-| Config. vinícola | ✅ | ⚠️ horários/contato | ❌ |
-| Treinamento | ✅ | ✅ | ✅ |
+Conteúdo: nome, ano, tipo, uva, região, enólogo, teor alcoólico, temperatura, harmonização, notas aromáticas, descrição, foto. Layout: cabeçalho colorido com primary_color, logo da vinícola, QR para a página pública do vinho.
 
-**Implementação:**
-- Criar `src/lib/admin/permissions.ts` com matriz acima e helper `can(role, capability)`.
-- Atualizar `AdminLayout` sidebar/bottom-nav para esconder itens conforme `can()`.
-- Cada Edge function valida `requireCapability(role, capability)` em `_shared/auth.ts`.
-- Página `/admin/:slug/team` mostra matriz somente leitura para o dono visualizar.
+---
+
+## 5. Multi-idioma — revisão por campo
+
+Sem reescrever a infra de tradução automática (Gemini). Apenas tornar visível.
+
+**UI:** em `AdminWinesPage` (e similares com tradução), abrir drawer "Traduções" que carrega o conteúdo traduzido para EN/ES (já cacheado pelo sistema atual), permite editar e salvar override em nova coluna `wines.translations jsonb` (override manual prevalece sobre IA).
+
+Como impacto é maior, **entrego apenas em Vinhos** nesta passada — padrão replicável.
+
+---
+
+## 6. App de check-in do sommelier
+
+Página `/admin/:slug/checkin` otimizada para celular: 2 passos rápidos.
+
+1. Capturar lead (nome + WhatsApp + ponto de captura) — cria `users_leads` se novo.
+2. Emitir voucher: seleção rápida de pacote ou vinho + total + gerar QR.
+
+Reaproveita edge functions `tourist-actions` (criar voucher) e admin-leads. Layout grande, botões altos (44px+), modo offline-first com fila se sem rede (best-effort: salva no localStorage até reconectar).
+
+Capability: `vouchers.issue` (staff+).
 
 ---
 
 ## Ordem de execução
-
-1. Migration única com todas as tabelas + colunas extras.
-2. `permissions.ts` + atualização de `_shared/auth.ts`.
-3. 4 Edge functions novas (`admin-reviews`, `admin-loyalty`, `admin-events`, `admin-import`).
-4. 4 páginas admin + integração tourist (eventos, fidelidade, review com comentário).
-5. Sidebar/bottom-nav + matriz visível em Equipe.
+1. Migration: `audit_logs`, colunas externas em `wineries`, `wines.translations`.
+2. `_shared/audit.ts` + integrar em 4-5 edge functions críticas.
+3. Edge function `admin-audit` (list + filtros).
+4. Instalar `jspdf`.
+5. Páginas/UI:
+   - `AdminAuditPage` + rota + nav (capability owner)
+   - Botão PDF relatório no Dashboard
+   - Botão PDF ficha em AdminWinesPage
+   - Drawer traduções em AdminWinesPage
+   - `AdminCheckinPage` mobile-first + rota + nav (capability vouchers.issue)
+   - Campos externos em `AdminWineryConfigPage`
+   - Ícones de redes em `TouristLayout` footer
 
 ## Fora deste bloco
-Ajustes finos (logs auditoria, integrações externas, PDF mensal, fichas técnicas PDF, multi-idioma UI por campo, app sommelier) ficam para o próximo ciclo.
+- Cron de envio email mensal automático (precisa scheduler + email infra).
+- Sincronização real-time com Google Reviews / TripAdvisor (precisa API key paga).
+- Tradução manual em Pacotes/Cardápio/Eventos (replicável depois do template em Vinhos).
