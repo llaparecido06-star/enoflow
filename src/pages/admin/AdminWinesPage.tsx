@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
-import { Wine as WineIcon, Plus, Pencil, Trash2, MapPin } from "lucide-react";
+import { Wine as WineIcon, Plus, Pencil, Trash2, MapPin, FileText, Languages } from "lucide-react";
 import WineFormModal from "@/components/admin/WineFormModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
+import WineTranslationsDrawer from "@/components/admin/WineTranslationsDrawer";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { generateWineSheet } from "@/lib/admin/pdf";
 
 export default function AdminWinesPage() {
   const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
@@ -23,8 +25,17 @@ export default function AdminWinesPage() {
   const [formWine, setFormWine] = useState<Wine | null | undefined>(undefined);
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [deleteWine, setDeleteWine] = useState<Wine | null>(null);
+  const [translateWine, setTranslateWine] = useState<Wine | null>(null);
   const [deleting, setDeleting] = useState(false);
   const qc = useQueryClient();
+
+  const handleSheet = async (wine: Wine) => {
+    try {
+      await generateWineSheet(wine as any, winery as any);
+    } catch {
+      toast.error("Erro ao gerar ficha");
+    }
+  };
 
   const handleDelete = async () => {
     if (!deleteWine) return;
@@ -115,6 +126,12 @@ export default function AdminWinesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
+                <button onClick={() => handleSheet(wine)} title="Ficha técnica PDF" className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                  <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
+                <button onClick={() => setTranslateWine(wine)} title="Traduções" className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                  <Languages className="w-3.5 h-3.5 text-muted-foreground" />
+                </button>
                 <button onClick={() => setFormWine(wine)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
                   <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
@@ -145,6 +162,10 @@ export default function AdminWinesPage() {
           onCancel={() => setDeleteWine(null)}
           loading={deleting}
         />
+      )}
+
+      {translateWine && (
+        <WineTranslationsDrawer wine={translateWine} winery={winery} onClose={() => setTranslateWine(null)} />
       )}
     </div>
   );
