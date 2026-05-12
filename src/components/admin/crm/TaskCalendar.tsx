@@ -238,12 +238,17 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
               {dayTasks.map((t) => {
                 const ov = new Date(t.due_at) < new Date() && t.status === "pendente";
                 return (
-                  <div key={t.id} className="flex items-start gap-2 p-2 border border-border rounded-md hover:bg-secondary/30">
+                  <div
+                    key={t.id}
+                    draggable
+                    onDragStart={() => setDragId(t.id)}
+                    onDragEnd={() => { setDragId(null); setDragOverKey(null); }}
+                    className={`flex items-start gap-2 p-2 border border-border rounded-md hover:bg-secondary/30 cursor-grab active:cursor-grabbing ${dragId === t.id ? "opacity-50" : ""}`}
+                  >
                     <span className={`w-2 h-2 mt-1.5 rounded-full ${TYPE_COLOR[t.type] || "bg-gray-400"}`} />
                     <button
-                      onClick={() => t.lead_id && onLeadOpen?.(t.lead_id)}
-                      disabled={!t.lead_id}
-                      className="flex-1 text-left min-w-0 disabled:cursor-default"
+                      onClick={() => setEditing(t)}
+                      className="flex-1 text-left min-w-0"
                     >
                       <p className="text-sm font-medium truncate">{t.title}</p>
                       <p className={`text-[10px] ${ov ? "text-rose-600" : "text-muted-foreground"}`}>
@@ -252,6 +257,9 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
                         {t.status === "feito" && " · ✓"}
                       </p>
                     </button>
+                    {t.lead_id && (
+                      <button onClick={() => onLeadOpen?.(t.lead_id!)} title="Abrir lead" className="text-[10px] text-primary underline">lead</button>
+                    )}
                     {t.status === "pendente" && (
                       <button onClick={() => complete(t.id)} title="Concluir" className="text-emerald-600">
                         <CheckCircle2 className="w-4 h-4" />
@@ -273,6 +281,15 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
           wineryId={wineryId}
           presetDueAt={newPreset ?? undefined}
           onClose={() => { setShowNew(false); setNewPreset(null); }}
+          onSaved={load}
+        />
+      )}
+      {editing && (
+        <TaskFormModal
+          wineryId={wineryId}
+          taskId={editing.id}
+          initial={{ title: editing.title, due_at: editing.due_at, type: editing.type, assigned_admin_id: editing.admin_id }}
+          onClose={() => setEditing(null)}
           onSaved={load}
         />
       )}
