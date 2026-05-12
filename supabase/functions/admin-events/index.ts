@@ -63,9 +63,11 @@ Deno.serve(async (req) => {
       if (id) {
         const { error } = await supabase.from("events").update(payload).eq("id", id).eq("winery_id", winery_id);
         if (error) throw error;
+        await logAudit({ winery_id, admin_id: session.sub, admin_name: session.name, entity: "event", entity_id: id, action: "update", after: payload });
       } else {
-        const { error } = await supabase.from("events").insert(payload);
+        const { data: ins, error } = await supabase.from("events").insert(payload).select("id").single();
         if (error) throw error;
+        await logAudit({ winery_id, admin_id: session.sub, admin_name: session.name, entity: "event", entity_id: ins?.id, action: "create", after: payload });
       }
       return json({ success: true });
     }
@@ -76,6 +78,7 @@ Deno.serve(async (req) => {
       await supabase.from("event_rsvps").delete().eq("event_id", id).eq("winery_id", winery_id);
       const { error } = await supabase.from("events").delete().eq("id", id).eq("winery_id", winery_id);
       if (error) throw error;
+      await logAudit({ winery_id, admin_id: session.sub, admin_name: session.name, entity: "event", entity_id: id, action: "delete" });
       return json({ success: true });
     }
 
