@@ -129,6 +129,43 @@ export default function AdminReviewsPage() {
             </div>
           )}
 
+          {/* Moderation history */}
+          {canRespond && (
+            <div className="rounded-xl bg-card border border-border overflow-hidden">
+              <button
+                onClick={() => setHistoryOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30 hover:bg-muted/50 transition-colors"
+                aria-expanded={historyOpen}
+              >
+                <span className="inline-flex items-center gap-2"><History className="w-3.5 h-3.5" /> Histórico de moderação</span>
+                {historyOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+              </button>
+              {historyOpen && (
+                <ul className="divide-y divide-border max-h-72 overflow-y-auto">
+                  {(history ?? []).length === 0 && (
+                    <li className="p-4 text-center text-xs text-muted-foreground">Nenhum evento de moderação registrado.</li>
+                  )}
+                  {(history ?? []).map((h: any) => (
+                    <li key={h.id} className="p-3 text-xs flex items-start gap-2">
+                      <span className={`px-2 py-0.5 rounded-full font-semibold ${h.action === "hide_review" ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}>
+                        {h.action === "hide_review" ? "Ocultou" : "Reexibiu"}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-foreground">
+                          <strong>{h.admin_name ?? "Admin"}</strong>
+                          {h.metadata?.stars ? <> · {"★".repeat(h.metadata.stars)}</> : null}
+                          {h.metadata?.comment ? <> · "{String(h.metadata.comment).slice(0, 80)}"</> : null}
+                        </p>
+                        <p className="text-muted-foreground">{new Date(h.created_at).toLocaleString("pt-BR")}</p>
+                        {h.metadata?.reason && <p className="text-muted-foreground italic mt-0.5">Motivo: {h.metadata.reason}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
           {/* Filters */}
           <div className="rounded-xl bg-card border border-border p-3 grid grid-cols-1 md:grid-cols-3 gap-2">
             <select
