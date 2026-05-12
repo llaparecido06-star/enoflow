@@ -35,6 +35,10 @@ const AdminTrainingPage = lazy(() => import("./pages/admin/AdminTrainingPage"));
 const AdminLocationsPage = lazy(() => import("./pages/admin/AdminLocationsPage"));
 const AdminStaffPerformancePage = lazy(() => import("./pages/admin/AdminStaffPerformancePage"));
 const AdminCampaignsPage = lazy(() => import("./pages/admin/AdminCampaignsPage"));
+const AdminReservationsPage = lazy(() => import("./pages/admin/AdminReservationsPage"));
+const AdminStockPage = lazy(() => import("./pages/admin/AdminStockPage"));
+const AdminFinancePage = lazy(() => import("./pages/admin/AdminFinancePage"));
+const AdminWineryConfigPage = lazy(() => import("./pages/admin/AdminWineryConfigPage"));
 
 // Lazy-loaded master routes
 const MasterLayout = lazy(() => import("./pages/master/MasterLayout"));
@@ -108,6 +112,10 @@ const App = () => {
                 <Route path="training" element={<AdminTrainingPage />} />
                 <Route path="settings" element={<AdminSettingsPage />} />
                 <Route path="campaigns" element={<AdminCampaignsPage />} />
+                <Route path="reservations" element={<AdminReservationsPage />} />
+                <Route path="stock" element={<AdminStockPage />} />
+                <Route path="finance" element={<AdminFinancePage />} />
+                <Route path="config" element={<AdminWineryConfigPage />} />
               </Route>
 
               {/* Privacy */}
