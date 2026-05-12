@@ -61,33 +61,33 @@ export default function AdminMenuPage() {
   }, {});
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Cardápio</h1>
-          <p className="text-sm text-muted-foreground">Gerencie os pratos do restaurante</p>
+          <h1 className="admin-page-title flex items-center gap-2"><UtensilsCrossed className="w-7 h-7 text-primary" />Cardápio</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie os pratos do restaurante</p>
         </div>
         <button onClick={() => setFormItem(null)}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
+          className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all">
           <Plus className="w-4 h-4" /> Novo item
         </button>
       </div>
 
       {/* Location filter */}
       {locations.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1 mb-4 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <button onClick={() => setLocationFilter("all")}
-            className={`whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${locationFilter === "all" ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-secondary"}`}>
+            className={`whitespace-nowrap text-xs font-medium px-3.5 py-2 rounded-full border transition-all ${locationFilter === "all" ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground border-primary shadow-card" : "border-border text-muted-foreground hover:bg-secondary"}`}>
             Todas
           </button>
           {locations.map(loc => (
             <button key={loc.id} onClick={() => setLocationFilter(loc.id)}
-              className={`whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full border transition-colors flex items-center gap-1 ${locationFilter === loc.id ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-secondary"}`}>
+              className={`whitespace-nowrap text-xs font-medium px-3.5 py-2 rounded-full border transition-all flex items-center gap-1 ${locationFilter === loc.id ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground border-primary shadow-card" : "border-border text-muted-foreground hover:bg-secondary"}`}>
               <MapPin className="w-3 h-3" /> {loc.name}
             </button>
           ))}
           <button onClick={() => setLocationFilter("none")}
-            className={`whitespace-nowrap text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${locationFilter === "none" ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-secondary"}`}>
+            className={`whitespace-nowrap text-xs font-medium px-3.5 py-2 rounded-full border transition-all ${locationFilter === "none" ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground border-primary shadow-card" : "border-border text-muted-foreground hover:bg-secondary"}`}>
             Sem local
           </button>
         </div>
