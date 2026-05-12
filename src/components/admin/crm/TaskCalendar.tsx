@@ -53,6 +53,9 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
   const [statusFilter, setStatusFilter] = useState<string>(persisted.statusFilter ?? "pendente");
   const [showNew, setShowNew] = useState(false);
   const [newPreset, setNewPreset] = useState<Date | null>(null);
+  const [editing, setEditing] = useState<Task | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ typeFilter, assigneeFilter, statusFilter }));
