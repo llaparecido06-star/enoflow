@@ -612,6 +612,93 @@ export type Database = {
         }
         Relationships: []
       }
+      event_rsvps: {
+        Row: {
+          contact_name: string
+          contact_whatsapp: string | null
+          created_at: string
+          event_id: string
+          id: string
+          lead_id: string | null
+          party_size: number
+          status: string
+          winery_id: string
+        }
+        Insert: {
+          contact_name: string
+          contact_whatsapp?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          lead_id?: string | null
+          party_size?: number
+          status?: string
+          winery_id: string
+        }
+        Update: {
+          contact_name?: string
+          contact_whatsapp?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          lead_id?: string | null
+          party_size?: number
+          status?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          capacity: number
+          capture_point_id: string | null
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          id: string
+          price: number
+          rsvp_count: number
+          starts_at: string
+          status: string
+          title: string
+          updated_at: string
+          winery_id: string
+        }
+        Insert: {
+          capacity?: number
+          capture_point_id?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          price?: number
+          rsvp_count?: number
+          starts_at: string
+          status?: string
+          title: string
+          updated_at?: string
+          winery_id: string
+        }
+        Update: {
+          capacity?: number
+          capture_point_id?: string | null
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          price?: number
+          rsvp_count?: number
+          starts_at?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
       favorites: {
         Row: {
           created_at: string
@@ -688,29 +775,110 @@ export type Database = {
         }
         Relationships: []
       }
+      loyalty_redemptions: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          id: string
+          points_spent: number
+          redeemed_at: string | null
+          reward_id: string
+          status: string
+          user_id: string
+          winery_id: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          points_spent: number
+          redeemed_at?: string | null
+          reward_id: string
+          status?: string
+          user_id: string
+          winery_id: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          points_spent?: number
+          redeemed_at?: string | null
+          reward_id?: string
+          status?: string
+          user_id?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
       loyalty_rewards: {
         Row: {
+          active: boolean
+          category: string | null
           created_at: string
           description: string | null
           id: string
+          image_url: string | null
+          points_cost: number
           threshold: number
           title: string
           winery_id: string
         }
         Insert: {
+          active?: boolean
+          category?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
+          points_cost?: number
           threshold: number
           title: string
           winery_id: string
         }
         Update: {
+          active?: boolean
+          category?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
+          points_cost?: number
           threshold?: number
           title?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
+      loyalty_tiers: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          min_points: number
+          name: string
+          perks: Json
+          position: number
+          winery_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          min_points?: number
+          name: string
+          perks?: Json
+          position?: number
+          winery_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          min_points?: number
+          name?: string
+          perks?: Json
+          position?: number
           winery_id?: string
         }
         Relationships: []
@@ -768,6 +936,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nps_responses: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          score: number
+          user_id: string | null
+          voucher_id: string | null
+          winery_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          score: number
+          user_id?: string | null
+          voucher_id?: string | null
+          winery_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          score?: number
+          user_id?: string | null
+          voucher_id?: string | null
+          winery_id?: string
+        }
+        Relationships: []
       }
       ratings: {
         Row: {
@@ -1200,6 +1398,45 @@ export type Database = {
           },
         ]
       }
+      wine_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          public_response: string | null
+          responded_at: string | null
+          responded_by: string | null
+          stars: number
+          user_id: string | null
+          wine_id: string
+          winery_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          public_response?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          stars: number
+          user_id?: string | null
+          wine_id: string
+          winery_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          public_response?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          stars?: number
+          user_id?: string | null
+          wine_id?: string
+          winery_id?: string
+        }
+        Relationships: []
+      }
       wineries: {
         Row: {
           address: string | null
@@ -1214,6 +1451,7 @@ export type Database = {
           instagram_url: string | null
           lgpd_policy_url: string | null
           logo_url: string | null
+          loyalty_rules: Json
           max_locations: number
           name: string
           plan_level: Database["public"]["Enums"]["plan_level"]
@@ -1238,6 +1476,7 @@ export type Database = {
           instagram_url?: string | null
           lgpd_policy_url?: string | null
           logo_url?: string | null
+          loyalty_rules?: Json
           max_locations?: number
           name: string
           plan_level?: Database["public"]["Enums"]["plan_level"]
@@ -1262,6 +1501,7 @@ export type Database = {
           instagram_url?: string | null
           lgpd_policy_url?: string | null
           logo_url?: string | null
+          loyalty_rules?: Json
           max_locations?: number
           name?: string
           plan_level?: Database["public"]["Enums"]["plan_level"]
