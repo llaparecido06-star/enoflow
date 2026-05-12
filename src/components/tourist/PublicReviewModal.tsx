@@ -4,13 +4,15 @@ import { Star, Send, X } from "lucide-react";
 
 interface Props {
   wineName: string;
+  initialStars?: number;
+  initialComment?: string;
   onSubmit: (stars: number, comment: string) => void;
   onClose: () => void;
 }
 
-export default function PublicReviewModal({ wineName, onSubmit, onClose }: Props) {
-  const [stars, setStars] = useState(0);
-  const [comment, setComment] = useState("");
+export default function PublicReviewModal({ wineName, initialStars, initialComment, onSubmit, onClose }: Props) {
+  const [stars, setStars] = useState(initialStars ?? 0);
+  const [comment, setComment] = useState(initialComment ?? "");
 
   return (
     <motion.div
