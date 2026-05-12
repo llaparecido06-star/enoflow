@@ -221,6 +221,7 @@ export default function AdminLayout() {
       {/* Mobile nav - 4 primary + Mais sheet */}
       <MobileBottomNav
         items={visibleNav}
+        groups={visibleGroups}
         activeItem={activeItem}
         basePath={basePath}
         navigate={navigate}
