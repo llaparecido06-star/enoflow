@@ -21,7 +21,7 @@ import NotificationPrefsForm from "@/components/admin/crm/NotificationPrefsForm"
 import PostSaleExportBar from "@/components/admin/crm/PostSaleExportBar";
 import type { CrmLead } from "@/components/admin/crm/LeadCard";
 
-type View = "pipeline" | "list" | "segments" | "agenda" | "templates" | "settings";
+type View = "pipeline" | "list" | "segments" | "agenda" | "templates" | "postsale" | "settings";
 type AgendaView = "list" | "calendar" | "scheduled";
 
 interface PersistedState {
