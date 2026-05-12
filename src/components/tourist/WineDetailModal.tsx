@@ -1,11 +1,16 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { useTranslatedText, useContentTranslation } from "@/hooks/useContentTranslation";
 import { formatCurrency } from "@/lib/currency";
-import { Wine as WineIcon, X, Star, Plus, Grape, MapPin, Thermometer, Clock, User, FlaskConical, Share2 } from "lucide-react";
+import { Wine as WineIcon, X, Star, Plus, Grape, MapPin, Thermometer, Clock, User, FlaskConical, Share2, MessageSquarePlus } from "lucide-react";
 import ShareWineButton from "./ShareWineButton";
+import PublicReviewModal from "./PublicReviewModal";
+import { invokeAuth } from "@/lib/auth-api";
+import { toast } from "sonner";
 import type { Wine } from "@/hooks/useWinery";
 
 export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "BRL", winerySlug }: { wine: Wine; onClose: () => void; onAdd: () => void; t: (k: string) => string; currency?: string; winerySlug?: string }) {
+  const [reviewOpen, setReviewOpen] = useState(false);
   const harmonizationItems = wine.harmonization?.length ? wine.harmonization : [];
   const translatedDescription = useTranslatedText(wine.description);
   const translatedName = useTranslatedText(wine.name);
