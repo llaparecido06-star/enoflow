@@ -23,6 +23,7 @@ import type { CrmLead } from "@/components/admin/crm/LeadCard";
 
 type View = "pipeline" | "list" | "segments" | "agenda" | "templates" | "postsale" | "settings";
 type AgendaView = "list" | "calendar" | "scheduled";
+type SettingsView = "queue" | "notifications";
 
 interface PersistedState {
   search: string;
