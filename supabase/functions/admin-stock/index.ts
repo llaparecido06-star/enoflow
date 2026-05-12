@@ -1,4 +1,5 @@
 import { verifySession, json, corsHeaders, createSupabaseAdmin, hasMinRole } from "../_shared/auth.ts";
+import { logAudit } from "../_shared/audit.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -53,6 +54,7 @@ Deno.serve(async (req) => {
       await supabase.from("stock_movements").insert({
         winery_id, wine_id, delta, reason: reason ?? "ajuste", admin_id: session.sub, note,
       });
+      await logAudit({ winery_id, admin_id: session.sub, admin_name: session.name, entity: "stock", entity_id: wine_id, action: "adjust", before: { stock_qty: wine.stock_qty }, after: { stock_qty: newQty, delta, reason } });
       return json({ success: true, stock_qty: newQty });
     }
 
