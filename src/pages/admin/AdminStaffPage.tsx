@@ -191,7 +191,7 @@ export default function AdminStaffPage() {
           {staff.map((member) => {
             const RoleIcon = roleIcons[member.role] || Shield;
             return (
-              <div key={member.id} className="bg-card rounded-xl border border-border p-4">
+              <div key={member.id} className="admin-card admin-card-hover p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
