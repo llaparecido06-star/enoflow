@@ -218,7 +218,7 @@ function SocialFooter({ winery }: { winery: any }) {
           <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
             <Star className="w-3.5 h-3.5 text-gold fill-gold" /> Gostou da experiência?
           </p>
-          <div className={`grid gap-2 ${reviewLinks.length > 1 ? "grid-cols-1 xs:grid-cols-2" : "grid-cols-1"}`}>
+          <div className={`grid gap-2 ${reviewLinks.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
             {reviewLinks.map((l) => (
               <a
                 key={l.label}
