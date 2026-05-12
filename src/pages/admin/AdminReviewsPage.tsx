@@ -95,7 +95,7 @@ export default function AdminReviewsPage() {
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
-        <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Avaliações & NPS</h1>
+        <h1 className="admin-page-title">Avaliações & NPS</h1>
         <p className="text-sm text-muted-foreground mt-1">Reviews dos vinhos e indicador de satisfação da visita.</p>
       </div>
 
@@ -108,7 +108,7 @@ export default function AdminReviewsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-border">
+      <div className="flex gap-1 bg-muted/50 p-1 rounded-xl w-fit">
         <TabBtn active={tab === "wines"} onClick={() => setTab("wines")} label="Vinhos" />
         <TabBtn active={tab === "nps"} onClick={() => setTab("nps")} label="Visita / NPS" />
       </div>
