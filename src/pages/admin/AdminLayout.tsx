@@ -175,3 +175,86 @@ export default function AdminLayout() {
     </div>
   );
 }
+
+function MobileBottomNav({ items, activeItem, basePath, navigate, onLogout }: {
+  items: typeof navItems;
+  activeItem: string | undefined;
+  basePath: string;
+  navigate: ReturnType<typeof useNavigate>;
+  onLogout: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  // Prioritize: leads, dashboard, wines, agenda-equivalents
+  const priority = ["leads", "dashboard", "wines", "staff", "menu", "packages"];
+  const primary = priority
+    .map((id) => items.find((i) => i.id === id))
+    .filter(Boolean)
+    .slice(0, 4) as typeof items;
+  // Fallback fill with first items if fewer primary
+  if (primary.length < 4) {
+    for (const it of items) {
+      if (primary.length >= 4) break;
+      if (!primary.find((p) => p.id === it.id)) primary.push(it);
+    }
+  }
+  const overflow = items.filter((i) => !primary.find((p) => p.id === i.id));
+
+  return (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border">
+      <div className="flex justify-around py-2">
+        {primary.map((item) => {
+          const isActive = activeItem === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => navigate(basePath + item.path)}
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 flex-1 ${
+                isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60"
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="text-[9px] truncate max-w-full">{item.label}</span>
+            </button>
+          );
+        })}
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <button className="flex flex-col items-center gap-0.5 px-2 py-1 flex-1 text-sidebar-foreground/60">
+              <MoreHorizontal className="w-5 h-5" />
+              <span className="text-[9px]">Mais</span>
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-2xl">
+            <SheetHeader>
+              <SheetTitle>Mais opções</SheetTitle>
+            </SheetHeader>
+            <div className="grid grid-cols-3 gap-2 mt-4">
+              {overflow.map((item) => {
+                const isActive = activeItem === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => { navigate(basePath + item.path); setOpen(false); }}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border ${
+                      isActive ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground"
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span className="text-xs text-center">{item.label}</span>
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => { onLogout(); setOpen(false); }}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-destructive/30 text-destructive"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="text-xs">Sair</span>
+              </button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+    </div>
+  );
+}
