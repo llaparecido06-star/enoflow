@@ -1445,6 +1445,7 @@ export type Database = {
           comment: string | null
           created_at: string
           id: string
+          is_hidden: boolean
           public_response: string | null
           responded_at: string | null
           responded_by: string | null
@@ -1457,6 +1458,7 @@ export type Database = {
           comment?: string | null
           created_at?: string
           id?: string
+          is_hidden?: boolean
           public_response?: string | null
           responded_at?: string | null
           responded_by?: string | null
@@ -1469,6 +1471,7 @@ export type Database = {
           comment?: string | null
           created_at?: string
           id?: string
+          is_hidden?: boolean
           public_response?: string | null
           responded_at?: string | null
           responded_by?: string | null
