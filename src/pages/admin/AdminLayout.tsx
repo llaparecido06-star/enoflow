@@ -181,27 +181,34 @@ export default function AdminLayout() {
             </div>
           </div>
         </div>
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto scrollbar-hide">
-          {visibleNav.map((item) => {
-            const isActive = activeItem === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => navigate(basePath + item.path)}
-                className={`group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 relative ${
-                  isActive
-                    ? "bg-card text-sidebar-primary font-medium shadow-card"
-                    : "text-sidebar-foreground/70 hover:bg-card/60 hover:text-sidebar-foreground"
-                }`}
-              >
-                {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full gradient-primary" />
-                )}
-                <item.icon className={`w-4 h-4 transition-transform ${isActive ? "scale-110" : "group-hover:scale-105"}`} />
-                <span className="truncate">{item.label}</span>
-              </button>
-            );
-          })}
+        <nav className="flex-1 p-3 space-y-4 overflow-y-auto scrollbar-hide">
+          {visibleGroups.map((group) => (
+            <div key={group.id} className="space-y-0.5">
+              <p className="px-3 pt-1 pb-1.5 text-[10px] uppercase tracking-wider font-semibold text-sidebar-foreground/40">
+                {group.label}
+              </p>
+              {group.items.map((item) => {
+                const isActive = activeItem === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => navigate(basePath + item.path)}
+                    className={`group w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-200 relative ${
+                      isActive
+                        ? "bg-card text-sidebar-primary font-medium shadow-card"
+                        : "text-sidebar-foreground/70 hover:bg-card/60 hover:text-sidebar-foreground"
+                    }`}
+                  >
+                    {isActive && (
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-1 rounded-r-full gradient-primary" />
+                    )}
+                    <item.icon className={`w-4 h-4 transition-transform ${isActive ? "scale-110" : "group-hover:scale-105"}`} />
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </nav>
         <div className="p-3 border-t border-sidebar-border/60">
           <button onClick={() => { logout(); navigate("/admin/login"); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-destructive/80 hover:bg-destructive/10 transition-colors">
