@@ -18,10 +18,17 @@ Deno.serve(async (req) => {
 
     // ─── LIST WINE REVIEWS ───
     if (!action || action === "list_wine_reviews") {
-      const { wine_id, has_response } = body;
+      const { wine_id, user_id, has_response, hidden, min_stars, max_stars, search } = body;
       let q = supabase.from("wine_reviews").select("*").eq("winery_id", winery_id);
       if (wine_id) q = q.eq("wine_id", wine_id);
+      if (user_id) q = q.eq("user_id", user_id);
       if (has_response === false) q = q.is("public_response", null);
+      if (has_response === true) q = q.not("public_response", "is", null);
+      if (hidden === true) q = q.eq("is_hidden", true);
+      if (hidden === false) q = q.eq("is_hidden", false);
+      if (typeof min_stars === "number") q = q.gte("stars", min_stars);
+      if (typeof max_stars === "number") q = q.lte("stars", max_stars);
+      if (search) q = q.ilike("comment", `%${search}%`);
       const { data, error } = await q.order("created_at", { ascending: false }).limit(500);
       if (error) throw error;
 
