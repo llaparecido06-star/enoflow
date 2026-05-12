@@ -79,6 +79,35 @@ Deno.serve(async (req) => {
         result = { deleted: true };
         break;
       }
+      case "set_translations": {
+        if (!isUUID(wine_id)) return json({ error: "Valid wine_id required" }, 400);
+        const translations = body.translations;
+        if (!translations || typeof translations !== "object") return json({ error: "translations required" }, 400);
+        // Sanitize: only keep allowed languages and string fields
+        const allowedLangs = ["en", "es", "pt"];
+        const allowedFields = ["name", "description", "grape", "region", "aging"];
+        const clean: Record<string, Record<string, string>> = {};
+        for (const lang of allowedLangs) {
+          const t = (translations as any)[lang];
+          if (t && typeof t === "object") {
+            const obj: Record<string, string> = {};
+            for (const f of allowedFields) {
+              if (typeof t[f] === "string" && t[f].length < 2000) obj[f] = t[f];
+            }
+            if (Object.keys(obj).length > 0) clean[lang] = obj;
+          }
+        }
+        const { data, error } = await supabase
+          .from("wines")
+          .update({ translations: clean })
+          .eq("id", wine_id)
+          .eq("winery_id", winery_id)
+          .select()
+          .single();
+        if (error) throw error;
+        result = data;
+        break;
+      }
       default:
         return json({ error: "Invalid action" }, 400);
     }
