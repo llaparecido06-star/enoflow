@@ -53,27 +53,51 @@ export default function AdminStockPage() {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
-            <Boxes className="w-6 h-6 text-primary" /> Estoque
+          <h1 className="admin-page-title flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-card">
+              <Boxes className="w-5 h-5 text-primary-foreground" />
+            </div>
+            Estoque
           </h1>
-          <p className="text-sm text-muted-foreground">
-            {summary.total} vinho(s)
-            {summary.out_of_stock > 0 && <span className="ml-2 text-rose-600 font-medium">⚠ {summary.out_of_stock} esgotado(s)</span>}
-            {summary.low_stock > 0 && <span className="ml-2 text-amber-600">⚠ {summary.low_stock} baixo(s)</span>}
-          </p>
+          <p className="text-sm text-muted-foreground mt-1.5 ml-12">{summary.total} vinho(s) monitorados</p>
         </div>
       </div>
 
-      <div className="bg-card rounded-xl border border-border p-3 mb-4 flex flex-wrap items-center gap-2">
+      {/* KPI Stats */}
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="admin-kpi p-4">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center mb-3 ring-1 ring-border/40">
+            <Boxes className="w-4 h-4 text-primary" />
+          </div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Total</p>
+          <p className="font-display text-2xl font-bold tracking-tight mt-0.5">{summary.total}</p>
+        </div>
+        <div className="admin-kpi p-4">
+          <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center mb-3 ring-1 ring-border/40">
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
+          </div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Baixos</p>
+          <p className="font-display text-2xl font-bold tracking-tight mt-0.5 text-amber-700">{summary.low_stock || 0}</p>
+        </div>
+        <div className="admin-kpi p-4">
+          <div className="w-9 h-9 rounded-xl bg-rose-50 flex items-center justify-center mb-3 ring-1 ring-border/40">
+            <AlertTriangle className="w-4 h-4 text-rose-600" />
+          </div>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Esgotados</p>
+          <p className="font-display text-2xl font-bold tracking-tight mt-0.5 text-rose-700">{summary.out_of_stock || 0}</p>
+        </div>
+      </div>
+
+      <div className="admin-card p-3 mb-4 flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar vinho…" className="pl-9 pr-3 py-2 border border-border rounded-lg text-sm bg-background w-full" />
         </div>
-        <div className="flex bg-secondary rounded-lg p-0.5">
+        <div className="flex bg-muted/50 rounded-xl p-1">
           {(["all", "tracked", "low", "out"] as const).map((f) => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-md text-xs ${filter === f ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
+            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${filter === f ? "bg-card shadow-card text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
               {f === "all" ? "Todos" : f === "tracked" ? "Com controle" : f === "low" ? "Baixos" : "Esgotados"}
             </button>
           ))}
@@ -83,40 +107,42 @@ export default function AdminStockPage() {
       {isLoading ? (
         <p className="text-center text-sm text-muted-foreground py-12">Carregando…</p>
       ) : wines.length === 0 ? (
-        <div className="bg-card border border-border rounded-xl p-12 text-center">
-          <Boxes className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
+        <div className="admin-card p-12 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
+            <Boxes className="w-7 h-7 text-muted-foreground/50" />
+          </div>
           <p className="text-sm text-muted-foreground">Nenhum vinho encontrado.</p>
         </div>
       ) : (
-        <div className="bg-card border border-border rounded-xl divide-y divide-border overflow-hidden">
+        <div className="admin-card divide-y divide-border overflow-hidden">
           {wines.map((w: any) => {
             const s = statusOf(w);
             return (
-              <div key={w.id} className="p-3 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div key={w.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-muted/20 transition-colors">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  {w.image_url ? <img src={w.image_url} alt="" className="w-10 h-10 rounded object-cover" /> : <div className="w-10 h-10 rounded bg-secondary flex items-center justify-center"><WineIcon className="w-4 h-4 text-muted-foreground" /></div>}
+                  {w.image_url ? <img src={w.image_url} alt="" className="w-11 h-11 rounded-lg object-cover ring-1 ring-border/40" /> : <div className="w-11 h-11 rounded-lg bg-muted/60 flex items-center justify-center ring-1 ring-border/40"><WineIcon className="w-4 h-4 text-muted-foreground" /></div>}
                   <div className="min-w-0">
                     <div className="text-sm font-semibold truncate">{w.name}</div>
                     <div className="text-xs text-muted-foreground">{w.type} {w.year ? `· ${w.year}` : ""}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="text-center min-w-[60px]">
-                    <div className="text-lg font-bold tabular-nums">{w.track_stock ? w.stock_qty : "—"}</div>
+                  <div className="text-center min-w-[64px]">
+                    <div className="font-display text-2xl font-bold tabular-nums tracking-tight">{w.track_stock ? w.stock_qty : "—"}</div>
                     <div className="text-[10px] text-muted-foreground">qty · min {w.stock_min}</div>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full border ${STATUS_LABEL[s].color}`}>{STATUS_LABEL[s].label}</span>
+                  <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${STATUS_LABEL[s].color}`}>{STATUS_LABEL[s].label}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   {w.track_stock && (
                     <>
-                      <button title="Baixa" onClick={() => setAdjusting({ wine: w, delta: -1 })} className="p-1.5 border border-border rounded-lg hover:bg-secondary"><Minus className="w-3.5 h-3.5" /></button>
-                      <button title="Entrada" onClick={() => setAdjusting({ wine: w, delta: 1 })} className="p-1.5 border border-border rounded-lg hover:bg-secondary"><Plus className="w-3.5 h-3.5" /></button>
+                      <button title="Baixa" onClick={() => setAdjusting({ wine: w, delta: -1 })} className="p-2 border border-border rounded-lg hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 transition-colors"><Minus className="w-3.5 h-3.5" /></button>
+                      <button title="Entrada" onClick={() => setAdjusting({ wine: w, delta: 1 })} className="p-2 border border-border rounded-lg hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600 transition-colors"><Plus className="w-3.5 h-3.5" /></button>
                     </>
                   )}
-                  <button title="Histórico" onClick={() => setHistoryWine(w)} className="p-1.5 border border-border rounded-lg hover:bg-secondary"><History className="w-3.5 h-3.5" /></button>
+                  <button title="Histórico" onClick={() => setHistoryWine(w)} className="p-2 border border-border rounded-lg hover:bg-muted/60 transition-colors"><History className="w-3.5 h-3.5" /></button>
                   {canManage && (
-                    <button onClick={() => toggleTracking(w)} className={`text-xs px-2 py-1 rounded-lg border ${w.track_stock ? "border-primary/40 bg-primary/5 text-primary" : "border-border text-muted-foreground"}`}>
+                    <button onClick={() => toggleTracking(w)} className={`text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-colors ${w.track_stock ? "border-primary/40 bg-primary/5 text-primary" : "border-border text-muted-foreground hover:bg-muted/60"}`}>
                       {w.track_stock ? "Controlado" : "Ativar"}
                     </button>
                   )}
