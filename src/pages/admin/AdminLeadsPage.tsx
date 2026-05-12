@@ -49,6 +49,7 @@ export default function AdminLeadsPage() {
 
   const [view, setView] = useState<View>(persisted.view ?? "pipeline");
   const [agendaView, setAgendaView] = useState<AgendaView>("list");
+  const [settingsView, setSettingsView] = useState<SettingsView>("queue");
   const [search, setSearch] = useState(persisted.search ?? "");
   const [stageFilter, setStageFilter] = useState(persisted.stageFilter ?? "all");
   const [minLtv, setMinLtv] = useState(persisted.minLtv ?? "");
