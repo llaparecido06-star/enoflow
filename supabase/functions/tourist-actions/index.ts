@@ -287,6 +287,62 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ─── ACTION: submit_wine_review (public 1–5 stars + comment)
+    if (action === "submit_wine_review") {
+      const { wine_id, stars, comment } = body;
+      if (!isUUID(wine_id)) return json({ error: "Valid wine_id required" }, 400);
+      if (typeof stars !== "number" || stars < 1 || stars > 5) {
+        return json({ error: "stars must be between 1 and 5" }, 400);
+      }
+      const safeComment = typeof comment === "string" && comment.trim()
+        ? comment.trim().slice(0, 500)
+        : null;
+
+      // Ensure wine belongs to this winery
+      const { data: wine } = await supabase
+        .from("wines")
+        .select("id, winery_id")
+        .eq("id", wine_id)
+        .eq("winery_id", winery_id)
+        .maybeSingle();
+      if (!wine) return json({ error: "Wine not found" }, 404);
+
+      // One review per user per wine: delete previous then insert
+      await supabase
+        .from("wine_reviews")
+        .delete()
+        .eq("user_id", user_id)
+        .eq("wine_id", wine_id);
+
+      const { data, error } = await supabase
+        .from("wine_reviews")
+        .insert({
+          winery_id,
+          wine_id,
+          user_id,
+          stars,
+          comment: safeComment,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return json({ success: true, review: data });
+    }
+
+    // ─── ACTION: get_my_wine_review
+    if (action === "get_my_wine_review") {
+      const { wine_id } = body;
+      if (!isUUID(wine_id)) return json({ error: "Valid wine_id required" }, 400);
+      const { data } = await supabase
+        .from("wine_reviews")
+        .select("stars, comment, created_at")
+        .eq("user_id", user_id)
+        .eq("wine_id", wine_id)
+        .maybeSingle();
+      return json({ success: true, review: data ?? null });
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (error) {
     console.error("tourist-actions error:", error);

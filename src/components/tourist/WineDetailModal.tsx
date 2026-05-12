@@ -1,11 +1,16 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { useTranslatedText, useContentTranslation } from "@/hooks/useContentTranslation";
 import { formatCurrency } from "@/lib/currency";
-import { Wine as WineIcon, X, Star, Plus, Grape, MapPin, Thermometer, Clock, User, FlaskConical, Share2 } from "lucide-react";
+import { Wine as WineIcon, X, Star, Plus, Grape, MapPin, Thermometer, Clock, User, FlaskConical, Share2, MessageSquarePlus } from "lucide-react";
 import ShareWineButton from "./ShareWineButton";
+import PublicReviewModal from "./PublicReviewModal";
+import { invokeAuth } from "@/lib/auth-api";
+import { toast } from "sonner";
 import type { Wine } from "@/hooks/useWinery";
 
 export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "BRL", winerySlug }: { wine: Wine; onClose: () => void; onAdd: () => void; t: (k: string) => string; currency?: string; winerySlug?: string }) {
+  const [reviewOpen, setReviewOpen] = useState(false);
   const harmonizationItems = wine.harmonization?.length ? wine.harmonization : [];
   const translatedDescription = useTranslatedText(wine.description);
   const translatedName = useTranslatedText(wine.name);
@@ -127,6 +132,14 @@ export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "B
             </div>
           )}
 
+          {/* Public review CTA */}
+          <button
+            onClick={() => setReviewOpen(true)}
+            className="w-full mt-2 mb-3 flex items-center justify-center gap-2 py-2 rounded-xl border border-dashed border-border text-xs text-muted-foreground hover:bg-secondary/40 transition-colors"
+          >
+            <MessageSquarePlus className="w-3.5 h-3.5" /> Avaliar este vinho
+          </button>
+
           {/* Price + Add to cart */}
           <div className="flex items-center justify-between pt-3 border-t border-border/30">
             <div>
@@ -146,6 +159,28 @@ export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "B
           </div>
         </div>
       </motion.div>
+
+      {reviewOpen && (
+        <PublicReviewModal
+          wineName={wine.name}
+          onClose={() => setReviewOpen(false)}
+          onSubmit={async (stars, comment) => {
+            try {
+              const res = await invokeAuth("tourist-actions", {
+                action: "submit_wine_review",
+                wine_id: wine.id,
+                stars,
+                comment,
+              });
+              if (res.error || res.data?.error) throw new Error(res.data?.error || "Erro");
+              toast.success("Avaliação enviada. Obrigado!");
+              setReviewOpen(false);
+            } catch {
+              toast.error("Não foi possível enviar a avaliação");
+            }
+          }}
+        />
+      )}
     </motion.div>
   );
 }
