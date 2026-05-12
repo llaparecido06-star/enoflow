@@ -2,9 +2,10 @@ import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
 import { useVoucherNotifications } from "@/hooks/useVoucherNotifications";
-import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare, MoreHorizontal } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import NotificationBell from "@/components/admin/crm/NotificationBell";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 // salesOnly excludes the item from sales-only sidebars
 const navItems = [
