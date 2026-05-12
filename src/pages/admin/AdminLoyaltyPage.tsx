@@ -24,18 +24,26 @@ export default function AdminLoyaltyPage() {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["loyalty", winery.id] });
 
+  const pending = data?.redemptions?.filter((r: any) => r.status === "pendente").length ?? 0;
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
-        <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Programa de Fidelidade</h1>
+        <h1 className="admin-page-title flex items-center gap-2"><Crown className="w-7 h-7 text-primary" />Programa de Fidelidade</h1>
         <p className="text-sm text-muted-foreground mt-1">Recompensas, níveis e regras de pontuação.</p>
       </div>
 
-      <div className="flex gap-2 border-b border-border overflow-x-auto">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Recompensas</p><p className="text-2xl font-bold mt-1">{data?.rewards?.length ?? 0}</p></div>
+        <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Níveis</p><p className="text-2xl font-bold mt-1">{data?.tiers?.length ?? 0}</p></div>
+        <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Resgates</p><p className="text-2xl font-bold mt-1">{data?.redemptions?.length ?? 0}</p></div>
+        <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Pendentes</p><p className="text-2xl font-bold mt-1 text-amber-600">{pending}</p></div>
+      </div>
+
+      <div className="flex gap-1 border-b border-border overflow-x-auto sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-1 px-1">
         <TabBtn active={tab === "rewards"} onClick={() => setTab("rewards")} label="Recompensas" icon={Gift} />
         <TabBtn active={tab === "tiers"} onClick={() => setTab("tiers")} label="Níveis" icon={Crown} />
         <TabBtn active={tab === "rules"} onClick={() => setTab("rules")} label="Regras" icon={SettingsIcon} />
-        <TabBtn active={tab === "redemptions"} onClick={() => setTab("redemptions")} label={`Resgates${(data?.redemptions?.filter((r: any) => r.status === "pendente").length ?? 0) > 0 ? ` (${data.redemptions.filter((r: any) => r.status === "pendente").length})` : ""}`} icon={Inbox} />
+        <TabBtn active={tab === "redemptions"} onClick={() => setTab("redemptions")} label={`Resgates${pending > 0 ? ` (${pending})` : ""}`} icon={Inbox} />
       </div>
 
       {tab === "rewards" && <RewardsTab rewards={data?.rewards ?? []} canManage={canManage} wineryId={winery.id} onChange={invalidate} />}
@@ -47,7 +55,7 @@ export default function AdminLoyaltyPage() {
 }
 
 function TabBtn({ active, onClick, label, icon: Icon }: any) {
-  return <button onClick={onClick} className={`px-3 py-2 text-sm border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${active ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground"}`}><Icon className="w-4 h-4" />{label}</button>;
+  return <button onClick={onClick} className={`px-4 py-2.5 text-sm border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${active ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"}`}><Icon className="w-4 h-4" />{label}</button>;
 }
 
 function RewardsTab({ rewards, canManage, wineryId, onChange }: any) {
@@ -70,10 +78,10 @@ function RewardsTab({ rewards, canManage, wineryId, onChange }: any) {
 
   return (
     <div className="space-y-3">
-      {canManage && <button onClick={() => setEditing(empty)} className="text-sm px-3 py-2 rounded-lg bg-primary text-primary-foreground inline-flex items-center gap-1"><Plus className="w-4 h-4" />Nova recompensa</button>}
+      {canManage && <button onClick={() => setEditing(empty)} className="text-sm px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground inline-flex items-center gap-1.5 shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all font-medium"><Plus className="w-4 h-4" />Nova recompensa</button>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {rewards.map((r: any) => (
-          <div key={r.id} className="rounded-xl bg-card border border-border p-3 flex gap-3">
+          <div key={r.id} className="admin-card admin-card-hover p-3 flex gap-3">
             {r.image_url ? <img src={r.image_url} className="w-14 h-14 rounded-md object-cover" /> : <div className="w-14 h-14 rounded-md bg-muted flex items-center justify-center"><Gift className="w-6 h-6 text-muted-foreground" /></div>}
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm truncate">{r.title}</p>
@@ -133,10 +141,10 @@ function TiersTab({ tiers, canManage, wineryId, onChange }: any) {
 
   return (
     <div className="space-y-3">
-      {canManage && <button onClick={() => setEditing(empty)} className="text-sm px-3 py-2 rounded-lg bg-primary text-primary-foreground inline-flex items-center gap-1"><Plus className="w-4 h-4" />Novo nível</button>}
+      {canManage && <button onClick={() => setEditing(empty)} className="text-sm px-3 py-2 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground inline-flex items-center gap-1.5 shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all font-medium"><Plus className="w-4 h-4" />Novo nível</button>}
       <div className="space-y-2">
         {tiers.sort((a: any, b: any) => a.min_points - b.min_points).map((t: any) => (
-          <div key={t.id} className="rounded-xl bg-card border border-border p-3 flex items-center gap-3">
+          <div key={t.id} className="admin-card admin-card-hover p-3 flex items-center gap-3">
             <div className="w-3 h-10 rounded" style={{ backgroundColor: t.color }} />
             <div className="flex-1">
               <p className="font-medium">{t.name}</p>
@@ -183,7 +191,7 @@ function RulesTab({ rules, canManage, wineryId, onChange }: any) {
     onChange();
   };
   return (
-    <div className="rounded-xl bg-card border border-border p-4 space-y-3 max-w-md">
+    <div className="admin-card admin-card-hover p-4 space-y-3 max-w-md">
       <Field label="Pontos por moeda gasta (R$1 =)" value={form.points_per_currency} onChange={(v) => setForm({ ...form, points_per_currency: v })} disabled={!canManage} />
       <Field label="Pontos por visita (check-in)" value={form.points_per_visit} onChange={(v) => setForm({ ...form, points_per_visit: v })} disabled={!canManage} />
       <Field label="Pontos por indicação" value={form.points_per_referral} onChange={(v) => setForm({ ...form, points_per_referral: v })} disabled={!canManage} />
@@ -207,7 +215,7 @@ function RedemptionsTab({ redemptions, canManage, wineryId, onChange }: any) {
     onChange();
   };
   return (
-    <div className="rounded-xl bg-card border border-border overflow-hidden">
+    <div className="admin-card admin-card-hover overflow-hidden">
       <ul className="divide-y divide-border">
         {redemptions.length === 0 && <li className="p-6 text-center text-sm text-muted-foreground">Nenhum resgate solicitado.</li>}
         {redemptions.map((r: any) => (

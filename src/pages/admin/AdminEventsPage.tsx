@@ -6,7 +6,7 @@ import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { can } from "@/lib/admin/permissions";
-import { Calendar, Plus, Users as UsersIcon, Trash2 } from "lucide-react";
+import { Calendar, Plus, Users as UsersIcon, Trash2, CalendarDays, Sparkles } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 
 export default function AdminEventsPage() {
@@ -48,12 +48,27 @@ export default function AdminEventsPage() {
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Eventos</h1>
+          <h1 className="admin-page-title flex items-center gap-2"><CalendarDays className="w-7 h-7 text-primary" />Eventos</h1>
           <p className="text-sm text-muted-foreground mt-1">Colheitas, harmonizações, jantares e RSVPs.</p>
         </div>
         {canManage && (
-          <button onClick={() => setEditing(empty)} className="text-sm px-3 py-2 rounded-lg bg-primary text-primary-foreground inline-flex items-center gap-1"><Plus className="w-4 h-4" />Novo</button>
+          <button onClick={() => setEditing(empty)} className="text-sm px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground inline-flex items-center gap-1.5 shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all font-medium"><Plus className="w-4 h-4" />Novo evento</button>
         )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="admin-kpi p-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Próximos</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{upcoming.length}</p>
+        </div>
+        <div className="admin-kpi p-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">RSVPs totais</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{(data ?? []).reduce((s: number, e: any) => s + (e.rsvp_count || 0), 0)}</p>
+        </div>
+        <div className="admin-kpi p-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Realizados</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{past.length}</p>
+        </div>
       </div>
 
       <Section title="Próximos eventos" events={upcoming} canManage={canManage} onEdit={setEditing} onDelete={del} onRsvps={setViewingRsvps} currency={winery.currency} />
@@ -93,24 +108,38 @@ export default function AdminEventsPage() {
 
 function Section({ title, events, canManage, onEdit, onDelete, onRsvps, currency, muted }: any) {
   if (!events.length) return null;
+  const statusTint = (s: string) => {
+    if (s === "confirmado") return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200";
+    if (s === "cancelado") return "bg-rose-50 text-rose-700 ring-1 ring-rose-200";
+    if (s === "encerrado") return "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200";
+    return "bg-amber-50 text-amber-700 ring-1 ring-amber-200";
+  };
   return (
-    <div className={muted ? "opacity-70" : ""}>
-      <h2 className="font-display text-lg font-semibold mb-2">{title}</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div className={muted ? "opacity-80" : ""}>
+      <h2 className="admin-section-title mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary/60" />{title}</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {events.map((e: any) => (
-          <div key={e.id} className="rounded-xl bg-card border border-border overflow-hidden">
-            {e.cover_url && <img src={e.cover_url} alt="" className="h-32 w-full object-cover" />}
-            <div className="p-3 space-y-1">
-              <div className="flex items-start justify-between gap-2">
-                <p className="font-medium text-sm flex-1">{e.title}</p>
-                <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{e.status}</span>
+          <div key={e.id} className="admin-card admin-card-hover overflow-hidden group">
+            {e.cover_url ? (
+              <div className="relative h-36 overflow-hidden">
+                <img src={e.cover_url} alt="" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                <span className={`absolute top-2 right-2 text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full ${statusTint(e.status)}`}>{e.status}</span>
               </div>
-              <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" />{new Date(e.starts_at).toLocaleString("pt-BR")}</p>
-              <p className="text-xs flex items-center gap-1"><UsersIcon className="w-3 h-3" /> {e.rsvp_count}/{e.capacity} · {formatCurrency(e.price, currency)}</p>
-              <div className="flex gap-1 mt-2">
-                <button onClick={() => onRsvps(e)} className="text-xs px-2 py-1 rounded border border-border flex-1">Ver RSVPs</button>
-                {canManage && <button onClick={() => onEdit(e)} className="text-xs px-2 py-1 rounded border border-border">Editar</button>}
-                {canManage && <button onClick={() => onDelete(e.id)} className="text-xs px-2 py-1 rounded text-rose-600"><Trash2 className="w-3 h-3" /></button>}
+            ) : (
+              <div className="h-2 bg-gradient-to-r from-primary/40 to-primary/10" />
+            )}
+            <div className="p-4 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-semibold text-sm flex-1 leading-snug">{e.title}</p>
+                {!e.cover_url && <span className={`text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full ${statusTint(e.status)}`}>{e.status}</span>}
+              </div>
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" />{new Date(e.starts_at).toLocaleString("pt-BR")}</p>
+              <p className="text-xs flex items-center gap-1.5"><UsersIcon className="w-3.5 h-3.5 text-primary" /> <span className="font-medium">{e.rsvp_count}/{e.capacity}</span> · <span className="text-muted-foreground">{formatCurrency(e.price, currency)}</span></p>
+              <div className="flex gap-1.5 pt-1">
+                <button onClick={() => onRsvps(e)} className="text-xs px-2.5 py-1.5 rounded-lg border border-border flex-1 hover:bg-secondary/60 transition-colors font-medium">Ver RSVPs</button>
+                {canManage && <button onClick={() => onEdit(e)} className="text-xs px-2.5 py-1.5 rounded-lg border border-border hover:bg-secondary/60 transition-colors">Editar</button>}
+                {canManage && <button onClick={() => onDelete(e.id)} className="text-xs px-2 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>}
               </div>
             </div>
           </div>
