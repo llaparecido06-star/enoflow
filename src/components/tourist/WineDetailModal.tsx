@@ -1,16 +1,31 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslatedText, useContentTranslation } from "@/hooks/useContentTranslation";
 import { formatCurrency } from "@/lib/currency";
-import { Wine as WineIcon, X, Star, Plus, Grape, MapPin, Thermometer, Clock, User, FlaskConical, Share2, MessageSquarePlus } from "lucide-react";
+import { Wine as WineIcon, X, Star, Plus, Grape, MapPin, Thermometer, Clock, User, FlaskConical, MessageSquarePlus, Pencil } from "lucide-react";
 import ShareWineButton from "./ShareWineButton";
 import PublicReviewModal from "./PublicReviewModal";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import type { Wine } from "@/hooks/useWinery";
 
+type MyReview = { stars: number; comment: string | null; created_at?: string } | null;
+
 export default function WineDetailModal({ wine, onClose, onAdd, t, currency = "BRL", winerySlug }: { wine: Wine; onClose: () => void; onAdd: () => void; t: (k: string) => string; currency?: string; winerySlug?: string }) {
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [myReview, setMyReview] = useState<MyReview>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await invokeAuth("tourist-actions", { action: "get_my_wine_review", wine_id: wine.id });
+        if (!cancelled && res?.data?.review) setMyReview(res.data.review);
+      } catch { /* ignore */ }
+    })();
+    return () => { cancelled = true; };
+  }, [wine.id]);
+
   const harmonizationItems = wine.harmonization?.length ? wine.harmonization : [];
   const translatedDescription = useTranslatedText(wine.description);
   const translatedName = useTranslatedText(wine.name);
