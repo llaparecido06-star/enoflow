@@ -34,9 +34,15 @@ export default function AdminWineryConfigPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2 mb-4">
-        <Building2 className="w-6 h-6 text-primary" /> Configurações da Vinícola
-      </h1>
+      <div className="mb-6">
+        <h1 className="admin-page-title flex items-center gap-2">
+          <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-card">
+            <Building2 className="w-5 h-5 text-primary-foreground" />
+          </div>
+          Configurações da Vinícola
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1.5 ml-12">Identidade, contato, idiomas e privacidade.</p>
+      </div>
 
       <SectionCard icon={Building2} title="Identidade" onSave={(v) => save("identity", v)} fields={[
         { key: "name", label: "Nome", value: cfg.name },
@@ -72,17 +78,22 @@ export default function AdminWineryConfigPage() {
 function SectionCard({ icon: Icon, title, fields, onSave }: any) {
   const [vals, setVals] = useState<any>(() => Object.fromEntries(fields.map((f: any) => [f.key, f.value])));
   return (
-    <div className="bg-card border border-border rounded-xl p-4 mb-4">
-      <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Icon className="w-4 h-4 text-primary" /> {title}</h3>
+    <div className="admin-card admin-card-hover p-5 mb-4">
+      <h3 className="admin-section-title flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Icon className="w-4 h-4 text-primary" />
+        </div>
+        {title}
+      </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {fields.map((f: any) => (
           <div key={f.key}>
-            <label className="text-[10px] text-muted-foreground uppercase block mb-1">{f.label}</label>
-            <input type={f.type ?? "text"} value={vals[f.key]} onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background" />
+            <label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold block mb-1.5">{f.label}</label>
+            <input type={f.type ?? "text"} value={vals[f.key]} onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })} className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:border-primary/50 focus:ring-2 focus:ring-primary/10 outline-none transition-all" />
           </div>
         ))}
       </div>
-      <button onClick={() => onSave(vals)} className="mt-3 bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm">Salvar</button>
+      <button onClick={() => onSave(vals)} className="mt-4 inline-flex items-center gap-2 gradient-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-card hover:shadow-elevated hover:scale-[1.02] transition-all">Salvar</button>
     </div>
   );
 }
