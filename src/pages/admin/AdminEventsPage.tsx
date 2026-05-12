@@ -6,7 +6,7 @@ import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { can } from "@/lib/admin/permissions";
-import { Calendar, Plus, Users as UsersIcon, Trash2 } from "lucide-react";
+import { Calendar, Plus, Users as UsersIcon, Trash2, CalendarDays, Sparkles } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 
 export default function AdminEventsPage() {
