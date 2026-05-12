@@ -35,6 +35,10 @@ const AdminTrainingPage = lazy(() => import("./pages/admin/AdminTrainingPage"));
 const AdminLocationsPage = lazy(() => import("./pages/admin/AdminLocationsPage"));
 const AdminStaffPerformancePage = lazy(() => import("./pages/admin/AdminStaffPerformancePage"));
 const AdminCampaignsPage = lazy(() => import("./pages/admin/AdminCampaignsPage"));
+const AdminReservationsPage = lazy(() => import("./pages/admin/AdminReservationsPage"));
+const AdminStockPage = lazy(() => import("./pages/admin/AdminStockPage"));
+const AdminFinancePage = lazy(() => import("./pages/admin/AdminFinancePage"));
+const AdminWineryConfigPage = lazy(() => import("./pages/admin/AdminWineryConfigPage"));
 
 // Lazy-loaded master routes
 const MasterLayout = lazy(() => import("./pages/master/MasterLayout"));
