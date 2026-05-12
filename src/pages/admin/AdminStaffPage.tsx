@@ -151,27 +151,38 @@ export default function AdminStaffPage() {
     }
   };
 
+  const activeCount = staff.filter(s => s.is_active).length;
+  const managerCount = staff.filter(s => s.role === "manager").length;
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Equipe</h1>
-          <p className="text-sm text-muted-foreground">Gerencie os funcionários da vinícola</p>
+          <h1 className="admin-page-title flex items-center gap-2"><Users className="w-7 h-7 text-primary" />Equipe</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie os funcionários da vinícola</p>
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all"
         >
           <Plus className="w-4 h-4" /> Novo funcionário
         </button>
       </div>
+
+      {!loading && staff.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Total</p><p className="text-2xl font-bold mt-1">{staff.length}</p></div>
+          <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Ativos</p><p className="text-2xl font-bold mt-1 text-emerald-600">{activeCount}</p></div>
+          <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Gerentes</p><p className="text-2xl font-bold mt-1 text-primary">{managerCount}</p></div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : staff.length === 0 ? (
-        <div className="bg-card rounded-xl border border-border p-8 text-center">
+        <div className="admin-card p-12 text-center">
           <Users className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
           <p className="text-sm text-muted-foreground">Nenhum funcionário cadastrado.</p>
         </div>
