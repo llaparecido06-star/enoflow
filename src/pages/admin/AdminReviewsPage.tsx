@@ -89,7 +89,7 @@ export default function AdminReviewsPage() {
     if (error || data?.error) return toast.error("Não foi possível atualizar a visibilidade");
     toast.success(next ? "Avaliação ocultada" : "Avaliação reexibida");
     qc.invalidateQueries({ queryKey: ["reviews", winery.id] });
-  };
+    qc.invalidateQueries({ queryKey: ["reviews-moderation-history", winery.id] });
 
   return (
     <div className="space-y-6 max-w-6xl">
