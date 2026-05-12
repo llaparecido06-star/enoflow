@@ -124,9 +124,30 @@ Deno.serve(async (req) => {
       if (!wine_id || !stars) return json({ error: "wine_id e stars obrigatórios" }, 400);
       const { data: w } = await supabase.from("wines").select("winery_id").eq("id", wine_id).single();
       if (!w) return json({ error: "vinho não encontrado" }, 404);
-      await supabase.from("wine_reviews").insert({ winery_id: w.winery_id, wine_id, stars, comment, user_id });
-      return json({ success: true });
+      if (user_id) {
+        await supabase.from("wine_reviews").delete().eq("wine_id", wine_id).eq("user_id", user_id);
+      }
+      const { data: inserted, error: insErr } = await supabase
+        .from("wine_reviews")
+        .insert({ winery_id: w.winery_id, wine_id, stars, comment, user_id })
+        .select("id, stars, comment, created_at, is_hidden")
+        .single();
+      if (insErr) throw insErr;
+      return json({ success: true, review: inserted });
     }
+
+    // ─── GET MY WINE REVIEW (tourist) ───
+    if (action === "get_my_wine_review") {
+      const { wine_id, user_id } = body;
+      if (!wine_id || !user_id) return json({ success: true, review: null });
+      const { data } = await supabase.from("wine_reviews")
+        .select("id, stars, comment, created_at, is_hidden, public_response")
+        .eq("wine_id", wine_id).eq("user_id", user_id)
+        .order("created_at", { ascending: false })
+        .limit(1).maybeSingle();
+      return json({ success: true, review: data ?? null });
+    }
+
 
     return json({ error: "Unknown action" }, 400);
   } catch (e) {
