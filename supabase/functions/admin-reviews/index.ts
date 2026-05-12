@@ -18,10 +18,17 @@ Deno.serve(async (req) => {
 
     // ─── LIST WINE REVIEWS ───
     if (!action || action === "list_wine_reviews") {
-      const { wine_id, has_response } = body;
+      const { wine_id, user_id, has_response, hidden, min_stars, max_stars, search } = body;
       let q = supabase.from("wine_reviews").select("*").eq("winery_id", winery_id);
       if (wine_id) q = q.eq("wine_id", wine_id);
+      if (user_id) q = q.eq("user_id", user_id);
       if (has_response === false) q = q.is("public_response", null);
+      if (has_response === true) q = q.not("public_response", "is", null);
+      if (hidden === true) q = q.eq("is_hidden", true);
+      if (hidden === false) q = q.eq("is_hidden", false);
+      if (typeof min_stars === "number") q = q.gte("stars", min_stars);
+      if (typeof max_stars === "number") q = q.lte("stars", max_stars);
+      if (search) q = q.ilike("comment", `%${search}%`);
       const { data, error } = await q.order("created_at", { ascending: false }).limit(500);
       if (error) throw error;
 
@@ -75,7 +82,17 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
-    // ─── NPS SUMMARY ───
+    // ─── MODERATE: HIDE / UNHIDE ───
+    if (action === "set_hidden") {
+      if (!canRespond) return json({ error: "Permissão insuficiente" }, 403);
+      const { review_id, hidden } = body;
+      if (!review_id || typeof hidden !== "boolean") return json({ error: "review_id e hidden obrigatórios" }, 400);
+      const { error } = await supabase.from("wine_reviews")
+        .update({ is_hidden: hidden })
+        .eq("id", review_id).eq("winery_id", winery_id);
+      if (error) throw error;
+      return json({ success: true });
+    }
     if (action === "nps_summary") {
       const { data: vouchers } = await supabase.from("vouchers").select("id, nps_score, created_at").eq("winery_id", winery_id).not("nps_score", "is", null);
       const scores = (vouchers ?? []).map((v: any) => v.nps_score);
@@ -107,9 +124,30 @@ Deno.serve(async (req) => {
       if (!wine_id || !stars) return json({ error: "wine_id e stars obrigatórios" }, 400);
       const { data: w } = await supabase.from("wines").select("winery_id").eq("id", wine_id).single();
       if (!w) return json({ error: "vinho não encontrado" }, 404);
-      await supabase.from("wine_reviews").insert({ winery_id: w.winery_id, wine_id, stars, comment, user_id });
-      return json({ success: true });
+      if (user_id) {
+        await supabase.from("wine_reviews").delete().eq("wine_id", wine_id).eq("user_id", user_id);
+      }
+      const { data: inserted, error: insErr } = await supabase
+        .from("wine_reviews")
+        .insert({ winery_id: w.winery_id, wine_id, stars, comment, user_id })
+        .select("id, stars, comment, created_at, is_hidden")
+        .single();
+      if (insErr) throw insErr;
+      return json({ success: true, review: inserted });
     }
+
+    // ─── GET MY WINE REVIEW (tourist) ───
+    if (action === "get_my_wine_review") {
+      const { wine_id, user_id } = body;
+      if (!wine_id || !user_id) return json({ success: true, review: null });
+      const { data } = await supabase.from("wine_reviews")
+        .select("id, stars, comment, created_at, is_hidden, public_response")
+        .eq("wine_id", wine_id).eq("user_id", user_id)
+        .order("created_at", { ascending: false })
+        .limit(1).maybeSingle();
+      return json({ success: true, review: data ?? null });
+    }
+
 
     return json({ error: "Unknown action" }, 400);
   } catch (e) {

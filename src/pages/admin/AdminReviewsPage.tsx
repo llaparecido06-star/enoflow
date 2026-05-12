@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Winery } from "@/hooks/useWinery";
@@ -6,7 +6,7 @@ import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { can } from "@/lib/admin/permissions";
-import { Star, MessageSquare, AlertTriangle, Smile, Frown, Meh } from "lucide-react";
+import { Star, MessageSquare, AlertTriangle, Smile, Frown, Meh, EyeOff, Eye } from "lucide-react";
 
 export default function AdminReviewsPage() {
   const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
@@ -16,10 +16,19 @@ export default function AdminReviewsPage() {
   const [responding, setResponding] = useState<any>(null);
   const [responseText, setResponseText] = useState("");
 
+  // Filters
+  const [wineFilter, setWineFilter] = useState<string>("");
+  const [userSearch, setUserSearch] = useState<string>("");
+  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "visible" | "hidden">("all");
+
   const { data: reviewsData } = useQuery({
-    queryKey: ["reviews", winery.id],
+    queryKey: ["reviews", winery.id, wineFilter, visibilityFilter],
     queryFn: async () => {
-      const { data } = await invokeAuth("admin-reviews", { action: "list_wine_reviews", winery_id: winery.id });
+      const params: any = { action: "list_wine_reviews", winery_id: winery.id };
+      if (wineFilter) params.wine_id = wineFilter;
+      if (visibilityFilter === "hidden") params.hidden = true;
+      if (visibilityFilter === "visible") params.hidden = false;
+      const { data } = await invokeAuth("admin-reviews", params);
       return data ?? { reviews: [] };
     },
   });
@@ -38,7 +47,15 @@ export default function AdminReviewsPage() {
     },
   });
 
-  const reviews = reviewsData?.reviews ?? [];
+  const allReviews = reviewsData?.reviews ?? [];
+  const reviews = useMemo(() => {
+    if (!userSearch.trim()) return allReviews;
+    const q = userSearch.toLowerCase();
+    return allReviews.filter((r: any) =>
+      (r.user_name ?? "").toLowerCase().includes(q) ||
+      (r.comment ?? "").toLowerCase().includes(q)
+    );
+  }, [allReviews, userSearch]);
   const lowScoreCount = reviews.filter((r: any) => r.stars <= 2).length;
 
   const submitResponse = async () => {
@@ -48,6 +65,19 @@ export default function AdminReviewsPage() {
     toast.success("Resposta publicada");
     setResponding(null);
     setResponseText("");
+    qc.invalidateQueries({ queryKey: ["reviews", winery.id] });
+  };
+
+  const toggleHidden = async (review: any) => {
+    const next = !review.is_hidden;
+    const { data, error } = await invokeAuth("admin-reviews", {
+      action: "set_hidden",
+      review_id: review.id,
+      hidden: next,
+      winery_id: winery.id,
+    });
+    if (error || data?.error) return toast.error("Não foi possível atualizar a visibilidade");
+    toast.success(next ? "Avaliação ocultada" : "Avaliação reexibida");
     qc.invalidateQueries({ queryKey: ["reviews", winery.id] });
   };
 
@@ -88,17 +118,57 @@ export default function AdminReviewsPage() {
             </div>
           )}
 
+          {/* Filters */}
+          <div className="rounded-xl bg-card border border-border p-3 grid grid-cols-1 md:grid-cols-3 gap-2">
+            <select
+              value={wineFilter}
+              onChange={(e) => setWineFilter(e.target.value)}
+              className="text-sm rounded-lg border border-border bg-background px-2 py-2"
+              aria-label="Filtrar por vinho"
+            >
+              <option value="">Todos os vinhos</option>
+              {(summary ?? []).map((s: any) => (
+                <option key={s.wine_id} value={s.wine_id}>{s.name} ({s.count})</option>
+              ))}
+            </select>
+            <input
+              type="search"
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              placeholder="Buscar por usuário ou comentário…"
+              className="text-sm rounded-lg border border-border bg-background px-3 py-2"
+              aria-label="Buscar por usuário ou comentário"
+            />
+            <div className="flex gap-1 text-xs">
+              {(["all", "visible", "hidden"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setVisibilityFilter(v)}
+                  className={`flex-1 py-2 rounded-lg border transition-colors ${visibilityFilter === v ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:bg-muted"}`}
+                >
+                  {v === "all" ? "Todas" : v === "visible" ? "Visíveis" : "Ocultas"}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="rounded-xl bg-card border border-border overflow-hidden">
-            <div className="p-3 border-b border-border bg-muted/30 text-xs font-semibold text-muted-foreground">Reviews recentes</div>
+            <div className="p-3 border-b border-border bg-muted/30 text-xs font-semibold text-muted-foreground flex items-center justify-between">
+              <span>Reviews</span>
+              <span>{reviews.length} resultado(s)</span>
+            </div>
             <ul className="divide-y divide-border">
-              {reviews.length === 0 && <li className="p-6 text-center text-sm text-muted-foreground">Nenhuma avaliação ainda.</li>}
+              {reviews.length === 0 && <li className="p-6 text-center text-sm text-muted-foreground">Nenhuma avaliação encontrada.</li>}
               {reviews.map((r: any) => (
-                <li key={r.id} className="p-4 flex flex-col gap-2">
+                <li key={r.id} className={`p-4 flex flex-col gap-2 ${r.is_hidden ? "bg-muted/30 opacity-70" : ""}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-amber-500 text-sm">{"★".repeat(r.stars)}{"☆".repeat(5 - r.stars)}</span>
                         <span className="text-xs text-muted-foreground">{r.wine_name} · {r.user_name ?? "Anônimo"}</span>
+                        {r.is_hidden && (
+                          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">Oculta</span>
+                        )}
                       </div>
                       {r.comment && <p className="text-sm mt-1">{r.comment}</p>}
                       {r.public_response && (
@@ -108,9 +178,20 @@ export default function AdminReviewsPage() {
                         </div>
                       )}
                     </div>
-                    {canRespond && !r.public_response && (
-                      <button onClick={() => { setResponding(r); setResponseText(""); }} className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground shrink-0">Responder</button>
-                    )}
+                    <div className="flex flex-col gap-1 shrink-0">
+                      {canRespond && !r.public_response && (
+                        <button onClick={() => { setResponding(r); setResponseText(""); }} className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground">Responder</button>
+                      )}
+                      {canRespond && (
+                        <button
+                          onClick={() => toggleHidden(r)}
+                          className="text-xs px-3 py-1.5 rounded-lg border border-border inline-flex items-center gap-1 justify-center hover:bg-muted"
+                          aria-label={r.is_hidden ? "Reexibir avaliação" : "Ocultar avaliação"}
+                        >
+                          {r.is_hidden ? <><Eye className="w-3 h-3" /> Reexibir</> : <><EyeOff className="w-3 h-3" /> Ocultar</>}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </li>
               ))}
