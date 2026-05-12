@@ -329,4 +329,3 @@ function MobileBottomNav({ items, groups, activeItem, basePath, navigate, onLogo
     </div>
   );
 }
-}
