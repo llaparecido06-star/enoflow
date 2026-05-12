@@ -239,28 +239,29 @@ export default function AdminLayout() {
   );
 }
 
-function MobileBottomNav({ items, activeItem, basePath, navigate, onLogout }: {
+function MobileBottomNav({ items, groups, activeItem, basePath, navigate, onLogout }: {
   items: typeof navItems;
+  groups: { id: string; label: string; items: typeof navItems }[];
   activeItem: string | undefined;
   basePath: string;
   navigate: ReturnType<typeof useNavigate>;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  // Prioritize: leads, dashboard, wines, agenda-equivalents
-  const priority = ["reservations", "leads", "dashboard", "stock", "wines", "events"];
+  const priority = ["checkin", "reservations", "leads", "dashboard", "wines"];
   const primary = priority
     .map((id) => items.find((i) => i.id === id))
     .filter(Boolean)
     .slice(0, 4) as typeof items;
-  // Fallback fill with first items if fewer primary
   if (primary.length < 4) {
     for (const it of items) {
       if (primary.length >= 4) break;
       if (!primary.find((p) => p.id === it.id)) primary.push(it);
     }
   }
-  const overflow = items.filter((i) => !primary.find((p) => p.id === i.id));
+  const groupsOverflow = groups
+    .map((g) => ({ ...g, items: g.items.filter((i) => !primary.find((p) => p.id === i.id)) }))
+    .filter((g) => g.items.length > 0);
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border shadow-elevated">
@@ -287,32 +288,39 @@ function MobileBottomNav({ items, activeItem, basePath, navigate, onLogout }: {
               <span className="text-[9px]">Mais</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetContent side="bottom" className="rounded-t-2xl max-h-[85vh] overflow-y-auto">
             <SheetHeader>
               <SheetTitle>Mais opções</SheetTitle>
             </SheetHeader>
-            <div className="grid grid-cols-3 gap-2 mt-4">
-              {overflow.map((item) => {
-                const isActive = activeItem === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => { navigate(basePath + item.path); setOpen(false); }}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border ${
-                      isActive ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground"
-                    }`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <span className="text-xs text-center">{item.label}</span>
-                  </button>
-                );
-              })}
+            <div className="mt-4 space-y-5 pb-4">
+              {groupsOverflow.map((group) => (
+                <div key={group.id}>
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-2 px-1">{group.label}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {group.items.map((item) => {
+                      const isActive = activeItem === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => { navigate(basePath + item.path); setOpen(false); }}
+                          className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
+                            isActive ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground hover:bg-secondary/60"
+                          }`}
+                        >
+                          <item.icon className="w-5 h-5" />
+                          <span className="text-xs text-center">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
               <button
                 onClick={() => { onLogout(); setOpen(false); }}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-destructive/30 text-destructive"
+                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-destructive/30 text-destructive font-medium"
               >
                 <LogOut className="w-5 h-5" />
-                <span className="text-xs">Sair</span>
+                Sair
               </button>
             </div>
           </SheetContent>
@@ -320,4 +328,5 @@ function MobileBottomNav({ items, activeItem, basePath, navigate, onLogout }: {
       </div>
     </div>
   );
+}
 }
