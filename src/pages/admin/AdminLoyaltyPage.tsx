@@ -24,18 +24,26 @@ export default function AdminLoyaltyPage() {
 
   const invalidate = () => qc.invalidateQueries({ queryKey: ["loyalty", winery.id] });
 
+  const pending = data?.redemptions?.filter((r: any) => r.status === "pendente").length ?? 0;
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
-        <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Programa de Fidelidade</h1>
+        <h1 className="admin-page-title flex items-center gap-2"><Crown className="w-7 h-7 text-primary" />Programa de Fidelidade</h1>
         <p className="text-sm text-muted-foreground mt-1">Recompensas, níveis e regras de pontuação.</p>
       </div>
 
-      <div className="flex gap-2 border-b border-border overflow-x-auto">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Recompensas</p><p className="text-2xl font-bold mt-1">{data?.rewards?.length ?? 0}</p></div>
+        <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Níveis</p><p className="text-2xl font-bold mt-1">{data?.tiers?.length ?? 0}</p></div>
+        <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Resgates</p><p className="text-2xl font-bold mt-1">{data?.redemptions?.length ?? 0}</p></div>
+        <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Pendentes</p><p className="text-2xl font-bold mt-1 text-amber-600">{pending}</p></div>
+      </div>
+
+      <div className="flex gap-1 border-b border-border overflow-x-auto sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-1 px-1">
         <TabBtn active={tab === "rewards"} onClick={() => setTab("rewards")} label="Recompensas" icon={Gift} />
         <TabBtn active={tab === "tiers"} onClick={() => setTab("tiers")} label="Níveis" icon={Crown} />
         <TabBtn active={tab === "rules"} onClick={() => setTab("rules")} label="Regras" icon={SettingsIcon} />
-        <TabBtn active={tab === "redemptions"} onClick={() => setTab("redemptions")} label={`Resgates${(data?.redemptions?.filter((r: any) => r.status === "pendente").length ?? 0) > 0 ? ` (${data.redemptions.filter((r: any) => r.status === "pendente").length})` : ""}`} icon={Inbox} />
+        <TabBtn active={tab === "redemptions"} onClick={() => setTab("redemptions")} label={`Resgates${pending > 0 ? ` (${pending})` : ""}`} icon={Inbox} />
       </div>
 
       {tab === "rewards" && <RewardsTab rewards={data?.rewards ?? []} canManage={canManage} wineryId={winery.id} onChange={invalidate} />}
@@ -47,7 +55,7 @@ export default function AdminLoyaltyPage() {
 }
 
 function TabBtn({ active, onClick, label, icon: Icon }: any) {
-  return <button onClick={onClick} className={`px-3 py-2 text-sm border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${active ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground"}`}><Icon className="w-4 h-4" />{label}</button>;
+  return <button onClick={onClick} className={`px-4 py-2.5 text-sm border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${active ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground hover:text-foreground"}`}><Icon className="w-4 h-4" />{label}</button>;
 }
 
 function RewardsTab({ rewards, canManage, wineryId, onChange }: any) {
