@@ -48,12 +48,27 @@ export default function AdminEventsPage() {
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Eventos</h1>
+          <h1 className="admin-page-title flex items-center gap-2"><CalendarDays className="w-7 h-7 text-primary" />Eventos</h1>
           <p className="text-sm text-muted-foreground mt-1">Colheitas, harmonizações, jantares e RSVPs.</p>
         </div>
         {canManage && (
-          <button onClick={() => setEditing(empty)} className="text-sm px-3 py-2 rounded-lg bg-primary text-primary-foreground inline-flex items-center gap-1"><Plus className="w-4 h-4" />Novo</button>
+          <button onClick={() => setEditing(empty)} className="text-sm px-4 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground inline-flex items-center gap-1.5 shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all font-medium"><Plus className="w-4 h-4" />Novo evento</button>
         )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        <div className="admin-kpi p-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Próximos</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{upcoming.length}</p>
+        </div>
+        <div className="admin-kpi p-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">RSVPs totais</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{(data ?? []).reduce((s: number, e: any) => s + (e.rsvp_count || 0), 0)}</p>
+        </div>
+        <div className="admin-kpi p-4">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Realizados</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{past.length}</p>
+        </div>
       </div>
 
       <Section title="Próximos eventos" events={upcoming} canManage={canManage} onEdit={setEditing} onDelete={del} onRsvps={setViewingRsvps} currency={winery.currency} />
