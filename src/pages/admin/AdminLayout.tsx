@@ -215,20 +215,20 @@ function MobileBottomNav({ items, activeItem, basePath, navigate, onLogout }: {
   const overflow = items.filter((i) => !primary.find((p) => p.id === i.id));
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border">
-      <div className="flex justify-around py-2">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border shadow-elevated">
+      <div className="flex justify-around py-2 px-1 safe-area-inset-bottom">
         {primary.map((item) => {
           const isActive = activeItem === item.id;
           return (
             <button
               key={item.id}
               onClick={() => navigate(basePath + item.path)}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1 flex-1 ${
-                isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60"
+              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 flex-1 rounded-xl transition-all ${
+                isActive ? "text-primary bg-primary/8" : "text-muted-foreground active:scale-95"
               }`}
             >
-              <item.icon className="w-5 h-5" />
-              <span className="text-[9px] truncate max-w-full">{item.label}</span>
+              <item.icon className={`w-5 h-5 transition-transform ${isActive ? "scale-110" : ""}`} />
+              <span className="text-[9px] truncate max-w-full font-medium">{item.label}</span>
             </button>
           );
         })}
