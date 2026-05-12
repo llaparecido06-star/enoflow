@@ -5,7 +5,7 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { formatCurrency } from "@/lib/currency";
-import { Download, Search, LayoutGrid, List, Filter, Send, MessageSquare, Layers, Calendar, Settings } from "lucide-react";
+import { Download, Search, LayoutGrid, List, Filter, Send, MessageSquare, Layers, Calendar, Settings, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import PipelineBoard from "@/components/admin/crm/PipelineBoard";
 import LeadTimelineModal from "@/components/admin/crm/LeadTimelineModal";
@@ -23,6 +23,7 @@ import type { CrmLead } from "@/components/admin/crm/LeadCard";
 
 type View = "pipeline" | "list" | "segments" | "agenda" | "templates" | "postsale" | "settings";
 type AgendaView = "list" | "calendar" | "scheduled";
+type SettingsView = "queue" | "notifications";
 
 interface PersistedState {
   search: string;
@@ -48,6 +49,7 @@ export default function AdminLeadsPage() {
 
   const [view, setView] = useState<View>(persisted.view ?? "pipeline");
   const [agendaView, setAgendaView] = useState<AgendaView>("list");
+  const [settingsView, setSettingsView] = useState<SettingsView>("queue");
   const [search, setSearch] = useState(persisted.search ?? "");
   const [stageFilter, setStageFilter] = useState(persisted.stageFilter ?? "all");
   const [minLtv, setMinLtv] = useState(persisted.minLtv ?? "");
@@ -171,6 +173,7 @@ export default function AdminLeadsPage() {
             <ViewBtn icon={List} active={view === "list"} onClick={() => setView("list")} label="Lista" />
             <ViewBtn icon={Layers} active={view === "segments"} onClick={() => setView("segments")} label="Segmentos" />
             <ViewBtn icon={Calendar} active={view === "agenda"} onClick={() => setView("agenda")} label="Agenda" badge={counts?.mineOverdue || counts?.today || 0} />
+            <ViewBtn icon={Trophy} active={view === "postsale"} onClick={() => setView("postsale")} label="Pós-venda" />
             <ViewBtn icon={MessageSquare} active={view === "templates"} onClick={() => setView("templates")} label="Templates" />
             {canManage && <ViewBtn icon={Settings} active={view === "settings"} onClick={() => setView("settings")} label="Config" />}
           </div>
@@ -264,9 +267,21 @@ export default function AdminLeadsPage() {
             <ScheduledQueue wineryId={winery.id} />
           )}
         </div>
+      ) : view === "postsale" ? (
+        <PostSaleExportBar wineryId={winery.id} winerySlug={winery.slug} wineryCurrency={winery.currency || "BRL"} />
       ) : view === "settings" ? (
         canManage ? (
-          <AssignmentQueueSettings wineryId={winery.id} />
+          <div className="space-y-3">
+            <div className="flex bg-secondary rounded-lg p-0.5 w-fit">
+              <SubBtn active={settingsView === "queue"} onClick={() => setSettingsView("queue")} label="Distribuição de leads" />
+              <SubBtn active={settingsView === "notifications"} onClick={() => setSettingsView("notifications")} label="Notificações" />
+            </div>
+            {settingsView === "queue" ? (
+              <AssignmentQueueSettings wineryId={winery.id} />
+            ) : (
+              <NotificationPrefsForm wineryId={winery.id} />
+            )}
+          </div>
         ) : (
           <p className="text-center text-sm text-muted-foreground py-12">Sem permissão.</p>
         )

@@ -2,9 +2,10 @@ import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
 import { useVoucherNotifications } from "@/hooks/useVoucherNotifications";
-import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare, MoreHorizontal } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import NotificationBell from "@/components/admin/crm/NotificationBell";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 // salesOnly excludes the item from sales-only sidebars
 const navItems = [
@@ -15,7 +16,7 @@ const navItems = [
   { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "sales" as AdminRole, salesOnly: true },
   { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", minRole: "owner" as AdminRole, salesOnly: false },
   { id: "performance", label: "Performance", icon: Activity, path: "/performance", minRole: "owner" as AdminRole, salesOnly: false },
-  { id: "locations", label: "Locais", icon: MapPin, path: "/locations", minRole: "manager" as AdminRole, salesOnly: false },
+  { id: "locations", label: "Pontos de Captura", icon: MapPin, path: "/locations", minRole: "manager" as AdminRole, salesOnly: false },
   { id: "training", label: "Treinamento", icon: Rocket, path: "/training", minRole: "staff" as AdminRole, salesOnly: false },
   { id: "campaigns", label: "Campanhas", icon: MessageSquare, path: "/campaigns", minRole: "owner" as AdminRole, salesOnly: false },
   { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", minRole: "staff" as AdminRole, salesOnly: false },
@@ -155,33 +156,14 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Mobile nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border">
-        <div className="flex justify-around py-2 overflow-x-auto">
-          {visibleNav.map((item) => {
-            const isActive = activeItem === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => navigate(basePath + item.path)}
-                className={`flex flex-col items-center gap-0.5 px-1.5 py-1 min-w-[3rem] ${
-                  isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60"
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="text-[9px]">{item.label}</span>
-              </button>
-            );
-          })}
-          <button
-            onClick={() => { logout(); navigate("/admin/login"); }}
-            className="flex flex-col items-center gap-0.5 px-1.5 py-1 min-w-[3rem] text-destructive/70"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="text-[9px]">Sair</span>
-          </button>
-        </div>
-      </div>
+      {/* Mobile nav - 4 primary + Mais sheet */}
+      <MobileBottomNav
+        items={visibleNav}
+        activeItem={activeItem}
+        basePath={basePath}
+        navigate={navigate}
+        onLogout={() => { logout(); navigate("/admin/login"); }}
+      />
 
       {/* Content */}
       <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
@@ -190,6 +172,89 @@ export default function AdminLayout() {
         </div>
         <Outlet context={{ winery, admin, hasPermission }} />
       </main>
+    </div>
+  );
+}
+
+function MobileBottomNav({ items, activeItem, basePath, navigate, onLogout }: {
+  items: typeof navItems;
+  activeItem: string | undefined;
+  basePath: string;
+  navigate: ReturnType<typeof useNavigate>;
+  onLogout: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  // Prioritize: leads, dashboard, wines, agenda-equivalents
+  const priority = ["leads", "dashboard", "wines", "staff", "menu", "packages"];
+  const primary = priority
+    .map((id) => items.find((i) => i.id === id))
+    .filter(Boolean)
+    .slice(0, 4) as typeof items;
+  // Fallback fill with first items if fewer primary
+  if (primary.length < 4) {
+    for (const it of items) {
+      if (primary.length >= 4) break;
+      if (!primary.find((p) => p.id === it.id)) primary.push(it);
+    }
+  }
+  const overflow = items.filter((i) => !primary.find((p) => p.id === i.id));
+
+  return (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border">
+      <div className="flex justify-around py-2">
+        {primary.map((item) => {
+          const isActive = activeItem === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => navigate(basePath + item.path)}
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 flex-1 ${
+                isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60"
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="text-[9px] truncate max-w-full">{item.label}</span>
+            </button>
+          );
+        })}
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetTrigger asChild>
+            <button className="flex flex-col items-center gap-0.5 px-2 py-1 flex-1 text-sidebar-foreground/60">
+              <MoreHorizontal className="w-5 h-5" />
+              <span className="text-[9px]">Mais</span>
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-2xl">
+            <SheetHeader>
+              <SheetTitle>Mais opções</SheetTitle>
+            </SheetHeader>
+            <div className="grid grid-cols-3 gap-2 mt-4">
+              {overflow.map((item) => {
+                const isActive = activeItem === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => { navigate(basePath + item.path); setOpen(false); }}
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border ${
+                      isActive ? "border-primary bg-primary/5 text-primary" : "border-border text-foreground"
+                    }`}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span className="text-xs text-center">{item.label}</span>
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => { onLogout(); setOpen(false); }}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl border border-destructive/30 text-destructive"
+              >
+                <LogOut className="w-5 h-5" />
+                <span className="text-xs">Sair</span>
+              </button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
     </div>
   );
 }
