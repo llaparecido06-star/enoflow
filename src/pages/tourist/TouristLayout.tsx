@@ -7,7 +7,7 @@ import BottomNav from "@/components/tourist/BottomNav";
 import PullToRefresh from "@/components/tourist/PullToRefresh";
 import WhatsAppLogin from "@/components/tourist/WhatsAppLogin";
 import QuizSommelier from "@/components/tourist/QuizSommelier";
-import { Loader2, LogOut, Wine } from "lucide-react";
+import { Loader2, LogOut, Wine, Instagram, Facebook, Youtube, MapPin, Star, Globe } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { invokeAuth } from "@/lib/auth-api";
