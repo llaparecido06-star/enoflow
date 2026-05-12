@@ -17,6 +17,8 @@ import TasksPanel from "@/components/admin/crm/TasksPanel";
 import ScheduledQueue from "@/components/admin/crm/ScheduledQueue";
 import TaskCalendar from "@/components/admin/crm/TaskCalendar";
 import AssignmentQueueSettings from "@/components/admin/crm/AssignmentQueueSettings";
+import NotificationPrefsForm from "@/components/admin/crm/NotificationPrefsForm";
+import PostSaleExportBar from "@/components/admin/crm/PostSaleExportBar";
 import type { CrmLead } from "@/components/admin/crm/LeadCard";
 
 type View = "pipeline" | "list" | "segments" | "agenda" | "templates" | "settings";
