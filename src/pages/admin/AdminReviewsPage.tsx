@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Winery } from "@/hooks/useWinery";
@@ -6,7 +6,7 @@ import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { can } from "@/lib/admin/permissions";
-import { Star, MessageSquare, AlertTriangle, Smile, Frown, Meh } from "lucide-react";
+import { Star, MessageSquare, AlertTriangle, Smile, Frown, Meh, EyeOff, Eye } from "lucide-react";
 
 export default function AdminReviewsPage() {
   const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
@@ -16,10 +16,19 @@ export default function AdminReviewsPage() {
   const [responding, setResponding] = useState<any>(null);
   const [responseText, setResponseText] = useState("");
 
+  // Filters
+  const [wineFilter, setWineFilter] = useState<string>("");
+  const [userSearch, setUserSearch] = useState<string>("");
+  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "visible" | "hidden">("all");
+
   const { data: reviewsData } = useQuery({
-    queryKey: ["reviews", winery.id],
+    queryKey: ["reviews", winery.id, wineFilter, visibilityFilter],
     queryFn: async () => {
-      const { data } = await invokeAuth("admin-reviews", { action: "list_wine_reviews", winery_id: winery.id });
+      const params: any = { action: "list_wine_reviews", winery_id: winery.id };
+      if (wineFilter) params.wine_id = wineFilter;
+      if (visibilityFilter === "hidden") params.hidden = true;
+      if (visibilityFilter === "visible") params.hidden = false;
+      const { data } = await invokeAuth("admin-reviews", params);
       return data ?? { reviews: [] };
     },
   });
@@ -38,7 +47,15 @@ export default function AdminReviewsPage() {
     },
   });
 
-  const reviews = reviewsData?.reviews ?? [];
+  const allReviews = reviewsData?.reviews ?? [];
+  const reviews = useMemo(() => {
+    if (!userSearch.trim()) return allReviews;
+    const q = userSearch.toLowerCase();
+    return allReviews.filter((r: any) =>
+      (r.user_name ?? "").toLowerCase().includes(q) ||
+      (r.comment ?? "").toLowerCase().includes(q)
+    );
+  }, [allReviews, userSearch]);
   const lowScoreCount = reviews.filter((r: any) => r.stars <= 2).length;
 
   const submitResponse = async () => {
@@ -48,6 +65,19 @@ export default function AdminReviewsPage() {
     toast.success("Resposta publicada");
     setResponding(null);
     setResponseText("");
+    qc.invalidateQueries({ queryKey: ["reviews", winery.id] });
+  };
+
+  const toggleHidden = async (review: any) => {
+    const next = !review.is_hidden;
+    const { data, error } = await invokeAuth("admin-reviews", {
+      action: "set_hidden",
+      review_id: review.id,
+      hidden: next,
+      winery_id: winery.id,
+    });
+    if (error || data?.error) return toast.error("Não foi possível atualizar a visibilidade");
+    toast.success(next ? "Avaliação ocultada" : "Avaliação reexibida");
     qc.invalidateQueries({ queryKey: ["reviews", winery.id] });
   };
 
