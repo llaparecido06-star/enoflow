@@ -184,8 +184,55 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
         </PullToRefresh>
       </main>
 
+      <SocialFooter winery={winery} />
+
       <BottomNav slug={slug} enabledModules={enabledModules} />
     </div>
+  );
+}
+
+function SocialFooter({ winery }: { winery: any }) {
+  const links = [
+    { url: winery.instagram_url, Icon: Instagram, label: "Instagram" },
+    { url: winery.facebook_url, Icon: Facebook, label: "Facebook" },
+    { url: winery.youtube_url, Icon: Youtube, label: "YouTube" },
+  ].filter((l) => l.url);
+
+  const reviewLinks = [
+    { url: winery.google_business_url, label: "Avalie no Google", Icon: Star },
+    { url: winery.tripadvisor_url, label: "Avalie no TripAdvisor", Icon: MapPin },
+  ].filter((l) => l.url);
+
+  if (links.length === 0 && reviewLinks.length === 0) return null;
+
+  return (
+    <footer className="px-4 pb-4 pt-2 space-y-3">
+      {reviewLinks.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-3 space-y-2">
+          <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
+            <Star className="w-3.5 h-3.5 text-gold fill-gold" /> Gostou da experiência?
+          </p>
+          <div className="flex flex-col gap-2">
+            {reviewLinks.map((l) => (
+              <a key={l.label} href={l.url!} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/15 transition-colors">
+                <l.Icon className="w-3.5 h-3.5" /> {l.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+      {links.length > 0 && (
+        <div className="flex items-center justify-center gap-3">
+          {links.map(({ url, Icon, label }) => (
+            <a key={label} href={url!} target="_blank" rel="noopener noreferrer" aria-label={label}
+              className="w-9 h-9 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center hover:bg-secondary/80 transition-colors">
+              <Icon className="w-4 h-4" />
+            </a>
+          ))}
+        </div>
+      )}
+    </footer>
   );
 }
 
