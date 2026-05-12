@@ -50,35 +50,48 @@ export default function AdminReservationsPage() {
     else toast.success("Status atualizado");
   };
 
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { pendente: 0, confirmada: 0, compareceu: 0, cancelada: 0 };
+    reservations.forEach((r: any) => { c[r.status] = (c[r.status] || 0) + 1; });
+    return c;
+  }, [reservations]);
+
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
-            <CalendarCheck className="w-6 h-6 text-primary" /> Reservas
-          </h1>
-          <p className="text-sm text-muted-foreground">{reservations.length} reserva(s) no período</p>
+          <h1 className="admin-page-title flex items-center gap-2"><CalendarCheck className="w-7 h-7 text-primary" />Reservas</h1>
+          <p className="text-sm text-muted-foreground mt-1">{reservations.length} reserva(s) no período</p>
         </div>
         <div className="flex gap-2">
-          <div className="flex bg-secondary rounded-lg p-0.5">
+          <div className="flex bg-secondary/70 rounded-xl p-1 shadow-inner">
             <TabBtn active={view === "today"} onClick={() => setView("today")} label="Hoje" />
             <TabBtn active={view === "week"} onClick={() => setView("week")} label="Semana" />
-            {canManage && <TabBtn active={view === "config"} onClick={() => setView("config")} label="Configurar slots" icon={SettingsIcon} />}
+            {canManage && <TabBtn active={view === "config"} onClick={() => setView("config")} label="Slots" icon={SettingsIcon} />}
           </div>
           {view !== "config" && (
-            <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-2 rounded-lg text-sm">
+            <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-4 py-2 rounded-xl text-sm font-medium shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all">
               <Plus className="w-4 h-4" /> Nova reserva
             </button>
           )}
         </div>
       </div>
 
+      {view !== "config" && reservations.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Pendentes</p><p className="text-2xl font-bold mt-1 text-amber-600">{counts.pendente}</p></div>
+          <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Confirmadas</p><p className="text-2xl font-bold mt-1 text-blue-600">{counts.confirmada}</p></div>
+          <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Compareceram</p><p className="text-2xl font-bold mt-1 text-emerald-600">{counts.compareceu}</p></div>
+          <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Canceladas</p><p className="text-2xl font-bold mt-1 text-rose-600">{counts.cancelada}</p></div>
+        </div>
+      )}
+
       {view === "config" ? (
         <SlotsConfig wineryId={winery.id} />
       ) : isLoading ? (
         <p className="text-center text-sm text-muted-foreground py-12">Carregando…</p>
       ) : reservations.length === 0 ? (
-        <div className="bg-card border border-border rounded-xl p-12 text-center">
+        <div className="admin-card p-12 text-center">
           <CalendarCheck className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">Nenhuma reserva {view === "today" ? "para hoje" : "nesta semana"}.</p>
         </div>
