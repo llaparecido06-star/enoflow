@@ -311,10 +311,10 @@ export default function AdminLeadsPage() {
 function ViewBtn({ icon: Icon, active, onClick, label, badge }: any) {
   return (
     <button onClick={onClick}
-      className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${active ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
+      className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${active ? "bg-card shadow-card text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
       <Icon className="w-4 h-4" /> {label}
       {badge > 0 && (
-        <span className="ml-1 text-[9px] bg-rose-500 text-white px-1.5 py-0.5 rounded-full leading-none">{badge}</span>
+        <span className="ml-1 text-[9px] bg-rose-500 text-white px-1.5 py-0.5 rounded-full leading-none font-semibold ring-2 ring-card">{badge}</span>
       )}
     </button>
   );
