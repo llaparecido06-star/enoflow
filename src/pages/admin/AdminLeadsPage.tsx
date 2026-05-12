@@ -279,7 +279,7 @@ export default function AdminLeadsPage() {
             {settingsView === "queue" ? (
               <AssignmentQueueSettings wineryId={winery.id} />
             ) : (
-              <NotificationPrefsForm wineryId={winery.id} adminId={admin.id} />
+              <NotificationPrefsForm wineryId={winery.id} />
             )}
           </div>
         ) : (
