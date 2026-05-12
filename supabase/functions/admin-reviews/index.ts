@@ -85,14 +85,56 @@ Deno.serve(async (req) => {
     // ─── MODERATE: HIDE / UNHIDE ───
     if (action === "set_hidden") {
       if (!canRespond) return json({ error: "Permissão insuficiente" }, 403);
-      const { review_id, hidden } = body;
+      const { review_id, hidden, reason } = body;
       if (!review_id || typeof hidden !== "boolean") return json({ error: "review_id e hidden obrigatórios" }, 400);
+
+      // Load existing for audit context
+      const { data: prev } = await supabase
+        .from("wine_reviews")
+        .select("id, wine_id, user_id, stars, comment, is_hidden")
+        .eq("id", review_id).eq("winery_id", winery_id).maybeSingle();
+      if (!prev) return json({ error: "Avaliação não encontrada" }, 404);
+
       const { error } = await supabase.from("wine_reviews")
         .update({ is_hidden: hidden })
         .eq("id", review_id).eq("winery_id", winery_id);
       if (error) throw error;
+
+      // Audit trail (best-effort, non-blocking on failure)
+      await supabase.from("audit_logs").insert({
+        winery_id,
+        admin_id: session.sub,
+        admin_name: session.name ?? session.email ?? null,
+        entity: "wine_review",
+        entity_id: review_id,
+        action: hidden ? "hide_review" : "unhide_review",
+        before: { is_hidden: prev.is_hidden },
+        after: { is_hidden: hidden },
+        metadata: {
+          wine_id: prev.wine_id,
+          user_id: prev.user_id,
+          stars: prev.stars,
+          comment: prev.comment,
+          reason: typeof reason === "string" ? reason.slice(0, 300) : null,
+        },
+      });
       return json({ success: true });
     }
+
+    // ─── MODERATION HISTORY ───
+    if (action === "moderation_history") {
+      const { review_id, limit } = body;
+      let q = supabase.from("audit_logs")
+        .select("id, admin_id, admin_name, action, entity_id, before, after, metadata, created_at")
+        .eq("winery_id", winery_id)
+        .eq("entity", "wine_review")
+        .in("action", ["hide_review", "unhide_review"]);
+      if (review_id) q = q.eq("entity_id", review_id);
+      const { data, error } = await q.order("created_at", { ascending: false }).limit(Math.min(Number(limit) || 100, 500));
+      if (error) throw error;
+      return json({ success: true, history: data ?? [] });
+    }
+
     if (action === "nps_summary") {
       const { data: vouchers } = await supabase.from("vouchers").select("id, nps_score, created_at").eq("winery_id", winery_id).not("nps_score", "is", null);
       const scores = (vouchers ?? []).map((v: any) => v.nps_score);

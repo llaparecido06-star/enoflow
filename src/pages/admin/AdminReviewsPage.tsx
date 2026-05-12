@@ -6,7 +6,7 @@ import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { can } from "@/lib/admin/permissions";
-import { Star, MessageSquare, AlertTriangle, Smile, Frown, Meh, EyeOff, Eye } from "lucide-react";
+import { Star, MessageSquare, AlertTriangle, Smile, Frown, Meh, EyeOff, Eye, History, ChevronDown, ChevronRight } from "lucide-react";
 
 export default function AdminReviewsPage() {
   const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
@@ -15,6 +15,7 @@ export default function AdminReviewsPage() {
   const [tab, setTab] = useState<"wines" | "nps">("wines");
   const [responding, setResponding] = useState<any>(null);
   const [responseText, setResponseText] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Filters
   const [wineFilter, setWineFilter] = useState<string>("");
@@ -45,6 +46,15 @@ export default function AdminReviewsPage() {
       const { data } = await invokeAuth("admin-reviews", { action: "nps_summary", winery_id: winery.id });
       return data;
     },
+  });
+
+  const { data: history } = useQuery({
+    queryKey: ["reviews-moderation-history", winery.id, historyOpen],
+    queryFn: async () => {
+      const { data } = await invokeAuth("admin-reviews", { action: "moderation_history", winery_id: winery.id, limit: 100 });
+      return data?.history ?? [];
+    },
+    enabled: historyOpen,
   });
 
   const allReviews = reviewsData?.reviews ?? [];
@@ -79,6 +89,7 @@ export default function AdminReviewsPage() {
     if (error || data?.error) return toast.error("Não foi possível atualizar a visibilidade");
     toast.success(next ? "Avaliação ocultada" : "Avaliação reexibida");
     qc.invalidateQueries({ queryKey: ["reviews", winery.id] });
+    qc.invalidateQueries({ queryKey: ["reviews-moderation-history", winery.id] });
   };
 
   return (
@@ -115,6 +126,43 @@ export default function AdminReviewsPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Moderation history */}
+          {canRespond && (
+            <div className="rounded-xl bg-card border border-border overflow-hidden">
+              <button
+                onClick={() => setHistoryOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-muted-foreground bg-muted/30 hover:bg-muted/50 transition-colors"
+                aria-expanded={historyOpen}
+              >
+                <span className="inline-flex items-center gap-2"><History className="w-3.5 h-3.5" /> Histórico de moderação</span>
+                {historyOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+              </button>
+              {historyOpen && (
+                <ul className="divide-y divide-border max-h-72 overflow-y-auto">
+                  {(history ?? []).length === 0 && (
+                    <li className="p-4 text-center text-xs text-muted-foreground">Nenhum evento de moderação registrado.</li>
+                  )}
+                  {(history ?? []).map((h: any) => (
+                    <li key={h.id} className="p-3 text-xs flex items-start gap-2">
+                      <span className={`px-2 py-0.5 rounded-full font-semibold ${h.action === "hide_review" ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}>
+                        {h.action === "hide_review" ? "Ocultou" : "Reexibiu"}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-foreground">
+                          <strong>{h.admin_name ?? "Admin"}</strong>
+                          {h.metadata?.stars ? <> · {"★".repeat(h.metadata.stars)}</> : null}
+                          {h.metadata?.comment ? <> · "{String(h.metadata.comment).slice(0, 80)}"</> : null}
+                        </p>
+                        <p className="text-muted-foreground">{new Date(h.created_at).toLocaleString("pt-BR")}</p>
+                        {h.metadata?.reason && <p className="text-muted-foreground italic mt-0.5">Motivo: {h.metadata.reason}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
 
