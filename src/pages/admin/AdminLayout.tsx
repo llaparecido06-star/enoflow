@@ -156,33 +156,14 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Mobile nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border">
-        <div className="flex justify-around py-2 overflow-x-auto">
-          {visibleNav.map((item) => {
-            const isActive = activeItem === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => navigate(basePath + item.path)}
-                className={`flex flex-col items-center gap-0.5 px-1.5 py-1 min-w-[3rem] ${
-                  isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60"
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="text-[9px]">{item.label}</span>
-              </button>
-            );
-          })}
-          <button
-            onClick={() => { logout(); navigate("/admin/login"); }}
-            className="flex flex-col items-center gap-0.5 px-1.5 py-1 min-w-[3rem] text-destructive/70"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="text-[9px]">Sair</span>
-          </button>
-        </div>
-      </div>
+      {/* Mobile nav - 4 primary + Mais sheet */}
+      <MobileBottomNav
+        items={visibleNav}
+        activeItem={activeItem}
+        basePath={basePath}
+        navigate={navigate}
+        onLogout={() => { logout(); navigate("/admin/login"); }}
+      />
 
       {/* Content */}
       <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
