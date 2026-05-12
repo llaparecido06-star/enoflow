@@ -113,25 +113,25 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-start justify-between gap-3">
+      <div className="mb-8 flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Dashboard Executivo</h1>
-          <p className="text-sm text-muted-foreground">Visão geral de {winery.name}</p>
+          <h1 className="admin-page-title">Dashboard Executivo</h1>
+          <p className="text-sm text-muted-foreground mt-1">Visão geral de <span className="font-medium text-foreground">{winery.name}</span> · {new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</p>
         </div>
         <button
           onClick={handleExportPdf}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-3 py-2 rounded-xl text-xs font-medium hover:bg-primary/90 transition-colors"
+          className="group inline-flex items-center gap-2 gradient-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium shadow-card hover:shadow-elevated hover:scale-[1.02] transition-all"
         >
-          <FileDown className="w-4 h-4" /> Relatório PDF
+          <FileDown className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" /> Relatório PDF
         </button>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="overview" className="gap-1.5">
+        <TabsList className="bg-muted/50 p-1 rounded-xl">
+          <TabsTrigger value="overview" className="gap-1.5 rounded-lg data-[state=active]:shadow-card data-[state=active]:bg-card">
             <BarChart3 className="w-4 h-4" /> Visão Geral
           </TabsTrigger>
-          <TabsTrigger value="roi" className="gap-1.5">
+          <TabsTrigger value="roi" className="gap-1.5 rounded-lg data-[state=active]:shadow-card data-[state=active]:bg-card">
             <QrCode className="w-4 h-4" /> ROI por QR Code
           </TabsTrigger>
         </TabsList>
@@ -139,36 +139,38 @@ export default function AdminDashboardPage() {
         <TabsContent value="overview">
           {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-            {kpis.map((kpi) => (
-              <div key={kpi.label} className="bg-card rounded-xl border border-border p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`w-10 h-10 rounded-xl ${kpi.bg} flex items-center justify-center`}>
+            {kpis.map((kpi, i) => (
+              <div key={kpi.label} className={`admin-kpi ${i === 0 ? "admin-kpi-accent" : ""}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`w-11 h-11 rounded-xl ${kpi.bg} flex items-center justify-center ring-1 ring-border/40`}>
                     <kpi.icon className={`w-5 h-5 ${kpi.color}`} />
                   </div>
-                  <span className="text-xs text-muted-foreground">{kpi.label}</span>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{kpi.label}</span>
                 </div>
-                <p className="font-display text-2xl font-bold text-foreground truncate">{kpi.value}</p>
-                <p className="text-[11px] text-muted-foreground mt-1">{kpi.sub}</p>
+                <p className="font-display text-3xl font-bold text-foreground truncate tracking-tight">{kpi.value}</p>
+                <p className="text-xs text-muted-foreground mt-1.5">{kpi.sub}</p>
               </div>
             ))}
           </div>
 
           {/* Weekly Chart */}
           {chartData.length > 0 && (
-            <div className="bg-card rounded-xl border border-border p-5 mb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <BarChart3 className="w-5 h-5 text-primary" />
-                <h2 className="font-display text-base font-semibold text-foreground">Vendas & Leads — Últimos 7 dias</h2>
+            <div className="admin-card admin-card-hover p-6 mb-6">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <BarChart3 className="w-4 h-4 text-primary" />
+                </div>
+                <h2 className="admin-section-title">Vendas & Leads — Últimos 7 dias</h2>
               </div>
-              <div className="h-64">
+              <div className="h-72">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} barGap={4}>
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(5)} />
-                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(5)} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 11 }} allowDecimals={false} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12, boxShadow: "0 10px 30px -12px hsl(0 0% 0% / 0.15)" }} cursor={{ fill: "hsl(var(--muted) / 0.4)" }} />
                     <Legend wrapperStyle={{ fontSize: 11 }} formatter={(value) => (value === "leads" ? "Novos Leads" : "Vendas (R$)")} />
-                    <Bar dataKey="leads" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="sales" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="leads" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="sales" fill="hsl(var(--accent))" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -198,23 +200,26 @@ export default function AdminDashboardPage() {
 function BiPieCard({ title, data, emptyMsg }: { title: string; data: { name: string; value: number }[]; emptyMsg: string }) {
   if (!data.length) {
     return (
-      <div className="bg-card rounded-xl border border-border p-5 flex flex-col items-center justify-center min-h-[220px]">
+      <div className="admin-card p-6 flex flex-col items-center justify-center min-h-[240px]">
+        <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center mb-2">
+          <BarChart3 className="w-5 h-5 text-muted-foreground" />
+        </div>
         <p className="text-sm text-muted-foreground">{emptyMsg}</p>
       </div>
     );
   }
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
-      <h3 className="font-display text-sm font-semibold text-foreground mb-3">{title}</h3>
-      <div className="h-48">
+    <div className="admin-card admin-card-hover p-6">
+      <h3 className="admin-section-title mb-4">{title}</h3>
+      <div className="h-52">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={10}>
+            <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={75} innerRadius={35} paddingAngle={2} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false} fontSize={10}>
               {data.map((_, i) => (
-                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="hsl(var(--card))" strokeWidth={2} />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid hsl(var(--border))" }} />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -225,21 +230,24 @@ function BiPieCard({ title, data, emptyMsg }: { title: string; data: { name: str
 function BiBarCard({ title, data, emptyMsg }: { title: string; data: { name: string; value: number }[]; emptyMsg: string }) {
   if (!data.length) {
     return (
-      <div className="bg-card rounded-xl border border-border p-5 flex flex-col items-center justify-center min-h-[220px]">
+      <div className="admin-card p-6 flex flex-col items-center justify-center min-h-[240px]">
+        <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center mb-2">
+          <BarChart3 className="w-5 h-5 text-muted-foreground" />
+        </div>
         <p className="text-sm text-muted-foreground">{emptyMsg}</p>
       </div>
     );
   }
   return (
-    <div className="bg-card rounded-xl border border-border p-5">
-      <h3 className="font-display text-sm font-semibold text-foreground mb-3">{title}</h3>
-      <div className="h-48">
+    <div className="admin-card admin-card-hover p-6">
+      <h3 className="admin-section-title mb-4">{title}</h3>
+      <div className="h-52">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ left: 0 }}>
-            <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={80} />
-            <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8 }} />
-            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+            <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} axisLine={false} tickLine={false} />
+            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={90} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ fontSize: 11, borderRadius: 12, border: "1px solid hsl(var(--border))" }} cursor={{ fill: "hsl(var(--muted) / 0.4)" }} />
+            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 6, 6, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
