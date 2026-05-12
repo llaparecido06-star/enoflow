@@ -2,24 +2,34 @@ import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
 import { useVoucherNotifications } from "@/hooks/useVoucherNotifications";
-import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare, MoreHorizontal, CalendarCheck, Boxes, DollarSign, Building2 } from "lucide-react";
+import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare, MoreHorizontal, CalendarCheck, Boxes, DollarSign, Building2, Star, Gift, CalendarDays, Upload } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import NotificationBell from "@/components/admin/crm/NotificationBell";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { can, type Capability } from "@/lib/admin/permissions";
 
-// salesOnly excludes the item from sales-only sidebars
-const navItems = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "", minRole: "owner" as AdminRole, salesOnly: false },
-  { id: "wines", label: "Vinhos", icon: Wine, path: "/wines", minRole: "manager" as AdminRole, salesOnly: false },
-  { id: "packages", label: "Pacotes", icon: Package, path: "/packages", minRole: "manager" as AdminRole, salesOnly: false },
-  { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", minRole: "manager" as AdminRole, salesOnly: false },
-  { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "sales" as AdminRole, salesOnly: true },
-  { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", minRole: "owner" as AdminRole, salesOnly: false },
-  { id: "performance", label: "Performance", icon: Activity, path: "/performance", minRole: "owner" as AdminRole, salesOnly: false },
-  { id: "locations", label: "Pontos de Captura", icon: MapPin, path: "/locations", minRole: "manager" as AdminRole, salesOnly: false },
-  { id: "training", label: "Treinamento", icon: Rocket, path: "/training", minRole: "staff" as AdminRole, salesOnly: false },
-  { id: "campaigns", label: "Campanhas", icon: MessageSquare, path: "/campaigns", minRole: "owner" as AdminRole, salesOnly: false },
-  { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", minRole: "staff" as AdminRole, salesOnly: false },
+type NavItem = { id: string; label: string; icon: any; path: string; cap: Capability; salesOnly?: boolean };
+
+const navItems: NavItem[] = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "", cap: "dashboard.view" },
+  { id: "reservations", label: "Reservas", icon: CalendarCheck, path: "/reservations", cap: "reservations.view" },
+  { id: "leads", label: "CRM / Leads", icon: Users, path: "/leads", cap: "crm.view", salesOnly: true },
+  { id: "wines", label: "Vinhos", icon: Wine, path: "/wines", cap: "wines.view" },
+  { id: "stock", label: "Estoque", icon: Boxes, path: "/stock", cap: "stock.view" },
+  { id: "packages", label: "Pacotes", icon: Package, path: "/packages", cap: "packages.view" },
+  { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", cap: "menu.view" },
+  { id: "events", label: "Eventos", icon: CalendarDays, path: "/events", cap: "events.view" },
+  { id: "loyalty", label: "Fidelidade", icon: Gift, path: "/loyalty", cap: "loyalty.view" },
+  { id: "reviews", label: "Avaliações", icon: Star, path: "/reviews", cap: "reviews.view" },
+  { id: "finance", label: "Financeiro", icon: DollarSign, path: "/finance", cap: "finance.view" },
+  { id: "campaigns", label: "Campanhas", icon: MessageSquare, path: "/campaigns", cap: "campaigns.view" },
+  { id: "locations", label: "Pontos de Captura", icon: MapPin, path: "/locations", cap: "wines.manage" },
+  { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", cap: "staff.view" },
+  { id: "performance", label: "Performance", icon: Activity, path: "/performance", cap: "performance.view" },
+  { id: "training", label: "Treinamento", icon: Rocket, path: "/training", cap: "training.view" },
+  { id: "import", label: "Importação CSV", icon: Upload, path: "/import", cap: "import.manage" },
+  { id: "config", label: "Configurações", icon: Building2, path: "/config", cap: "config.view" },
+  { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", cap: "vouchers.issue" },
 ];
 
 export default function AdminLayout() {
