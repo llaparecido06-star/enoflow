@@ -2,7 +2,7 @@ import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
 import { useVoucherNotifications } from "@/hooks/useVoucherNotifications";
-import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare, MoreHorizontal, CalendarCheck, Boxes, DollarSign, Building2, Star, Gift, CalendarDays, Upload } from "lucide-react";
+import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare, MoreHorizontal, CalendarCheck, Boxes, DollarSign, Building2, Star, Gift, CalendarDays, Upload, Shield, Smartphone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import NotificationBell from "@/components/admin/crm/NotificationBell";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -11,6 +11,7 @@ import { can, type Capability } from "@/lib/admin/permissions";
 type NavItem = { id: string; label: string; icon: any; path: string; cap: Capability; salesOnly?: boolean };
 
 const navItems: NavItem[] = [
+  { id: "checkin", label: "Check-in", icon: Smartphone, path: "/checkin", cap: "checkin.use" },
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "", cap: "dashboard.view" },
   { id: "reservations", label: "Reservas", icon: CalendarCheck, path: "/reservations", cap: "reservations.view" },
   { id: "leads", label: "CRM / Leads", icon: Users, path: "/leads", cap: "crm.view", salesOnly: true },
@@ -30,6 +31,7 @@ const navItems: NavItem[] = [
   { id: "import", label: "Importação CSV", icon: Upload, path: "/import", cap: "import.manage" },
   { id: "config", label: "Configurações", icon: Building2, path: "/config", cap: "config.view" },
   { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", cap: "vouchers.issue" },
+  { id: "audit", label: "Auditoria", icon: Shield, path: "/audit", cap: "audit.view" },
 ];
 
 export default function AdminLayout() {
