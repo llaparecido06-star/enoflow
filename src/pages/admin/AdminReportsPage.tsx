@@ -78,7 +78,7 @@ export default function AdminReportsPage() {
       </div>
 
       {automations && automations.length > 0 ? (
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
+        <div className="admin-card overflow-hidden">
           <div className="px-4 py-3 border-b border-border bg-secondary/50">
             <h3 className="text-xs font-medium text-muted-foreground">Histórico de Automações</h3>
           </div>
@@ -122,7 +122,7 @@ export default function AdminReportsPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-card rounded-xl border border-border p-8 text-center">
+        <div className="admin-card p-10 text-center">
           <BarChart3 className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
           <p className="text-sm text-muted-foreground">Clique em "Processar D+1 / D+15" para simular envios automáticos.</p>
         </div>
