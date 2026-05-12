@@ -51,6 +51,13 @@ export default function AdminWineryConfigPage() {
         { key: "instagram_url", label: "Instagram", value: cfg.instagram_url ?? "" },
       ]} />
 
+      <SectionCard icon={Share2} title="Redes & Reviews externas" onSave={(v) => save("external", v)} fields={[
+        { key: "google_business_url", label: "Google Business", value: cfg.google_business_url ?? "" },
+        { key: "tripadvisor_url", label: "TripAdvisor", value: cfg.tripadvisor_url ?? "" },
+        { key: "facebook_url", label: "Facebook", value: cfg.facebook_url ?? "" },
+        { key: "youtube_url", label: "YouTube", value: cfg.youtube_url ?? "" },
+      ]} />
+
       <HoursCard hours={cfg.business_hours ?? {}} onSave={(business_hours) => save("hours", { business_hours })} />
 
       <I18nCard cfg={cfg} onSave={(v) => save("i18n", v)} />
