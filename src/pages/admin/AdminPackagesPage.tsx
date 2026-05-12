@@ -39,35 +39,35 @@ export default function AdminPackagesPage() {
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Pacotes de Degustação</h1>
-          <p className="text-sm text-muted-foreground">Crie experiências de degustação</p>
+          <h1 className="admin-page-title flex items-center gap-2"><Package className="w-7 h-7 text-primary" />Pacotes de Degustação</h1>
+          <p className="text-sm text-muted-foreground mt-1">Crie experiências de degustação</p>
         </div>
         <button onClick={() => setFormPkg(null)}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
+          className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all">
           <Plus className="w-4 h-4" /> Novo pacote
         </button>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {packages?.map((pkg) => (
-          <div key={pkg.id} className="bg-card rounded-xl border border-border p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center">
+          <div key={pkg.id} className="admin-card admin-card-hover p-4 group">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gold/20 to-gold/5 flex items-center justify-center ring-1 ring-gold/20 shrink-0">
                   <Package className="w-5 h-5 text-gold" />
                 </div>
-                <div>
-                  <h3 className="font-display text-sm font-semibold">{pkg.name}</h3>
-                  <p className="text-[11px] text-muted-foreground">
-                    {pkg.wine_ids.length} vinhos{pkg.description ? ` · ${pkg.description}` : ""}
+                <div className="min-w-0">
+                  <h3 className="font-display text-sm font-semibold truncate">{pkg.name}</h3>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {pkg.wine_ids.length} vinho{pkg.wine_ids.length !== 1 ? "s" : ""}{pkg.description ? ` · ${pkg.description}` : ""}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="font-display text-lg font-bold text-foreground">R$ {Number(pkg.price).toFixed(2)}</span>
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="font-display text-lg font-bold text-primary mr-1">R$ {Number(pkg.price).toFixed(0)}</span>
                 <button onClick={() => setFormPkg(pkg)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
                   <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
@@ -79,7 +79,7 @@ export default function AdminPackagesPage() {
           </div>
         ))}
         {(!packages || packages.length === 0) && (
-          <div className="bg-card rounded-xl border border-border p-8 text-center">
+          <div className="admin-card p-10 text-center md:col-span-2">
             <Package className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground">Nenhum pacote criado ainda.</p>
           </div>

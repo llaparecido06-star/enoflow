@@ -210,25 +210,35 @@ export default function AdminCampaignsPage() {
     fetchCampaigns();
   };
 
+  const sentCount = campaigns.filter(c => c.status === "sent").length;
+  const totalReach = campaigns.reduce((s, c) => s + (c.sent_count || 0), 0);
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Campanhas WhatsApp</h1>
-          <p className="text-sm text-muted-foreground">Crie e envie notificações para seus turistas</p>
+          <h1 className="admin-page-title flex items-center gap-2"><MessageSquare className="w-7 h-7 text-primary" />Campanhas WhatsApp</h1>
+          <p className="text-sm text-muted-foreground mt-1">Crie e envie notificações para seus turistas</p>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} className="bg-gradient-to-r from-primary to-primary/80 shadow-card hover:shadow-elevated hover:scale-[1.02] active:scale-95 transition-all">
           <Plus className="w-4 h-4 mr-2" /> Nova Campanha
         </Button>
       </div>
+
+      {campaigns.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Total</p><p className="text-2xl font-bold mt-1">{campaigns.length}</p></div>
+          <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Enviadas</p><p className="text-2xl font-bold mt-1 text-emerald-600">{sentCount}</p></div>
+          <div className="admin-kpi p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Alcance</p><p className="text-2xl font-bold mt-1 text-primary">{totalReach}</p></div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : campaigns.length === 0 ? (
-        <div className="text-center py-16 border border-dashed rounded-xl">
-          <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
+        <div className="admin-card p-16 text-center">
+          <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-muted-foreground">Nenhuma campanha criada ainda</p>
           <Button variant="outline" className="mt-4" onClick={openCreate}>
             <Plus className="w-4 h-4 mr-2" /> Criar primeira campanha
@@ -237,7 +247,7 @@ export default function AdminCampaignsPage() {
       ) : (
         <div className="grid gap-4">
           {campaigns.map((c) => (
-            <div key={c.id} className="border rounded-xl p-4 bg-card">
+            <div key={c.id} className="admin-card admin-card-hover p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
