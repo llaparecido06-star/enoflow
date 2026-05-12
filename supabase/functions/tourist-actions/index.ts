@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: create_voucher
     if (action === "create_voucher") {
-      const { code, items, total } = body;
+      const { code, items, total, channel } = body;
       if (!code || !items || total === undefined) return json({ error: "code, items, total required" }, 400);
       if (typeof total !== "number" || total < 0) return json({ error: "Invalid total" }, 400);
       if (typeof code !== "string" || code.length > 20) return json({ error: "Invalid code" }, 400);
@@ -124,11 +124,43 @@ Deno.serve(async (req) => {
       const { valid, sanitized } = validateVoucherItems(items);
       if (!valid) return json({ error: "Invalid items format" }, 400);
 
+      // Infer channel if not provided
+      const inferredChannel = (() => {
+        if (channel && ["tasting", "restaurant", "shop", "mixed"].includes(channel)) return channel;
+        const cats = new Set<string>();
+        for (const it of sanitized as any[]) if (it?.category) cats.add(String(it.category));
+        if (cats.size === 1) return Array.from(cats)[0];
+        return "mixed";
+      })();
+
       const { data, error } = await supabase.from("vouchers").insert({
-        winery_id, user_id, code: str(code, 20), items: sanitized, total,
+        winery_id, user_id, code: str(code, 20), items: sanitized, total, channel: inferredChannel,
       }).select().single();
 
       if (error) throw error;
+
+      // ─── Auto-debit stock for tracked wines
+      try {
+        const wineLine = (sanitized as any[]).filter((it) => it?.wine_id && it?.qty);
+        if (wineLine.length) {
+          const wineIds = wineLine.map((l) => l.wine_id);
+          const { data: tracked } = await supabase.from("wines").select("id, stock_qty, track_stock").in("id", wineIds).eq("winery_id", winery_id);
+          for (const w of tracked ?? []) {
+            if (!w.track_stock) continue;
+            const line = wineLine.find((l) => l.wine_id === w.id);
+            const qty = Number(line?.qty ?? 0);
+            if (qty <= 0) continue;
+            const newQty = Math.max(0, (w.stock_qty ?? 0) - qty);
+            await supabase.from("wines").update({ stock_qty: newQty }).eq("id", w.id);
+            await supabase.from("stock_movements").insert({
+              winery_id, wine_id: w.id, delta: -qty, reason: "venda", voucher_id: data.id,
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Stock debit failed (non-blocking):", e);
+      }
+
       return json({ success: true, voucher: data });
     }
 
