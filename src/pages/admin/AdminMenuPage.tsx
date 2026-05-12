@@ -97,12 +97,12 @@ export default function AdminMenuPage() {
       <div className="space-y-5">
         {Object.entries(grouped).map(([category, items]) => (
           <div key={category}>
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{category}</h3>
+            <h3 className="admin-section-title mb-2">{category}</h3>
             <div className="space-y-2">
               {items.map((item) => {
                 const suggestedWine = item.suggested_wine_id ? wineMap.get(item.suggested_wine_id) : undefined;
                 return (
-                  <div key={item.id} className="bg-card rounded-xl border border-border p-4">
+                  <div key={item.id} className="admin-card admin-card-hover p-4">
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {item.image_url ? (
@@ -149,7 +149,7 @@ export default function AdminMenuPage() {
           </div>
         ))}
         {(!menuItems || menuItems.length === 0) && (
-          <div className="bg-card rounded-xl border border-border p-8 text-center">
+          <div className="admin-card p-10 text-center">
             <UtensilsCrossed className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
             <p className="text-sm text-muted-foreground">Nenhum item no cardápio ainda.</p>
           </div>
