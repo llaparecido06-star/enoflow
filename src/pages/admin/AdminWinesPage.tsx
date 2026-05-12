@@ -25,8 +25,17 @@ export default function AdminWinesPage() {
   const [formWine, setFormWine] = useState<Wine | null | undefined>(undefined);
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [deleteWine, setDeleteWine] = useState<Wine | null>(null);
+  const [translateWine, setTranslateWine] = useState<Wine | null>(null);
   const [deleting, setDeleting] = useState(false);
   const qc = useQueryClient();
+
+  const handleSheet = async (wine: Wine) => {
+    try {
+      await generateWineSheet(wine as any, winery as any);
+    } catch {
+      toast.error("Erro ao gerar ficha");
+    }
+  };
 
   const handleDelete = async () => {
     if (!deleteWine) return;
