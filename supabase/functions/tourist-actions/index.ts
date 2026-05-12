@@ -336,10 +336,12 @@ Deno.serve(async (req) => {
       if (!isUUID(wine_id)) return json({ error: "Valid wine_id required" }, 400);
       const { data } = await supabase
         .from("wine_reviews")
-        .select("stars, comment, created_at")
+        .select("stars, comment, created_at, is_hidden")
         .eq("user_id", user_id)
         .eq("wine_id", wine_id)
         .maybeSingle();
+      // Hidden reviews must never leak back to tourists, not even their own
+      if (data?.is_hidden) return json({ success: true, review: null });
       return json({ success: true, review: data ?? null });
     }
 
