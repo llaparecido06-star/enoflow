@@ -48,6 +48,15 @@ export default function AdminReviewsPage() {
     },
   });
 
+  const { data: history } = useQuery({
+    queryKey: ["reviews-moderation-history", winery.id, historyOpen],
+    queryFn: async () => {
+      const { data } = await invokeAuth("admin-reviews", { action: "moderation_history", winery_id: winery.id, limit: 100 });
+      return data?.history ?? [];
+    },
+    enabled: historyOpen,
+  });
+
   const allReviews = reviewsData?.reviews ?? [];
   const reviews = useMemo(() => {
     if (!userSearch.trim()) return allReviews;
