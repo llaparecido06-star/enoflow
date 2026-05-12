@@ -15,7 +15,7 @@ const navItems = [
   { id: "leads", label: "Leads", icon: Users, path: "/leads", minRole: "sales" as AdminRole, salesOnly: true },
   { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", minRole: "owner" as AdminRole, salesOnly: false },
   { id: "performance", label: "Performance", icon: Activity, path: "/performance", minRole: "owner" as AdminRole, salesOnly: false },
-  { id: "locations", label: "Locais", icon: MapPin, path: "/locations", minRole: "manager" as AdminRole, salesOnly: false },
+  { id: "locations", label: "Pontos de Captura", icon: MapPin, path: "/locations", minRole: "manager" as AdminRole, salesOnly: false },
   { id: "training", label: "Treinamento", icon: Rocket, path: "/training", minRole: "staff" as AdminRole, salesOnly: false },
   { id: "campaigns", label: "Campanhas", icon: MessageSquare, path: "/campaigns", minRole: "owner" as AdminRole, salesOnly: false },
   { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", minRole: "staff" as AdminRole, salesOnly: false },
