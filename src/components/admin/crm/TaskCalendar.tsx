@@ -120,6 +120,23 @@ export default function TaskCalendar({ wineryId, onLeadOpen }: Props) {
     setShowNew(true);
   };
 
+  const handleDrop = async (dayKey: string) => {
+    const id = dragId;
+    setDragId(null);
+    setDragOverKey(null);
+    if (!id) return;
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    const orig = new Date(task.due_at);
+    const [y, m, dd] = dayKey.split("-").map(Number);
+    const newDate = new Date(y, m - 1, dd, orig.getHours(), orig.getMinutes());
+    if (newDate.toISOString().slice(0, 10) === task.due_at.slice(0, 10)) return;
+    // optimistic
+    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, due_at: newDate.toISOString() } : t));
+    const { error } = await invokeAuth("admin-crm", { action: "move_task", task_id: id, due_at: newDate.toISOString(), winery_id: wineryId });
+    if (error) { toast.error("Erro ao mover"); load(); } else { toast.success("Reagendada"); }
+  };
+
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 p-3 border-b border-border bg-secondary/30">
