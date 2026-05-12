@@ -93,11 +93,37 @@ export default function AdminDashboardPage() {
   const biPrefs: { name: string; value: number }[] = (data?.bi_preferences ?? []).map((d: any) => ({ ...d, name: d.name || "Não informado" }));
   const biCapture: { name: string; value: number }[] = (data?.bi_capture_points ?? []).map((d: any) => ({ ...d, name: d.name || "Acesso Direto" }));
 
+  const handleExportPdf = async () => {
+    try {
+      const period = new Date().toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+      await generateMonthlyReport(winery as any, {
+        period,
+        revenue: Number(data?.revenue_month ?? 0),
+        vouchers: Number(data?.vouchers_redeemed ?? 0),
+        leads: Number(data?.leads_month ?? 0),
+        npsScore: data?.nps_avg ? Number(Number(data.nps_avg).toFixed(1)) : 0,
+        byChannel: (data?.bi_capture_points ?? []).map((d: any) => ({ channel: d.name || "Direto", revenue: Number(d.value || 0) })),
+        topWines: data?.top_wine_name ? [{ name: data.top_wine_name, count: Number(data.top_wine_count ?? 0) }] : [],
+      });
+      toast.success("Relatório gerado!");
+    } catch {
+      toast.error("Erro ao gerar relatório");
+    }
+  };
+
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-foreground">Dashboard Executivo</h1>
-        <p className="text-sm text-muted-foreground">Visão geral de {winery.name}</p>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Dashboard Executivo</h1>
+          <p className="text-sm text-muted-foreground">Visão geral de {winery.name}</p>
+        </div>
+        <button
+          onClick={handleExportPdf}
+          className="flex items-center gap-2 bg-primary text-primary-foreground px-3 py-2 rounded-xl text-xs font-medium hover:bg-primary/90 transition-colors"
+        >
+          <FileDown className="w-4 h-4" /> Relatório PDF
+        </button>
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
