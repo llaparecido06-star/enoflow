@@ -2,12 +2,14 @@ import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
-import { Wine as WineIcon, Plus, Pencil, Trash2, MapPin } from "lucide-react";
+import { Wine as WineIcon, Plus, Pencil, Trash2, MapPin, FileText, Languages } from "lucide-react";
 import WineFormModal from "@/components/admin/WineFormModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
+import WineTranslationsDrawer from "@/components/admin/WineTranslationsDrawer";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { generateWineSheet } from "@/lib/admin/pdf";
 
 export default function AdminWinesPage() {
   const { winery, admin } = useOutletContext<{ winery: Winery; admin: AdminUser }>();
