@@ -211,44 +211,66 @@ function SocialFooter({ winery }: { winery: any }) {
 
   if (links.length === 0 && reviewLinks.length === 0) return null;
 
+  const singleReview = reviewLinks.length === 1;
+
   return (
-    <footer className="px-4 pb-4 pt-2 space-y-3">
+    <footer
+      className="px-4 pb-4 pt-2 space-y-3"
+      aria-label="Links sociais e avaliações da vinícola"
+    >
       {reviewLinks.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-3 space-y-2">
-          <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
-            <Star className="w-3.5 h-3.5 text-gold fill-gold" /> Gostou da experiência?
-          </p>
-          <div className={`grid gap-2 ${reviewLinks.length > 1 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
+        <section
+          aria-labelledby="reviews-heading"
+          className="rounded-xl border border-border bg-card p-3 space-y-2 shadow-sm"
+        >
+          <h2
+            id="reviews-heading"
+            className="text-xs font-semibold text-foreground flex items-center gap-1.5"
+          >
+            <Star className="w-3.5 h-3.5 text-gold fill-gold" aria-hidden="true" />
+            Gostou da experiência?
+          </h2>
+          <div
+            className={`grid gap-2 ${
+              reviewLinks.length > 1
+                ? "grid-cols-1 sm:grid-cols-2"
+                : "grid-cols-1 mx-auto w-full sm:max-w-xs"
+            }`}
+          >
             {reviewLinks.map((l) => (
               <a
                 key={l.label}
                 href={l.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-medium hover:bg-primary/15 active:scale-[0.98] transition-all min-h-[40px]"
+                aria-label={`${l.label} (abre em nova aba)`}
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                  singleReview ? "w-full" : ""
+                }`}
               >
-                <l.Icon className="w-3.5 h-3.5 shrink-0" />
+                <l.Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span className="truncate">{l.label}</span>
               </a>
             ))}
           </div>
-        </div>
+        </section>
       )}
       {links.length > 0 && (
-        <div className="flex items-center justify-center gap-3">
+        <nav aria-label="Redes sociais" className="flex items-center justify-center gap-3">
           {links.map(({ url, Icon, label }) => (
             <a
               key={label}
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={label}
-              className="w-10 h-10 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center hover:bg-secondary/80 active:scale-95 transition-all"
+              aria-label={`${label} (abre em nova aba)`}
+              title={label}
+              className="w-11 h-11 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center hover:bg-secondary/80 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-4 h-4" aria-hidden="true" />
             </a>
           ))}
-        </div>
+        </nav>
       )}
     </footer>
   );
