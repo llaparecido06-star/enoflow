@@ -79,26 +79,26 @@ export default function AdminCheckinPage() {
   return (
     <div className="space-y-5 max-w-md mx-auto pb-24">
       <div className="text-center">
-        <h1 className="font-display text-2xl font-bold text-foreground">Check-in</h1>
-        <p className="text-xs text-muted-foreground">Cadastro rápido + voucher</p>
+        <h1 className="admin-page-title flex items-center justify-center gap-2"><UserPlus className="w-6 h-6 text-primary" />Check-in</h1>
+        <p className="text-xs text-muted-foreground mt-1">Cadastro rápido + voucher</p>
       </div>
 
       <Stepper step={step} />
 
       {step === "lead" && (
-        <div className="space-y-3 bg-card border border-border rounded-2xl p-4">
+        <div className="admin-card p-5 space-y-3">
           <BigInput label="Nome" value={name} onChange={setName} placeholder="Nome completo" />
           <BigInput label="WhatsApp" value={whatsapp} onChange={setWhatsapp} placeholder="+55 54 9..." type="tel" />
           {(catalog?.capture_points?.length ?? 0) > 0 && (
             <div>
               <label className="text-sm font-medium block mb-1">Ponto de captura</label>
-              <select value={capturePoint} onChange={(e) => setCapturePoint(e.target.value)} className="w-full rounded-xl border border-border p-3 text-base">
+              <select value={capturePoint} onChange={(e) => setCapturePoint(e.target.value)} className="w-full rounded-xl border border-border p-3 text-base bg-background focus:outline-none focus:ring-2 focus:ring-primary/30">
                 <option value="">— selecione —</option>
                 {catalog!.capture_points.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
           )}
-          <button disabled={loading} onClick={submitLead} className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-50">
+          <button disabled={loading} onClick={submitLead} className="w-full h-14 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-semibold text-base flex items-center justify-center gap-2 disabled:opacity-50 shadow-card hover:shadow-elevated active:scale-95 transition-all">
             <UserPlus className="w-5 h-5" /> Registrar e seguir
           </button>
         </div>
