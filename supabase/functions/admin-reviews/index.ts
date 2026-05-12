@@ -82,7 +82,17 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
-    // ─── NPS SUMMARY ───
+    // ─── MODERATE: HIDE / UNHIDE ───
+    if (action === "set_hidden") {
+      if (!canRespond) return json({ error: "Permissão insuficiente" }, 403);
+      const { review_id, hidden } = body;
+      if (!review_id || typeof hidden !== "boolean") return json({ error: "review_id e hidden obrigatórios" }, 400);
+      const { error } = await supabase.from("wine_reviews")
+        .update({ is_hidden: hidden })
+        .eq("id", review_id).eq("winery_id", winery_id);
+      if (error) throw error;
+      return json({ success: true });
+    }
     if (action === "nps_summary") {
       const { data: vouchers } = await supabase.from("vouchers").select("id, nps_score, created_at").eq("winery_id", winery_id).not("nps_score", "is", null);
       const scores = (vouchers ?? []).map((v: any) => v.nps_score);
