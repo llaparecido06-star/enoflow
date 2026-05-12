@@ -60,18 +60,18 @@ export default function AdminFinancePage() {
   };
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+    <div className="space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
-            <DollarSign className="w-6 h-6 text-primary" /> Financeiro
+          <h1 className="admin-page-title flex items-center gap-2">
+            <DollarSign className="w-7 h-7 text-primary" /> Financeiro
           </h1>
-          <p className="text-sm text-muted-foreground">{from} → {to}</p>
+          <p className="text-sm text-muted-foreground mt-1">{from} → {to}</p>
         </div>
-        <div className="flex gap-2">
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border border-border rounded-lg px-2 py-1.5 text-sm bg-background" />
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border border-border rounded-lg px-2 py-1.5 text-sm bg-background" />
-          <button onClick={exportCsv} className="flex items-center gap-1.5 border border-border px-3 py-1.5 rounded-lg text-sm"><Download className="w-4 h-4" /> CSV</button>
+        <div className="flex gap-2 items-center flex-wrap">
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border border-border rounded-lg px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/30" />
+          <button onClick={exportCsv} className="flex items-center gap-1.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-3.5 py-2 rounded-lg text-sm font-medium shadow-card hover:shadow-elevated active:scale-95 transition-all"><Download className="w-4 h-4" /> CSV</button>
         </div>
       </div>
 
