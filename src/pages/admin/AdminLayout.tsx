@@ -195,7 +195,7 @@ function MobileBottomNav({ items, activeItem, basePath, navigate, onLogout }: {
 }) {
   const [open, setOpen] = useState(false);
   // Prioritize: leads, dashboard, wines, agenda-equivalents
-  const priority = ["leads", "dashboard", "wines", "staff", "menu", "packages"];
+  const priority = ["reservations", "leads", "dashboard", "stock", "wines", "events"];
   const primary = priority
     .map((id) => items.find((i) => i.id === id))
     .filter(Boolean)
