@@ -75,7 +75,7 @@ export default function AdminFinancePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Kpi icon={TrendingUp} label="Receita" value={formatCurrency(summary?.summary?.revenue ?? 0, currency)} tone="emerald" />
         <Kpi icon={Receipt} label="Ticket médio" value={formatCurrency(summary?.summary?.ticket_avg ?? 0, currency)} tone="blue" />
         <Kpi icon={DollarSign} label="Vouchers resgatados" value={`${summary?.summary?.redeemed_count ?? 0}/${summary?.summary?.total_count ?? 0}`} tone="amber" />
@@ -83,7 +83,7 @@ export default function AdminFinancePage() {
       </div>
 
       {summary?.by_channel && Object.keys(summary.by_channel).length > 0 && (
-        <div className="bg-card border border-border rounded-xl p-4 mb-4">
+        <div className="admin-card p-5">
           <h3 className="text-sm font-semibold mb-3">Receita por canal</h3>
           <div className="space-y-2">
             {CHANNELS.map((c) => {
@@ -106,7 +106,7 @@ export default function AdminFinancePage() {
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-xl p-3 mb-3 flex flex-wrap gap-2 items-center">
+      <div className="admin-card p-3 flex flex-wrap gap-2 items-center">
         <select value={channelFilter} onChange={(e) => setChannelFilter(e.target.value)} className="border border-border rounded-lg px-2 py-1.5 text-sm bg-background">
           <option value="">Todos os canais</option>
           {CHANNELS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -118,7 +118,7 @@ export default function AdminFinancePage() {
         </select>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-x-auto">
+      <div className="admin-card overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-secondary/40 text-xs text-muted-foreground uppercase">
             <tr>
