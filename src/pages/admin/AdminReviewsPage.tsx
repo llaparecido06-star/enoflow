@@ -292,18 +292,25 @@ export default function AdminReviewsPage() {
 }
 
 function KpiCard({ icon: Icon, label, value, suffix, tint }: any) {
-  const c = tint === "emerald" ? "text-emerald-600" : tint === "rose" ? "text-rose-600" : "text-amber-600";
+  const tintMap: Record<string, { text: string; bg: string }> = {
+    emerald: { text: "text-emerald-600", bg: "bg-emerald-50" },
+    rose: { text: "text-rose-600", bg: "bg-rose-50" },
+    amber: { text: "text-amber-600", bg: "bg-amber-50" },
+  };
+  const t = tintMap[tint] ?? tintMap.amber;
   return (
-    <div className="rounded-xl bg-card border border-border p-3">
-      <Icon className={`w-4 h-4 mb-1 ${c}`} />
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-display text-xl font-bold">{value}{suffix ?? ""}</p>
+    <div className="admin-kpi p-4">
+      <div className={`w-9 h-9 rounded-xl ${t.bg} flex items-center justify-center mb-3 ring-1 ring-border/40`}>
+        <Icon className={`w-4 h-4 ${t.text}`} />
+      </div>
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{label}</p>
+      <p className="font-display text-2xl font-bold tracking-tight mt-0.5">{value}{suffix ?? ""}</p>
     </div>
   );
 }
 
 function TabBtn({ active, onClick, label }: any) {
-  return <button onClick={onClick} className={`px-3 py-2 text-sm border-b-2 transition-colors ${active ? "border-primary text-primary font-semibold" : "border-transparent text-muted-foreground"}`}>{label}</button>;
+  return <button onClick={onClick} className={`px-4 py-1.5 text-sm rounded-lg transition-all ${active ? "bg-card text-foreground font-semibold shadow-card" : "text-muted-foreground hover:text-foreground"}`}>{label}</button>;
 }
 
 function NpsBar({ icon: Icon, label, count, total, color }: any) {
