@@ -9,30 +9,63 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { can, type Capability } from "@/lib/admin/permissions";
 
 type NavItem = { id: string; label: string; icon: any; path: string; cap: Capability; salesOnly?: boolean };
+type NavGroup = { id: string; label: string; items: NavItem[] };
 
-const navItems: NavItem[] = [
-  { id: "checkin", label: "Check-in", icon: Smartphone, path: "/checkin", cap: "checkin.use" },
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "", cap: "dashboard.view" },
-  { id: "reservations", label: "Reservas", icon: CalendarCheck, path: "/reservations", cap: "reservations.view" },
-  { id: "leads", label: "CRM / Leads", icon: Users, path: "/leads", cap: "crm.view", salesOnly: true },
-  { id: "wines", label: "Vinhos", icon: Wine, path: "/wines", cap: "wines.view" },
-  { id: "stock", label: "Estoque", icon: Boxes, path: "/stock", cap: "stock.view" },
-  { id: "packages", label: "Pacotes", icon: Package, path: "/packages", cap: "packages.view" },
-  { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", cap: "menu.view" },
-  { id: "events", label: "Eventos", icon: CalendarDays, path: "/events", cap: "events.view" },
-  { id: "loyalty", label: "Fidelidade", icon: Gift, path: "/loyalty", cap: "loyalty.view" },
-  { id: "reviews", label: "Avaliações", icon: Star, path: "/reviews", cap: "reviews.view" },
-  { id: "finance", label: "Financeiro", icon: DollarSign, path: "/finance", cap: "finance.view" },
-  { id: "campaigns", label: "Campanhas", icon: MessageSquare, path: "/campaigns", cap: "campaigns.view" },
-  { id: "locations", label: "Pontos de Captura", icon: MapPin, path: "/locations", cap: "wines.manage" },
-  { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", cap: "staff.view" },
-  { id: "performance", label: "Performance", icon: Activity, path: "/performance", cap: "performance.view" },
-  { id: "training", label: "Treinamento", icon: Rocket, path: "/training", cap: "training.view" },
-  { id: "import", label: "Importação CSV", icon: Upload, path: "/import", cap: "import.manage" },
-  { id: "config", label: "Configurações", icon: Building2, path: "/config", cap: "config.view" },
-  { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", cap: "vouchers.issue" },
-  { id: "audit", label: "Auditoria", icon: Shield, path: "/audit", cap: "audit.view" },
+const navGroups: NavGroup[] = [
+  {
+    id: "operacao",
+    label: "Operação",
+    items: [
+      { id: "checkin", label: "Check-in", icon: Smartphone, path: "/checkin", cap: "checkin.use" },
+      { id: "reservations", label: "Reservas", icon: CalendarCheck, path: "/reservations", cap: "reservations.view" },
+      { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", cap: "vouchers.issue" },
+    ],
+  },
+  {
+    id: "relacionamento",
+    label: "Relacionamento",
+    items: [
+      { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "", cap: "dashboard.view" },
+      { id: "leads", label: "Leads", icon: Users, path: "/leads", cap: "crm.view", salesOnly: true },
+      { id: "reviews", label: "Avaliações", icon: Star, path: "/reviews", cap: "reviews.view" },
+      { id: "campaigns", label: "Campanhas", icon: MessageSquare, path: "/campaigns", cap: "campaigns.view" },
+      { id: "loyalty", label: "Fidelidade", icon: Gift, path: "/loyalty", cap: "loyalty.view" },
+    ],
+  },
+  {
+    id: "catalogo",
+    label: "Catálogo",
+    items: [
+      { id: "wines", label: "Vinhos", icon: Wine, path: "/wines", cap: "wines.view" },
+      { id: "stock", label: "Estoque", icon: Boxes, path: "/stock", cap: "stock.view" },
+      { id: "packages", label: "Pacotes", icon: Package, path: "/packages", cap: "packages.view" },
+      { id: "menu", label: "Cardápio", icon: UtensilsCrossed, path: "/menu", cap: "menu.view" },
+      { id: "events", label: "Eventos", icon: CalendarDays, path: "/events", cap: "events.view" },
+    ],
+  },
+  {
+    id: "insights",
+    label: "Insights",
+    items: [
+      { id: "finance", label: "Financeiro", icon: DollarSign, path: "/finance", cap: "finance.view" },
+      { id: "performance", label: "Performance", icon: Activity, path: "/performance", cap: "performance.view" },
+      { id: "audit", label: "Auditoria", icon: Shield, path: "/audit", cap: "audit.view" },
+    ],
+  },
+  {
+    id: "ajustes",
+    label: "Ajustes",
+    items: [
+      { id: "staff", label: "Equipe", icon: UserCog, path: "/staff", cap: "staff.view" },
+      { id: "locations", label: "Locais", icon: MapPin, path: "/locations", cap: "wines.manage" },
+      { id: "training", label: "Treinamento", icon: Rocket, path: "/training", cap: "training.view" },
+      { id: "import", label: "Importar", icon: Upload, path: "/import", cap: "import.manage" },
+      { id: "config", label: "Configurações", icon: Building2, path: "/config", cap: "config.view" },
+    ],
+  },
 ];
+
+const navItems: NavItem[] = navGroups.flatMap((g) => g.items);
 
 export default function AdminLayout() {
   const { slug } = useParams<{ slug: string }>();
