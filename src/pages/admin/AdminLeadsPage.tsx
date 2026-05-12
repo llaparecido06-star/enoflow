@@ -157,18 +157,18 @@ export default function AdminLeadsPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">CRM</h1>
-          <p className="text-sm text-muted-foreground">
-            {leads.length} leads · LTV: {formatCurrency(totalLtv, winery.currency)}
+          <h1 className="admin-page-title">CRM</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            <span className="font-medium text-foreground">{leads.length}</span> leads · LTV: <span className="font-medium text-foreground">{formatCurrency(totalLtv, winery.currency)}</span>
             {counts?.mineOverdue > 0 && (
-              <span className="ml-2 text-rose-600 font-medium">⚠ {counts.mineOverdue} tarefa{counts.mineOverdue > 1 ? "s" : ""} atrasada{counts.mineOverdue > 1 ? "s" : ""}</span>
+              <span className="ml-2 inline-flex items-center gap-1 text-rose-700 bg-rose-50 ring-1 ring-rose-200 px-2 py-0.5 rounded-full text-[11px] font-medium">⚠ {counts.mineOverdue} atrasada{counts.mineOverdue > 1 ? "s" : ""}</span>
             )}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <div className="flex bg-secondary rounded-lg p-0.5 flex-wrap">
+          <div className="flex bg-muted/50 rounded-xl p-1 flex-wrap">
             <ViewBtn icon={LayoutGrid} active={view === "pipeline"} onClick={() => setView("pipeline")} label="Funil" />
             <ViewBtn icon={List} active={view === "list"} onClick={() => setView("list")} label="Lista" />
             <ViewBtn icon={Layers} active={view === "segments"} onClick={() => setView("segments")} label="Segmentos" />
@@ -311,10 +311,10 @@ export default function AdminLeadsPage() {
 function ViewBtn({ icon: Icon, active, onClick, label, badge }: any) {
   return (
     <button onClick={onClick}
-      className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors ${active ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
+      className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${active ? "bg-card shadow-card text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
       <Icon className="w-4 h-4" /> {label}
       {badge > 0 && (
-        <span className="ml-1 text-[9px] bg-rose-500 text-white px-1.5 py-0.5 rounded-full leading-none">{badge}</span>
+        <span className="ml-1 text-[9px] bg-rose-500 text-white px-1.5 py-0.5 rounded-full leading-none font-semibold ring-2 ring-card">{badge}</span>
       )}
     </button>
   );

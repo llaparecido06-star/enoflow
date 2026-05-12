@@ -56,31 +56,31 @@ export default function AdminWinesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Vinhos</h1>
-          <p className="text-sm text-muted-foreground">Gerencie os vinhos da {winery.name}</p>
+          <h1 className="admin-page-title">Vinhos</h1>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie os vinhos da <span className="font-medium text-foreground">{winery.name}</span></p>
         </div>
         <button onClick={() => setFormWine(null)}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
-          <Plus className="w-4 h-4" /> Novo vinho
+          className="group inline-flex items-center gap-2 gradient-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-medium shadow-card hover:shadow-elevated hover:scale-[1.02] transition-all">
+          <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" /> Novo vinho
         </button>
       </div>
 
       {/* Location filter */}
       {locations.length > 0 && (
-        <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-2 mb-5 overflow-x-auto scrollbar-hide pb-1">
           <button onClick={() => setLocationFilter("all")}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${locationFilter === "all" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}>
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${locationFilter === "all" ? "bg-foreground text-background shadow-card" : "bg-card border border-border text-muted-foreground hover:bg-muted/60"}`}>
             Todas
           </button>
           <button onClick={() => setLocationFilter("none")}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${locationFilter === "none" ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}>
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${locationFilter === "none" ? "bg-foreground text-background shadow-card" : "bg-card border border-border text-muted-foreground hover:bg-muted/60"}`}>
             Sem unidade
           </button>
           {locations.map((loc) => (
             <button key={loc.id} onClick={() => setLocationFilter(loc.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${locationFilter === loc.id ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground hover:bg-secondary/80"}`}>
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all inline-flex items-center gap-1 ${locationFilter === loc.id ? "bg-foreground text-background shadow-card" : "bg-card border border-border text-muted-foreground hover:bg-muted/60"}`}>
               <MapPin className="w-3 h-3" /> {loc.name}
             </button>
           ))}
@@ -94,9 +94,9 @@ export default function AdminWinesPage() {
           if (locationFilter === "none") return !(w as any).capture_point_id;
           return (w as any).capture_point_id === locationFilter;
         }).map((wine) => (
-          <div key={wine.id} className="bg-card rounded-xl border border-border p-4">
+          <div key={wine.id} className="admin-card admin-card-hover p-4">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden ring-1 ring-border/40">
                 {wine.image_url ? (
                   <img src={wine.image_url} alt={wine.name} className="w-full h-full object-cover" />
                 ) : (
@@ -107,35 +107,35 @@ export default function AdminWinesPage() {
                 <h3 className="text-sm font-semibold text-foreground truncate">{wine.name}</h3>
                 <p className="text-[11px] text-muted-foreground">{wine.type} · R$ {Number(wine.price_bottle).toFixed(2)}</p>
                 {(wine as any).capture_point_id && (
-                  <span className="inline-flex items-center gap-1 mt-0.5 text-[10px] text-muted-foreground bg-secondary rounded-full px-2 py-0.5">
+                  <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-muted-foreground bg-muted/60 ring-1 ring-border rounded-full px-2 py-0.5">
                     <MapPin className="w-2.5 h-2.5" />
                     {locations.find(l => l.id === (wine as any).capture_point_id)?.name ?? "Unidade"}
                   </span>
                 )}
-                <div className="flex items-center gap-3 mt-1.5">
+                <div className="flex items-center gap-3 mt-2">
                   {[
                     { label: "Deg", active: wine.on_tasting },
                     { label: "Rest", active: wine.on_restaurant },
                     { label: "Loja", active: wine.on_shop },
                   ].map(({ label, active }) => (
                     <span key={label} className="flex items-center gap-1">
-                      <span className={`inline-block w-1.5 h-1.5 rounded-full ${active ? "bg-green-500" : "bg-border"}`} />
-                      <span className="text-[10px] text-muted-foreground">{label}</span>
+                      <span className={`inline-block w-1.5 h-1.5 rounded-full ${active ? "bg-emerald-500 shadow-[0_0_8px_hsl(160_60%_45%/0.6)]" : "bg-border"}`} />
+                      <span className="text-[10px] text-muted-foreground font-medium">{label}</span>
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <button onClick={() => handleSheet(wine)} title="Ficha técnica PDF" className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <button onClick={() => handleSheet(wine)} title="Ficha técnica PDF" className="p-2 rounded-lg hover:bg-muted/60 transition-colors">
                   <FileText className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
-                <button onClick={() => setTranslateWine(wine)} title="Traduções" className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                <button onClick={() => setTranslateWine(wine)} title="Traduções" className="p-2 rounded-lg hover:bg-muted/60 transition-colors">
                   <Languages className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
-                <button onClick={() => setFormWine(wine)} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
+                <button onClick={() => setFormWine(wine)} className="p-2 rounded-lg hover:bg-muted/60 transition-colors">
                   <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
-                <button onClick={() => setDeleteWine(wine)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                <button onClick={() => setDeleteWine(wine)} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors">
                   <Trash2 className="w-3.5 h-3.5 text-destructive" />
                 </button>
               </div>
@@ -143,9 +143,14 @@ export default function AdminWinesPage() {
           </div>
         ))}
         {(!wines || wines.length === 0) && (
-          <div className="bg-card rounded-xl border border-border p-8 text-center">
-            <WineIcon className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+          <div className="admin-card p-12 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
+              <WineIcon className="w-7 h-7 text-muted-foreground/50" />
+            </div>
             <p className="text-sm text-muted-foreground">Nenhum vinho cadastrado ainda.</p>
+            <button onClick={() => setFormWine(null)} className="mt-4 inline-flex items-center gap-2 text-sm text-primary font-medium hover:underline">
+              <Plus className="w-4 h-4" /> Cadastrar o primeiro vinho
+            </button>
           </div>
         )}
       </div>
