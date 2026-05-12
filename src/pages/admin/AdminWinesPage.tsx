@@ -163,6 +163,10 @@ export default function AdminWinesPage() {
           loading={deleting}
         />
       )}
+
+      {translateWine && (
+        <WineTranslationsDrawer wine={translateWine} winery={winery} onClose={() => setTranslateWine(null)} />
+      )}
     </div>
   );
 }
