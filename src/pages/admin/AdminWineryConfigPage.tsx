@@ -4,7 +4,7 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
-import { Building2, Phone, Clock, Globe, Shield } from "lucide-react";
+import { Building2, Phone, Clock, Globe, Shield, Share2 } from "lucide-react";
 
 const DAYS = [
   { id: "mon", label: "Segunda" }, { id: "tue", label: "Terça" }, { id: "wed", label: "Quarta" },
@@ -49,6 +49,13 @@ export default function AdminWineryConfigPage() {
         { key: "contact_email", label: "Email", value: cfg.contact_email ?? "" },
         { key: "address", label: "Endereço", value: cfg.address ?? "" },
         { key: "instagram_url", label: "Instagram", value: cfg.instagram_url ?? "" },
+      ]} />
+
+      <SectionCard icon={Share2} title="Redes & Reviews externas" onSave={(v) => save("external", v)} fields={[
+        { key: "google_business_url", label: "Google Business", value: cfg.google_business_url ?? "" },
+        { key: "tripadvisor_url", label: "TripAdvisor", value: cfg.tripadvisor_url ?? "" },
+        { key: "facebook_url", label: "Facebook", value: cfg.facebook_url ?? "" },
+        { key: "youtube_url", label: "YouTube", value: cfg.youtube_url ?? "" },
       ]} />
 
       <HoursCard hours={cfg.business_hours ?? {}} onSave={(business_hours) => save("hours", { business_hours })} />

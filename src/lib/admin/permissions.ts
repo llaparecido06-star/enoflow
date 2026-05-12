@@ -23,7 +23,9 @@ export type Capability =
   | "vouchers.issue"
   | "config.view" | "config.manage_basic" | "config.manage_full"
   | "training.view"
-  | "performance.view";
+  | "performance.view"
+  | "audit.view"
+  | "checkin.use";
 
 const HIERARCHY: AdminRole[] = ["staff", "sales", "manager", "owner", "master"];
 const rank = (r: AdminRole) => HIERARCHY.indexOf(r);
@@ -75,6 +77,8 @@ const MATRIX: Record<Capability, AdminRole> = {
 
   "training.view": "staff",
   "performance.view": "manager",
+  "audit.view": "owner",
+  "checkin.use": "staff",
 };
 
 export function can(role: AdminRole | undefined, cap: Capability): boolean {

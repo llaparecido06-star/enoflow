@@ -43,6 +43,8 @@ const AdminReviewsPage = lazy(() => import("./pages/admin/AdminReviewsPage"));
 const AdminLoyaltyPage = lazy(() => import("./pages/admin/AdminLoyaltyPage"));
 const AdminEventsPage = lazy(() => import("./pages/admin/AdminEventsPage"));
 const AdminImportPage = lazy(() => import("./pages/admin/AdminImportPage"));
+const AdminAuditPage = lazy(() => import("./pages/admin/AdminAuditPage"));
+const AdminCheckinPage = lazy(() => import("./pages/admin/AdminCheckinPage"));
 
 // Lazy-loaded master routes
 const MasterLayout = lazy(() => import("./pages/master/MasterLayout"));
@@ -124,6 +126,8 @@ const App = () => {
                 <Route path="loyalty" element={<AdminLoyaltyPage />} />
                 <Route path="events" element={<AdminEventsPage />} />
                 <Route path="import" element={<AdminImportPage />} />
+                <Route path="audit" element={<AdminAuditPage />} />
+                <Route path="checkin" element={<AdminCheckinPage />} />
               </Route>
 
               {/* Privacy */}

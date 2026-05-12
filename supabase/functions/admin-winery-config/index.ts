@@ -1,8 +1,10 @@
 import { verifySession, json, corsHeaders, createSupabaseAdmin, hasMinRole } from "../_shared/auth.ts";
+import { logAudit } from "../_shared/audit.ts";
 
 const WINERY_FIELDS = [
   "id", "name", "slug", "primary_color", "logo_url", "currency",
   "business_hours", "contact_phone", "contact_email", "address", "instagram_url",
+  "google_business_url", "tripadvisor_url", "facebook_url", "youtube_url",
   "lgpd_policy_url", "default_language", "supported_languages",
   "plan_level", "status", "max_locations",
 ];
@@ -38,6 +40,7 @@ Deno.serve(async (req) => {
       const ALLOWED: Record<string, string[]> = {
         identity: ["name", "primary_color", "logo_url"],
         contact: ["contact_phone", "contact_email", "address", "instagram_url"],
+        external: ["google_business_url", "tripadvisor_url", "facebook_url", "youtube_url"],
         hours: ["business_hours"],
         i18n: ["default_language", "supported_languages", "currency"],
         lgpd: ["lgpd_policy_url"],
@@ -51,8 +54,10 @@ Deno.serve(async (req) => {
       }
       if (Object.keys(upd).length === 1) return json({ error: "Nada para atualizar" }, 400);
 
+      const { data: before } = await supabase.from("wineries").select(allowed.join(", ")).eq("id", winery_id).single();
       const { data, error } = await supabase.from("wineries").update(upd).eq("id", winery_id).select(WINERY_FIELDS.join(", ")).single();
       if (error) throw error;
+      await logAudit({ winery_id, admin_id: session.sub, admin_name: session.name, entity: "winery_config", entity_id: section, action: "update", before, after: upd });
       return json({ success: true, winery: data });
     }
 
