@@ -82,6 +82,13 @@ export default function LeadCard({ lead, currency, onOpen }: { lead: CrmLead; cu
       {persona && (
         <p className="text-[10px] text-accent bg-accent/10 px-1.5 py-0.5 rounded inline-block mb-1.5">{persona}</p>
       )}
+      {demoChips.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-1.5">
+          {demoChips.map((c, i) => (
+            <span key={i} className="text-[9px] bg-secondary/70 text-muted-foreground px-1.5 py-0.5 rounded">{c}</span>
+          ))}
+        </div>
+      )}
       <div className="flex items-center justify-between text-[10px] text-muted-foreground">
         <span className="flex items-center gap-1"><Wine className="w-2.5 h-2.5" />{lead.voucher_count}v</span>
         {lead.ltv > 0 && <span className="font-semibold text-accent">{formatCurrency(lead.ltv, currency)}</span>}
