@@ -58,8 +58,8 @@ export default function AdminLayout() {
 
   const visibleNav = useMemo(() => {
     if (admin?.role === "sales") return navItems.filter((n) => n.salesOnly);
-    return navItems.filter((n) => hasPermission(n.minRole));
-  }, [hasPermission, admin?.role]);
+    return navItems.filter((n) => can(admin?.role, n.cap));
+  }, [admin?.role]);
 
   // Redirect staff/manager to default page
   useEffect(() => {
