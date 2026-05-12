@@ -237,10 +237,10 @@ export default function ShopPage() {
     }
   };
 
-  const handleNpsSubmit = async (score: number) => {
+  const handleNpsSubmit = async (score: number, comment: string) => {
     if (voucher?.id) {
       try {
-        await invokeAuth("tourist-actions", { action: "submit_nps", voucher_id: voucher.id, nps_score: score });
+        await invokeAuth("tourist-actions", { action: "submit_nps", voucher_id: voucher.id, nps_score: score, comment });
         toast.success(t("nps.thanks"));
       } catch {}
     }

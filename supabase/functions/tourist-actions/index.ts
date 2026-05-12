@@ -166,16 +166,39 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: submit_nps
     if (action === "submit_nps") {
-      const { voucher_id, nps_score } = body;
+      const { voucher_id, nps_score, comment } = body;
       if (!voucher_id || typeof nps_score !== "number" || nps_score < 0 || nps_score > 10) {
         return json({ error: "voucher_id and nps_score (0-10) required" }, 400);
       }
-      const { error } = await supabase
+      const safeComment = typeof comment === "string" && comment.trim()
+        ? comment.trim().slice(0, 500)
+        : null;
+
+      // Verify voucher belongs to this user
+      const { data: v } = await supabase
+        .from("vouchers")
+        .select("id, winery_id, user_id")
+        .eq("id", voucher_id)
+        .eq("user_id", user_id)
+        .maybeSingle();
+      if (!v) return json({ error: "Voucher not found" }, 404);
+
+      const { error: updErr } = await supabase
         .from("vouchers")
         .update({ nps_score })
         .eq("id", voucher_id)
         .eq("user_id", user_id);
-      if (error) throw error;
+      if (updErr) throw updErr;
+
+      // Also store qualitative response (audit + admin reviews page)
+      await supabase.from("nps_responses").insert({
+        winery_id: v.winery_id,
+        user_id,
+        voucher_id,
+        score: nps_score,
+        comment: safeComment,
+      });
+
       return json({ success: true });
     }
 

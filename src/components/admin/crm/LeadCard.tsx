@@ -34,6 +34,17 @@ const daysSince = (iso: string | null | undefined) => {
 const STALE_DAYS = 7;
 const FINAL_STAGES = ["convertido", "perdido"];
 
+const ageFrom = (iso?: string | null): number | null => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  const diff = Date.now() - d.getTime();
+  const age = Math.floor(diff / (365.25 * 86400000));
+  return age > 0 && age < 120 ? age : null;
+};
+
+const GENDER_ICON: Record<string, string> = { masculino: "♂", feminino: "♀", nao_informar: "" };
+
 export default function LeadCard({ lead, currency, onOpen }: { lead: CrmLead; currency: string; onOpen: () => void }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: lead.id });
   const style = transform
@@ -43,6 +54,13 @@ export default function LeadCard({ lead, currency, onOpen }: { lead: CrmLead; cu
   const persona = lead.preferences_summary?.match(/Wine Persona:\s*([^(]+)/)?.[1]?.trim();
   const stageDays = daysSince(lead.stage_changed_at);
   const stale = !FINAL_STAGES.includes(lead.stage) && stageDays !== null && stageDays >= STALE_DAYS;
+  const age = ageFrom(lead.birth_date);
+  const genderIcon = lead.gender ? GENDER_ICON[lead.gender] ?? "" : "";
+  const demoChips = [
+    age ? `${age}a` : null,
+    genderIcon || null,
+    lead.income_class ? `R:${lead.income_class}` : null,
+  ].filter(Boolean) as string[];
 
   return (
     <div
@@ -63,6 +81,13 @@ export default function LeadCard({ lead, currency, onOpen }: { lead: CrmLead; cu
       </div>
       {persona && (
         <p className="text-[10px] text-accent bg-accent/10 px-1.5 py-0.5 rounded inline-block mb-1.5">{persona}</p>
+      )}
+      {demoChips.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-1.5">
+          {demoChips.map((c, i) => (
+            <span key={i} className="text-[9px] bg-secondary/70 text-muted-foreground px-1.5 py-0.5 rounded">{c}</span>
+          ))}
+        </div>
       )}
       <div className="flex items-center justify-between text-[10px] text-muted-foreground">
         <span className="flex items-center gap-1"><Wine className="w-2.5 h-2.5" />{lead.voucher_count}v</span>
