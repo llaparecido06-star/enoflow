@@ -16,8 +16,10 @@ export type Database = {
     Tables: {
       admin_users: {
         Row: {
+          capture_point_ids: string[]
           created_at: string
           email: string
+          enabled_modules: string[] | null
           id: string
           is_active: boolean
           name: string
@@ -26,8 +28,10 @@ export type Database = {
           winery_id: string
         }
         Insert: {
+          capture_point_ids?: string[]
           created_at?: string
           email: string
+          enabled_modules?: string[] | null
           id?: string
           is_active?: boolean
           name: string
@@ -36,8 +40,10 @@ export type Database = {
           winery_id: string
         }
         Update: {
+          capture_point_ids?: string[]
           created_at?: string
           email?: string
+          enabled_modules?: string[] | null
           id?: string
           is_active?: boolean
           name?: string
@@ -1381,6 +1387,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      staff_notifications: {
+        Row: {
+          admin_id: string
+          body: string | null
+          capture_point_id: string | null
+          created_at: string
+          done_at: string | null
+          done_by: string | null
+          id: string
+          payload: Json
+          seen_at: string | null
+          status: string
+          title: string
+          type: string
+          voucher_id: string | null
+          winery_id: string
+        }
+        Insert: {
+          admin_id: string
+          body?: string | null
+          capture_point_id?: string | null
+          created_at?: string
+          done_at?: string | null
+          done_by?: string | null
+          id?: string
+          payload?: Json
+          seen_at?: string | null
+          status?: string
+          title: string
+          type?: string
+          voucher_id?: string | null
+          winery_id: string
+        }
+        Update: {
+          admin_id?: string
+          body?: string | null
+          capture_point_id?: string | null
+          created_at?: string
+          done_at?: string | null
+          done_by?: string | null
+          id?: string
+          payload?: Json
+          seen_at?: string | null
+          status?: string
+          title?: string
+          type?: string
+          voucher_id?: string | null
+          winery_id?: string
+        }
+        Relationships: []
       }
       stock_movements: {
         Row: {
