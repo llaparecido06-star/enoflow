@@ -393,8 +393,35 @@ export default function MasterWineriesPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  Apenas clientes ainda não vinculados aparecem. Mensalidade e comissão serão preenchidas pelo contrato mais recente.
+                  Apenas clientes ainda não vinculados aparecem.
                 </p>
+
+                {form.client_id && (
+                  <div className="mt-3">
+                    <Label className="text-xs">Contrato vigente</Label>
+                    {clientContracts.length === 0 ? (
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Nenhum contrato cadastrado para este cliente. Cadastre em Clientes B2B.
+                      </p>
+                    ) : (
+                      <>
+                        <Select value={form.contract_id} onValueChange={(v) => applyContractValues(v)}>
+                          <SelectTrigger><SelectValue placeholder="Selecione o contrato" /></SelectTrigger>
+                          <SelectContent>
+                            {clientContracts.map((c: any) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {String(c.status).toUpperCase()} · {c.plan_name || "Plano"} · R$ {Number(c.monthly_fee).toFixed(2)}/mês{c.postsales_active ? ` · ${c.postsales_commission_pct}% pós` : ""} · {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          Mensalidade e comissão serão preenchidas a partir do contrato escolhido.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
