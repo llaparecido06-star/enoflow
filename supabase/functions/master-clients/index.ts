@@ -23,6 +23,12 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
+    if (action === "list_wineries") {
+      const { data, error } = await supabase.from("wineries").select("id, name, slug").order("name");
+      if (error) throw error;
+      return json({ success: true, wineries: data ?? [] });
+    }
+
     // ── CLIENTS ──────────────────────────────
     if (action === "list_clients") {
       const { data, error } = await supabase
