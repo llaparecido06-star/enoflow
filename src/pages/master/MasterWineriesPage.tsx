@@ -346,6 +346,35 @@ export default function MasterWineriesPage() {
             <DialogTitle>{editTarget ? "Editar Vinícola" : "Nova Vinícola"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2 pb-2">
+            {!editTarget && (
+              <div className="rounded-lg border border-border bg-secondary/30 p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-xs">Cliente B2B (vincular)</Label>
+                  <button
+                    type="button"
+                    onClick={() => { setModalOpen(false); navigate("/master/clients"); }}
+                    className="text-[11px] text-accent hover:underline"
+                  >
+                    + Cadastrar novo cliente
+                  </button>
+                </div>
+                <Select value={form.client_id || "none"} onValueChange={(v) => onSelectB2BClient(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione um cliente B2B" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem cliente vinculado</SelectItem>
+                    {b2bClients.filter(c => !c.winery_id).map(c => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.trade_name || c.legal_name} — {c.cnpj}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Apenas clientes ainda não vinculados aparecem. Mensalidade e comissão serão preenchidas pelo contrato mais recente.
+                </p>
+              </div>
+            )}
+
             <div>
               <Label>Nome</Label>
               <Input
