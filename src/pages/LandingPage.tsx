@@ -5,7 +5,7 @@ import {
   Wine, Star, ShoppingBag, ChefHat, TrendingUp, Shield, Zap,
   MessageCircle, Mail, MapPin
 } from "lucide-react";
-import enoflowLogo from "@/assets/enoflow-logo.png";
+import enoflowLogo from "@/assets/enoflow-logo-v2.png";
 import phoneMockup from "@/assets/landing-phone-mockup.png";
 import vineyardBg from "@/assets/landing-vineyard-bg.jpg";
 import darkSectionBg from "@/assets/landing-dark-section.jpg";
