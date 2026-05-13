@@ -18,6 +18,7 @@ interface ResolvedCPs {
   shop_cp: string | null;
   tasting_cp: string | null;
   tasting_package_ids: string[];
+  enabled_modules?: string[] | null;
 }
 
 function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
@@ -25,10 +26,13 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const { t } = useI18n();
   const location = useLocation();
   const navigate = useNavigate();
-  const enabledModules: string[] = winery.enabled_modules ?? ["tasting", "restaurant", "shop"];
+  const wineryModules: string[] = winery.enabled_modules ?? ["tasting", "restaurant", "shop"];
   const [showQuiz, setShowQuiz] = useState(false);
   const [pendingRedirectCategory, setPendingRedirectCategory] = useState<string | null>(null);
   const [resolvedCPs, setResolvedCPs] = useState<ResolvedCPs | null>(null);
+  const enabledModules: string[] = (resolvedCPs?.enabled_modules && resolvedCPs.enabled_modules.length > 0)
+    ? resolvedCPs.enabled_modules.filter(m => wineryModules.includes(m))
+    : wineryModules;
   const queryClient = useQueryClient();
 
   // Read acquisition params from URL

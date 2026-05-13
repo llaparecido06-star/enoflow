@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     // ─── LIST
     if (!action || action === "list") {
       const [locsRes, wineryRes, captureRes] = await Promise.all([
-        supabase.from("capture_points").select("*, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id").eq("winery_id", winery_id).order("created_at", { ascending: true }),
+        supabase.from("capture_points").select("*, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id, enabled_modules").eq("winery_id", winery_id).order("created_at", { ascending: true }),
         supabase.from("wineries").select("max_locations, slug").eq("id", winery_id).single(),
         supabase.from("capture_history").select("capture_point_id").eq("winery_id", winery_id),
       ]);
@@ -50,10 +50,8 @@ Deno.serve(async (req) => {
         slug: wineryRes.data?.slug ?? "",
       });
     }
-
-    // ─── CREATE
     if (action === "create") {
-      const { name, category, redirect_url, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id, linked_tasting_package_ids } = body;
+      const { name, category, redirect_url, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id, linked_tasting_package_ids, enabled_modules } = body;
       if (!name) return json({ error: "Nome obrigatório" }, 400);
 
       const { count } = await supabase.from("capture_points").select("id", { count: "exact", head: true }).eq("winery_id", winery_id);
@@ -62,6 +60,11 @@ Deno.serve(async (req) => {
       if ((count ?? 0) >= max) return json({ error: `Limite de ${max} locais atingido. Atualize seu plano.` }, 403);
 
       const validCategories = ["restaurant", "tasting", "shop", "wifi", "other"];
+      const validModules = ["tasting", "restaurant", "shop"];
+      const sanitizedModules = Array.isArray(enabled_modules)
+        ? enabled_modules.filter((m: unknown) => typeof m === "string" && validModules.includes(m))
+        : null;
+
       const { data, error } = await supabase.from("capture_points").insert({
         winery_id,
         name: String(name).slice(0, 100),
@@ -71,6 +74,7 @@ Deno.serve(async (req) => {
         linked_shop_cp_id: linked_shop_cp_id || null,
         linked_tasting_cp_id: linked_tasting_cp_id || null,
         linked_tasting_package_ids: Array.isArray(linked_tasting_package_ids) ? linked_tasting_package_ids : [],
+        enabled_modules: sanitizedModules && sanitizedModules.length > 0 ? sanitizedModules : null,
       }).select().single();
       if (error) throw error;
       return json({ success: true, location: data });
@@ -78,7 +82,7 @@ Deno.serve(async (req) => {
 
     // ─── UPDATE
     if (action === "update") {
-      const { location_id, name, category, redirect_url, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id, linked_tasting_package_ids } = body;
+      const { location_id, name, category, redirect_url, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id, linked_tasting_package_ids, enabled_modules } = body;
       if (!location_id) return json({ error: "location_id obrigatório" }, 400);
 
       const updates: Record<string, unknown> = {};
@@ -92,6 +96,13 @@ Deno.serve(async (req) => {
       if (linked_shop_cp_id !== undefined) updates.linked_shop_cp_id = linked_shop_cp_id || null;
       if (linked_tasting_cp_id !== undefined) updates.linked_tasting_cp_id = linked_tasting_cp_id || null;
       if (linked_tasting_package_ids !== undefined) updates.linked_tasting_package_ids = Array.isArray(linked_tasting_package_ids) ? linked_tasting_package_ids : [];
+      if (enabled_modules !== undefined) {
+        const validModules = ["tasting", "restaurant", "shop"];
+        const sanitized = Array.isArray(enabled_modules)
+          ? enabled_modules.filter((m: unknown) => typeof m === "string" && validModules.includes(m))
+          : null;
+        updates.enabled_modules = sanitized && sanitized.length > 0 ? sanitized : null;
+      }
 
       if (Object.keys(updates).length === 0) return json({ error: "Nada para atualizar" }, 400);
 

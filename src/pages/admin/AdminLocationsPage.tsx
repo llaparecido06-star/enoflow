@@ -21,9 +21,16 @@ interface CapturePoint {
   linked_shop_cp_id: string | null;
   linked_tasting_cp_id: string | null;
   linked_tasting_package_ids: string[];
+  enabled_modules: string[] | null;
   created_at: string;
   visit_count: number;
 }
+
+const ALL_MODULES: { id: string; label: string; emoji: string }[] = [
+  { id: "tasting", label: "Degustação", emoji: "🍷" },
+  { id: "restaurant", label: "Restaurante", emoji: "🍽️" },
+  { id: "shop", label: "Loja", emoji: "🛒" },
+];
 
 const categoryLabels: Record<string, string> = {
   restaurant: "🍽️ Restaurante",
@@ -51,7 +58,7 @@ export default function AdminLocationsPage() {
   const [editTarget, setEditTarget] = useState<CapturePoint | null>(null);
   const [saving, setSaving] = useState(false);
   const [qrTarget, setQrTarget] = useState<CapturePoint | null>(null);
-  const [form, setForm] = useState({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "", linked_tasting_package_ids: [] as string[] });
+  const [form, setForm] = useState({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "", linked_tasting_package_ids: [] as string[], enabled_modules: [] as string[] });
   const { data: tastingPackages } = useTastingPackages(winery?.id);
 
   const fetchData = async () => {
@@ -73,13 +80,13 @@ export default function AdminLocationsPage() {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "", linked_tasting_package_ids: [] });
+    setForm({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "", linked_tasting_package_ids: [], enabled_modules: [] });
     setModalOpen(true);
   };
 
   const openEdit = (loc: CapturePoint) => {
     setEditTarget(loc);
-    setForm({ name: loc.name, category: loc.category, redirect_url: loc.redirect_url || "", linked_restaurant_cp_id: loc.linked_restaurant_cp_id || "", linked_shop_cp_id: loc.linked_shop_cp_id || "", linked_tasting_cp_id: loc.linked_tasting_cp_id || "", linked_tasting_package_ids: loc.linked_tasting_package_ids ?? [] });
+    setForm({ name: loc.name, category: loc.category, redirect_url: loc.redirect_url || "", linked_restaurant_cp_id: loc.linked_restaurant_cp_id || "", linked_shop_cp_id: loc.linked_shop_cp_id || "", linked_tasting_cp_id: loc.linked_tasting_cp_id || "", linked_tasting_package_ids: loc.linked_tasting_package_ids ?? [], enabled_modules: loc.enabled_modules ?? [] });
     setModalOpen(true);
   };
 
@@ -276,6 +283,44 @@ export default function AdminLocationsPage() {
               <Label>URL de Redirecionamento (opcional)</Label>
               <Input value={form.redirect_url} onChange={e => setForm(f => ({ ...f, redirect_url: e.target.value }))} placeholder="https://cardapio.exemplo.com" />
               <p className="text-[10px] text-muted-foreground mt-1">Ex: link do cardápio digital, catálogo, etc.</p>
+            </div>
+
+            {/* Abas habilitadas no app do turista para este QR */}
+            <div className="border border-primary/20 bg-primary/5 rounded-xl p-3">
+              <p className="text-xs font-semibold text-foreground mb-1">Abas exibidas ao turista</p>
+              <p className="text-[10px] text-muted-foreground mb-2">
+                Selecione quais abas aparecerão ao escanear este QR. Se nenhuma for marcada, o turista verá todas as abas padrão da vinícola.
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {ALL_MODULES.map(m => {
+                  const checked = form.enabled_modules.includes(m.id);
+                  return (
+                    <label
+                      key={m.id}
+                      className={`flex flex-col items-center gap-1 px-2 py-2.5 rounded-lg border cursor-pointer transition-colors ${
+                        checked ? "border-primary bg-primary/10" : "border-border bg-background hover:bg-secondary"
+                      }`}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(c) => {
+                          setForm(f => ({
+                            ...f,
+                            enabled_modules: c
+                              ? [...f.enabled_modules, m.id]
+                              : f.enabled_modules.filter(x => x !== m.id),
+                          }));
+                        }}
+                      />
+                      <span className="text-base leading-none">{m.emoji}</span>
+                      <span className="text-[10px] font-medium text-foreground">{m.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-2">
+                A aba <strong>Perfil</strong> sempre é exibida.
+              </p>
             </div>
 
             {/* Linked Capture Points */}
