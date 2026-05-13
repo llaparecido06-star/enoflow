@@ -27,12 +27,12 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
   const location = useLocation();
   const navigate = useNavigate();
   const wineryModules: string[] = winery.enabled_modules ?? ["tasting", "restaurant", "shop"];
-  const enabledModules: string[] = (resolvedCPs?.enabled_modules && resolvedCPs.enabled_modules.length > 0)
-    ? resolvedCPs.enabled_modules.filter(m => wineryModules.includes(m))
-    : wineryModules;
   const [showQuiz, setShowQuiz] = useState(false);
   const [pendingRedirectCategory, setPendingRedirectCategory] = useState<string | null>(null);
   const [resolvedCPs, setResolvedCPs] = useState<ResolvedCPs | null>(null);
+  const enabledModules: string[] = (resolvedCPs?.enabled_modules && resolvedCPs.enabled_modules.length > 0)
+    ? resolvedCPs.enabled_modules.filter(m => wineryModules.includes(m))
+    : wineryModules;
   const queryClient = useQueryClient();
 
   // Read acquisition params from URL
