@@ -80,13 +80,13 @@ export default function AdminLocationsPage() {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "", linked_tasting_package_ids: [] });
+    setForm({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "", linked_tasting_package_ids: [], enabled_modules: [] });
     setModalOpen(true);
   };
 
   const openEdit = (loc: CapturePoint) => {
     setEditTarget(loc);
-    setForm({ name: loc.name, category: loc.category, redirect_url: loc.redirect_url || "", linked_restaurant_cp_id: loc.linked_restaurant_cp_id || "", linked_shop_cp_id: loc.linked_shop_cp_id || "", linked_tasting_cp_id: loc.linked_tasting_cp_id || "", linked_tasting_package_ids: loc.linked_tasting_package_ids ?? [] });
+    setForm({ name: loc.name, category: loc.category, redirect_url: loc.redirect_url || "", linked_restaurant_cp_id: loc.linked_restaurant_cp_id || "", linked_shop_cp_id: loc.linked_shop_cp_id || "", linked_tasting_cp_id: loc.linked_tasting_cp_id || "", linked_tasting_package_ids: loc.linked_tasting_package_ids ?? [], enabled_modules: loc.enabled_modules ?? [] });
     setModalOpen(true);
   };
 
