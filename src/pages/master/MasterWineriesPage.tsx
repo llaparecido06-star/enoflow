@@ -33,6 +33,15 @@ const planColors: Record<string, string> = {
   gold: "bg-accent/10 text-accent",
 };
 
+interface B2BClientOption {
+  id: string;
+  legal_name: string;
+  trade_name: string | null;
+  cnpj: string;
+  winery_id: string | null;
+  contracts: Array<{ id: string; monthly_fee: number; setup_fee: number; postsales_active: boolean; postsales_commission_pct: number; status: string; created_at: string }>;
+}
+
 export default function MasterWineriesPage() {
   const { admin } = useOutletContext<{ admin: MasterAdmin }>();
   const navigate = useNavigate();
@@ -43,7 +52,9 @@ export default function MasterWineriesPage() {
   const [editTarget, setEditTarget] = useState<WineryMetric | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<WineryMetric | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[], status: "active", max_locations: "5", currency: "BRL" });
+  const [b2bClients, setB2bClients] = useState<B2BClientOption[]>([]);
+  const [form, setForm] = useState({ client_id: "", name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[], status: "active", max_locations: "5", currency: "BRL" });
+
 
   const fetchData = async () => {
     try {
