@@ -222,7 +222,7 @@ export async function generateContractDOCX(client: ContractClient, data: Contrac
   });
   s.closing.forEach((c) => children.push(para(c, false, AlignmentType.CENTER)));
   children.push(para(""));
-  s.signatures.forEach((sig) => children.push(para(sig, false, AlignmentType.LEFT)));
+  s.signatures.forEach((sig) => sig.split("\n").forEach((line) => children.push(para(line, false, AlignmentType.LEFT))));
 
   const doc = new Document({
     styles: { default: { document: { run: { font: "Calibri", size: 22 } } } },
