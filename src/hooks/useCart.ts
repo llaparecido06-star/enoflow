@@ -64,7 +64,7 @@ export function useCart(wineryId?: string) {
   }, []);
 
   const total = useMemo(
-    () => items.reduce((sum, i) => sum + i.wine.price_bottle * i.quantity, 0),
+    () => items.reduce((sum, i) => sum + (Number(i.wine.price_bottle) || 0) * i.quantity, 0),
     [items]
   );
 
