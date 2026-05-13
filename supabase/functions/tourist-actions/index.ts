@@ -116,7 +116,7 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: create_voucher
     if (action === "create_voucher") {
-      const { code, items, total, channel } = body;
+      const { code, items, total, channel, capture_point_id } = body;
       if (!code || !items || total === undefined) return json({ error: "code, items, total required" }, 400);
       if (typeof total !== "number" || total < 0) return json({ error: "Invalid total" }, 400);
       if (typeof code !== "string" || code.length > 20) return json({ error: "Invalid code" }, 400);
@@ -159,6 +159,65 @@ Deno.serve(async (req) => {
         }
       } catch (e) {
         console.error("Stock debit failed (non-blocking):", e);
+      }
+
+      // ─── Notify staff at the Loja capture point to separate wines
+      try {
+        const cpId = typeof capture_point_id === "string" && capture_point_id ? capture_point_id : null;
+        const isShop = inferredChannel === "shop" || inferredChannel === "mixed";
+        if (cpId && isShop) {
+          const { data: cp } = await supabase
+            .from("capture_points")
+            .select("id, name, category, winery_id")
+            .eq("id", cpId)
+            .eq("winery_id", winery_id)
+            .maybeSingle();
+          if (cp && (cp.category === "shop" || inferredChannel === "shop")) {
+            // Pick active staff for this winery, optionally filtered by capture_point assignment
+            const { data: staffList } = await supabase
+              .from("admin_users")
+              .select("id, role, capture_point_ids, enabled_modules, is_active")
+              .eq("winery_id", winery_id)
+              .eq("is_active", true)
+              .neq("role", "master");
+            const recipients = (staffList ?? []).filter((s: any) => {
+              const cps: string[] = Array.isArray(s.capture_point_ids) ? s.capture_point_ids : [];
+              const matchesCp = cps.length === 0 || cps.includes(cpId);
+              // Owner/manager always; staff/sales must have vouchers module enabled (or null = role default)
+              const mods: string[] | null = s.enabled_modules;
+              const hasVoucher = mods === null || mods.includes("settings") || mods.includes("checkin");
+              const roleOk = s.role === "owner" || s.role === "manager" || hasVoucher;
+              return matchesCp && roleOk;
+            });
+            // Customer name: prefer users_leads
+            const { data: leadRow } = await supabase
+              .from("users_leads")
+              .select("name")
+              .eq("id", user_id)
+              .maybeSingle();
+            const customerName = leadRow?.name ?? "Cliente";
+            const wineSummary = (sanitized as any[])
+              .filter((it) => it?.name)
+              .map((it) => `${it.qty || 1}x ${it.name}`)
+              .join(", ")
+              .slice(0, 280);
+            const rows = recipients.map((r: any) => ({
+              winery_id,
+              admin_id: r.id,
+              type: "voucher_separation",
+              title: `Separar vinhos para ${customerName}`,
+              body: wineSummary || `Voucher ${code}`,
+              voucher_id: data.id,
+              capture_point_id: cpId,
+              payload: { code, total, location: cp.name, items: sanitized },
+            }));
+            if (rows.length) {
+              await supabase.from("staff_notifications").insert(rows);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Staff notification dispatch failed (non-blocking):", e);
       }
 
       return json({ success: true, voucher: data });

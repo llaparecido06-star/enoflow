@@ -14,7 +14,34 @@ interface StaffMember {
   role: string;
   is_active: boolean;
   created_at: string;
+  enabled_modules: string[] | null;
+  capture_point_ids: string[];
 }
+
+interface CapturePoint { id: string; name: string; category: string }
+
+const MODULES: Array<{ key: string; label: string; group: string }> = [
+  { group: "Operação", key: "checkin", label: "Check-in" },
+  { group: "Operação", key: "reservations", label: "Reservas" },
+  { group: "Operação", key: "settings", label: "Vouchers" },
+  { group: "Relacionamento", key: "dashboard", label: "Dashboard" },
+  { group: "Relacionamento", key: "leads", label: "Leads (CRM)" },
+  { group: "Relacionamento", key: "reviews", label: "Avaliações" },
+  { group: "Relacionamento", key: "campaigns", label: "Campanhas" },
+  { group: "Relacionamento", key: "loyalty", label: "Fidelidade" },
+  { group: "Catálogo", key: "wines", label: "Vinhos" },
+  { group: "Catálogo", key: "stock", label: "Estoque" },
+  { group: "Catálogo", key: "packages", label: "Pacotes" },
+  { group: "Catálogo", key: "menu", label: "Cardápio" },
+  { group: "Catálogo", key: "events", label: "Eventos" },
+  { group: "Insights", key: "finance", label: "Financeiro" },
+  { group: "Insights", key: "performance", label: "Performance" },
+  { group: "Insights", key: "audit", label: "Auditoria" },
+  { group: "Ajustes", key: "locations", label: "Locais" },
+  { group: "Ajustes", key: "training", label: "Treinamento" },
+  { group: "Ajustes", key: "import", label: "Importar" },
+  { group: "Ajustes", key: "config", label: "Configurações" },
+];
 
 const roleLabels: Record<string, string> = {
   staff: "Funcionário",
@@ -39,7 +66,18 @@ export default function AdminStaffPage() {
   const [deleteStaff, setDeleteStaff] = useState<StaffMember | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "staff" });
+  const [form, setForm] = useState<{
+    name: string; email: string; password: string; role: string;
+    enabled_modules: string[] | null; capture_point_ids: string[];
+  }>({ name: "", email: "", password: "", role: "staff", enabled_modules: null, capture_point_ids: [] });
+  const [capturePoints, setCapturePoints] = useState<CapturePoint[]>([]);
+  const [customizeModules, setCustomizeModules] = useState(false);
+
+  useEffect(() => {
+    invokeAuth("admin-locations", { action: "list" })
+      .then(({ data }) => setCapturePoints((data?.locations ?? data?.capture_points ?? []).map((c: any) => ({ id: c.id, name: c.name, category: c.category }))))
+      .catch(() => {});
+  }, []);
 
   const fetchStaff = async () => {
     setLoading(true);
@@ -61,13 +99,19 @@ export default function AdminStaffPage() {
 
   const openCreate = () => {
     setEditStaff(null);
-    setForm({ name: "", email: "", password: "", role: "staff" });
+    setForm({ name: "", email: "", password: "", role: "staff", enabled_modules: null, capture_point_ids: [] });
+    setCustomizeModules(false);
     setShowForm(true);
   };
 
   const openEdit = (member: StaffMember) => {
     setEditStaff(member);
-    setForm({ name: member.name, email: member.email, password: "", role: member.role });
+    setForm({
+      name: member.name, email: member.email, password: "", role: member.role,
+      enabled_modules: member.enabled_modules ?? null,
+      capture_point_ids: member.capture_point_ids ?? [],
+    });
+    setCustomizeModules(Array.isArray(member.enabled_modules));
     setShowForm(true);
   };
 
@@ -82,6 +126,7 @@ export default function AdminStaffPage() {
     }
 
     try {
+      const modulesPayload = customizeModules ? (form.enabled_modules ?? []) : [];
       if (editStaff) {
         const { data, error } = await invokeAuth("admin-staff", {
           action: "update",
@@ -90,6 +135,8 @@ export default function AdminStaffPage() {
           email: form.email.trim(),
           password: form.password || undefined,
           role: form.role,
+          enabled_modules: customizeModules ? modulesPayload : [],
+          capture_point_ids: form.capture_point_ids,
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
@@ -101,6 +148,8 @@ export default function AdminStaffPage() {
           email: form.email.trim(),
           password: form.password,
           role: form.role,
+          enabled_modules: customizeModules ? modulesPayload : undefined,
+          capture_point_ids: form.capture_point_ids,
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
@@ -243,7 +292,7 @@ export default function AdminStaffPage() {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm">
-          <div className="bg-card w-full max-w-md mx-4 rounded-2xl border border-border animate-scale-in">
+          <div className="bg-card w-full max-w-md mx-4 rounded-2xl border border-border animate-scale-in max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="font-display text-lg font-semibold">
                 {editStaff ? "Editar Funcionário" : "Novo Funcionário"}
@@ -253,7 +302,7 @@ export default function AdminStaffPage() {
               </button>
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-4 overflow-y-auto">
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">Nome *</label>
                 <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} maxLength={100}
@@ -281,6 +330,83 @@ export default function AdminStaffPage() {
                   <option value="manager">Gerente — Vinhos, pacotes e cardápio</option>
                 </select>
               </div>
+
+              {/* Capture points assignment */}
+              {capturePoints.length > 0 && (
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1.5">Locais que atende</label>
+                  <p className="text-[10px] text-muted-foreground mb-2">Vazio = recebe notificações de todos os locais</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {capturePoints.map((cp) => {
+                      const checked = form.capture_point_ids.includes(cp.id);
+                      return (
+                        <button
+                          key={cp.id}
+                          type="button"
+                          onClick={() => setForm((f) => ({
+                            ...f,
+                            capture_point_ids: checked
+                              ? f.capture_point_ids.filter((x) => x !== cp.id)
+                              : [...f.capture_point_ids, cp.id],
+                          }))}
+                          className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${checked ? "bg-primary text-primary-foreground border-primary" : "bg-background text-foreground border-border hover:bg-secondary"}`}
+                        >
+                          {cp.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Module customization toggle */}
+              <div>
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={customizeModules}
+                    onChange={(e) => {
+                      setCustomizeModules(e.target.checked);
+                      if (e.target.checked && !Array.isArray(form.enabled_modules)) {
+                        setForm((f) => ({ ...f, enabled_modules: [] }));
+                      }
+                    }}
+                  />
+                  <span className="font-medium">Personalizar acesso por módulo</span>
+                </label>
+                <p className="text-[10px] text-muted-foreground mt-1">Quando desligado, usa o padrão do nível de acesso.</p>
+              </div>
+
+              {customizeModules && (
+                <div className="space-y-3 border border-border rounded-xl p-3 bg-muted/20">
+                  {Array.from(new Set(MODULES.map((m) => m.group))).map((g) => (
+                    <div key={g}>
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">{g}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {MODULES.filter((m) => m.group === g).map((m) => {
+                          const enabled = (form.enabled_modules ?? []).includes(m.key);
+                          return (
+                            <button
+                              key={m.key}
+                              type="button"
+                              onClick={() => setForm((f) => {
+                                const cur = f.enabled_modules ?? [];
+                                return {
+                                  ...f,
+                                  enabled_modules: enabled ? cur.filter((x) => x !== m.key) : [...cur, m.key],
+                                };
+                              })}
+                              className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${enabled ? "bg-primary text-primary-foreground border-primary" : "bg-background text-foreground border-border hover:bg-secondary"}`}
+                            >
+                              {m.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="p-4 border-t border-border flex gap-2 justify-end">

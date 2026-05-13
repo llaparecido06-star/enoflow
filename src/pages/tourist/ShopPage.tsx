@@ -217,6 +217,8 @@ export default function ShopPage() {
         code,
         items: items.map((i) => ({ wine_id: i.wine.id, id: i.wine.id, name: i.wine.name, qty: i.quantity, quantity: i.quantity, price: (Number(i.wine.price_bottle) || 0) * discountMultiplier })),
         total: Number(discountedTotal) || 0,
+        capture_point_id: resolvedCPs?.shop_cp ?? new URLSearchParams(location.search).get("cp") ?? undefined,
+        channel: "shop",
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

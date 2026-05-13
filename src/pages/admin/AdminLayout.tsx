@@ -1,10 +1,12 @@
 import { Outlet, useParams, useLocation, useNavigate } from "react-router-dom";
 import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
+import { useAdminSelf } from "@/hooks/useAdminSelf";
 import { useVoucherNotifications } from "@/hooks/useVoucherNotifications";
 import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare, MoreHorizontal, CalendarCheck, Boxes, DollarSign, Building2, Star, Gift, CalendarDays, Upload, Shield, Smartphone } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import NotificationBell from "@/components/admin/crm/NotificationBell";
+import StaffSeparationBell from "@/components/admin/StaffSeparationBell";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { can, type Capability } from "@/lib/admin/permissions";
 
@@ -79,6 +81,9 @@ export default function AdminLayout() {
   // Real-time voucher redemption notifications for owners and managers
   useVoucherNotifications(winery?.id, !!admin && hasPermission("manager"));
 
+  // Per-staff overrides (modules + capture point assignment)
+  const self = useAdminSelf(admin?.id);
+
   // Force light mode in admin
   useEffect(() => {
     document.documentElement.classList.remove("dark");
@@ -92,15 +97,23 @@ export default function AdminLayout() {
   }, [admin, isLoading, authLoading, navigate]);
 
   const visibleGroups = useMemo(() => {
+    const overrideMods = self?.enabled_modules; // null/undefined = no override; array = restricted set
+    const isOwnerOrMaster = admin?.role === "owner" || admin?.role === "master";
     return navGroups
       .map((g) => ({
         ...g,
         items: admin?.role === "sales"
           ? g.items.filter((n) => n.salesOnly)
-          : g.items.filter((n) => can(admin?.role, n.cap)),
+          : g.items.filter((n) => {
+              if (!can(admin?.role, n.cap)) return false;
+              // Owners/masters ignore module overrides
+              if (isOwnerOrMaster) return true;
+              if (Array.isArray(overrideMods)) return overrideMods.includes(n.id);
+              return true;
+            }),
       }))
       .filter((g) => g.items.length > 0);
-  }, [admin?.role]);
+  }, [admin?.role, self?.enabled_modules]);
   const visibleNav = useMemo(() => visibleGroups.flatMap((g) => g.items), [visibleGroups]);
 
   // Redirect staff/manager to default page
@@ -230,7 +243,8 @@ export default function AdminLayout() {
 
       {/* Content */}
       <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
-        <div className="flex justify-end mb-2">
+        <div className="flex justify-end mb-2 gap-1 items-center">
+          <StaffSeparationBell adminId={admin.id} wineryId={winery.id} />
           <NotificationBell wineryId={winery.id} basePath={basePath} />
         </div>
         <Outlet context={{ winery, admin, hasPermission }} />
