@@ -17,6 +17,8 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { action, target_id, name, email, password, role } = body;
+    const enabled_modules = Array.isArray(body.enabled_modules) ? body.enabled_modules.filter((s: unknown) => typeof s === "string").slice(0, 50) : undefined;
+    const capture_point_ids = Array.isArray(body.capture_point_ids) ? body.capture_point_ids.filter((s: unknown) => typeof s === "string").slice(0, 50) : undefined;
 
     const { data: admin, error: adminErr } = await supabase
       .from("admin_users")
@@ -32,7 +34,7 @@ Deno.serve(async (req) => {
     if (action === "list") {
       const { data, error } = await supabase
         .from("admin_users")
-        .select("id, name, email, role, created_at, is_active")
+        .select("id, name, email, role, created_at, is_active, enabled_modules, capture_point_ids")
         .eq("winery_id", winery_id)
         .neq("role", "master")
         .order("created_at", { ascending: false });
@@ -68,8 +70,10 @@ Deno.serve(async (req) => {
           password_hash: hashResult,
           role,
           winery_id,
+          enabled_modules: enabled_modules ?? null,
+          capture_point_ids: capture_point_ids ?? [],
         })
-        .select("id, name, email, role, created_at")
+        .select("id, name, email, role, created_at, enabled_modules, capture_point_ids")
         .single();
 
       if (error) throw error;
@@ -96,6 +100,8 @@ Deno.serve(async (req) => {
         if (hashResult) updates.password_hash = hashResult;
       }
       if (role && ["staff", "manager", "sales"].includes(role)) updates.role = role;
+      if (enabled_modules !== undefined) (updates as any).enabled_modules = enabled_modules.length ? enabled_modules : null;
+      if (capture_point_ids !== undefined) (updates as any).capture_point_ids = capture_point_ids;
 
       if (Object.keys(updates).length === 0) return json({ error: "Nada para atualizar" }, 400);
 
