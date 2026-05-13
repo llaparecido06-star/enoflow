@@ -71,15 +71,58 @@ export default function MasterWineriesPage() {
 
   useEffect(() => { fetchData(); }, [admin.id]);
 
+  const loadB2BClients = async () => {
+    try {
+      const res = await invokeAuth("master-clients", { action: "list_clients" });
+      if (res.data?.error) throw new Error(res.data.error);
+      // Fetch contracts per client to enable auto-fill — list_clients doesn't include them, so fetch in batch via get_client lazily on demand.
+      // Simpler: store basic info now; fetch contracts on selection.
+      setB2bClients((res.data?.clients ?? []).map((c: any) => ({
+        id: c.id, legal_name: c.legal_name, trade_name: c.trade_name, cnpj: c.cnpj, winery_id: c.winery_id, contracts: [],
+      })));
+    } catch {
+      // silent
+    }
+  };
+
+  const onSelectB2BClient = async (clientId: string) => {
+    setForm(f => ({ ...f, client_id: clientId }));
+    if (!clientId) return;
+    try {
+      const res = await invokeAuth("master-clients", { action: "get_client", client_id: clientId });
+      if (res.data?.error) throw new Error(res.data.error);
+      const client = res.data?.client;
+      const contracts = (res.data?.contracts ?? []) as any[];
+      const latest = contracts[0];
+      setForm(f => ({
+        ...f,
+        client_id: clientId,
+        ...(latest ? {
+          subscription_value: String(latest.monthly_fee ?? "0"),
+          platform_commission_rate: latest.postsales_active ? String(latest.postsales_commission_pct ?? "0") : f.platform_commission_rate,
+        } : {}),
+        ...(!f.name && client?.trade_name ? {
+          name: client.trade_name,
+          slug: String(client.trade_name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+        } : {}),
+      }));
+      if (latest) toast.success(`Mensalidade carregada do contrato (R$ ${Number(latest.monthly_fee).toFixed(2)})`);
+      else toast.info("Cliente sem contrato — preencha os valores manualmente");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao carregar cliente");
+    }
+  };
+
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"], status: "active", max_locations: "5", currency: "BRL" });
+    setForm({ client_id: "", name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"], status: "active", max_locations: "5", currency: "BRL" });
+    loadB2BClients();
     setModalOpen(true);
   };
 
   const openEdit = (w: WineryMetric) => {
     setEditTarget(w);
-    setForm({ name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0"), enabled_modules: (w as any).enabled_modules ?? ["tasting", "restaurant", "shop"], status: (w as any).status ?? "active", max_locations: String((w as any).max_locations ?? "5"), currency: (w as any).currency ?? "BRL" });
+    setForm({ client_id: "", name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0"), enabled_modules: (w as any).enabled_modules ?? ["tasting", "restaurant", "shop"], status: (w as any).status ?? "active", max_locations: String((w as any).max_locations ?? "5"), currency: (w as any).currency ?? "BRL" });
     setModalOpen(true);
   };
 
