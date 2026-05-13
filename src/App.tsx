@@ -143,6 +143,8 @@ const App = () => {
                 <Route path="plans" element={<MasterPlansPage />} />
                 <Route path="admins" element={<MasterAdminsPage />} />
                 <Route path="leads" element={<MasterLeadsPage />} />
+                <Route path="clients" element={<MasterClientsPage />} />
+                <Route path="clients/:clientId" element={<MasterClientDetailPage />} />
                 <Route path="reports" element={<MasterReportsPage />} />
                 <Route path="import" element={<MasterImportPage />} />
               </Route>
