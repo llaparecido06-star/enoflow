@@ -292,7 +292,7 @@ export default function AdminStaffPage() {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm">
-          <div className="bg-card w-full max-w-md mx-4 rounded-2xl border border-border animate-scale-in">
+          <div className="bg-card w-full max-w-md mx-4 rounded-2xl border border-border animate-scale-in max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="font-display text-lg font-semibold">
                 {editStaff ? "Editar Funcionário" : "Novo Funcionário"}
@@ -302,7 +302,7 @@ export default function AdminStaffPage() {
               </button>
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-4 overflow-y-auto">
               <div>
                 <label className="text-xs text-muted-foreground block mb-1">Nome *</label>
                 <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} maxLength={100}
@@ -330,6 +330,83 @@ export default function AdminStaffPage() {
                   <option value="manager">Gerente — Vinhos, pacotes e cardápio</option>
                 </select>
               </div>
+
+              {/* Capture points assignment */}
+              {capturePoints.length > 0 && (
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1.5">Locais que atende</label>
+                  <p className="text-[10px] text-muted-foreground mb-2">Vazio = recebe notificações de todos os locais</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {capturePoints.map((cp) => {
+                      const checked = form.capture_point_ids.includes(cp.id);
+                      return (
+                        <button
+                          key={cp.id}
+                          type="button"
+                          onClick={() => setForm((f) => ({
+                            ...f,
+                            capture_point_ids: checked
+                              ? f.capture_point_ids.filter((x) => x !== cp.id)
+                              : [...f.capture_point_ids, cp.id],
+                          }))}
+                          className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${checked ? "bg-primary text-primary-foreground border-primary" : "bg-background text-foreground border-border hover:bg-secondary"}`}
+                        >
+                          {cp.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Module customization toggle */}
+              <div>
+                <label className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={customizeModules}
+                    onChange={(e) => {
+                      setCustomizeModules(e.target.checked);
+                      if (e.target.checked && !Array.isArray(form.enabled_modules)) {
+                        setForm((f) => ({ ...f, enabled_modules: [] }));
+                      }
+                    }}
+                  />
+                  <span className="font-medium">Personalizar acesso por módulo</span>
+                </label>
+                <p className="text-[10px] text-muted-foreground mt-1">Quando desligado, usa o padrão do nível de acesso.</p>
+              </div>
+
+              {customizeModules && (
+                <div className="space-y-3 border border-border rounded-xl p-3 bg-muted/20">
+                  {Array.from(new Set(MODULES.map((m) => m.group))).map((g) => (
+                    <div key={g}>
+                      <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1.5">{g}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {MODULES.filter((m) => m.group === g).map((m) => {
+                          const enabled = (form.enabled_modules ?? []).includes(m.key);
+                          return (
+                            <button
+                              key={m.key}
+                              type="button"
+                              onClick={() => setForm((f) => {
+                                const cur = f.enabled_modules ?? [];
+                                return {
+                                  ...f,
+                                  enabled_modules: enabled ? cur.filter((x) => x !== m.key) : [...cur, m.key],
+                                };
+                              })}
+                              className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${enabled ? "bg-primary text-primary-foreground border-primary" : "bg-background text-foreground border-border hover:bg-secondary"}`}
+                            >
+                              {m.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="p-4 border-t border-border flex gap-2 justify-end">
