@@ -127,7 +127,7 @@ const sectionsText = (client: ContractClient, data: ContractData) => {
       fmtDate(data.start_date),
     ],
     signatures: [
-      `CONTRATANTE: ${client.responsible_name || "[Nome do Representante Legal da Vinícola]"}${client.responsible_role ? ` (${client.responsible_role})` : ""} — CPF: ${client.responsible_cpf || "[000.000.000-00]"}`,
+      `CONTRATANTE: ${client.legal_name}${client.trade_name ? ` (${client.trade_name})` : ""} — CNPJ: ${client.cnpj}${client.responsible_name ? `\nRepresentada por: ${client.responsible_name}${client.responsible_role ? ` (${client.responsible_role})` : ""}${client.responsible_cpf ? ` — CPF: ${client.responsible_cpf}` : ""}` : ""}`,
       "CONTRATADA: 56.185.635 LUCAS DE LIMA APARECIDO — CNPJ: 56.185.635/0001-65",
       "TESTEMUNHA 1: __________________________________ CPF: ____________________",
       "TESTEMUNHA 2: __________________________________ CPF: ____________________",
