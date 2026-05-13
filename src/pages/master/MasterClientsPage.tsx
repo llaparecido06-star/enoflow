@@ -48,7 +48,7 @@ export default function MasterClientsPage() {
     try {
       const [clientsRes, winRes] = await Promise.all([
         invokeAuth("master-clients", { action: "list_clients" }),
-        invokeAuth("master-dashboard", { action: "list_wineries" }),
+        invokeAuth("master-clients", { action: "list_wineries" }),
       ]);
       if (clientsRes.data?.error) throw new Error(clientsRes.data.error);
       setClients(clientsRes.data?.clients ?? []);
