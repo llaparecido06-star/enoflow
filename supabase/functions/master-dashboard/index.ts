@@ -98,25 +98,51 @@ Deno.serve(async (req) => {
 
     // ─── ACTION: create_winery ───────────────────────────
     if (action === "create_winery") {
-      const { name, slug, primary_color, plan_level, logo_url, subscription_value, platform_commission_rate, enabled_modules } = body;
+      const { name, slug, primary_color, plan_level, logo_url, subscription_value, platform_commission_rate, enabled_modules, client_id } = body;
       if (!name || !slug) return json({ error: "name and slug required" }, 400);
       const slugClean = slug.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 50);
       const validModules = ["tasting", "restaurant", "shop"];
       const modules = Array.isArray(enabled_modules) ? enabled_modules.filter((m: string) => validModules.includes(m)) : validModules;
       const validCurrencies = ["BRL", "USD", "EUR"];
+
+      // If linked to a B2B client and values not provided, pull from latest contract
+      let finalMonthly = Number(subscription_value) || 0;
+      let finalCommission = Number(platform_commission_rate) || 0;
+      if (client_id) {
+        const { data: contract } = await supabase
+          .from("b2b_contracts")
+          .select("monthly_fee, postsales_commission_pct, postsales_active")
+          .eq("client_id", client_id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (contract) {
+          if (!subscription_value) finalMonthly = Number(contract.monthly_fee) || 0;
+          if (!platform_commission_rate && contract.postsales_active) {
+            finalCommission = Number(contract.postsales_commission_pct) || 0;
+          }
+        }
+      }
+
       const { data: winery, error } = await supabase.from("wineries").insert({
         name: String(name).slice(0, 100),
         slug: slugClean,
         primary_color: primary_color || "#630D16",
         plan_level: plan_level || "bronze",
         logo_url: logo_url || null,
-        subscription_value: Number(subscription_value) || 0,
-        platform_commission_rate: Number(platform_commission_rate) || 0,
+        subscription_value: finalMonthly,
+        platform_commission_rate: finalCommission,
         enabled_modules: modules,
         max_locations: Math.max(1, Math.min(100, Number(body.max_locations) || 5)),
         currency: validCurrencies.includes(body.currency) ? body.currency : "BRL",
       }).select().single();
       if (error) throw error;
+
+      // Link the B2B client to the newly created winery
+      if (client_id && winery) {
+        await supabase.from("b2b_clients").update({ winery_id: winery.id }).eq("id", client_id);
+      }
+
       return json({ success: true, winery });
     }
 

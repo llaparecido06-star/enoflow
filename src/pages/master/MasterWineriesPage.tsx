@@ -33,6 +33,15 @@ const planColors: Record<string, string> = {
   gold: "bg-accent/10 text-accent",
 };
 
+interface B2BClientOption {
+  id: string;
+  legal_name: string;
+  trade_name: string | null;
+  cnpj: string;
+  winery_id: string | null;
+  contracts: Array<{ id: string; monthly_fee: number; setup_fee: number; postsales_active: boolean; postsales_commission_pct: number; status: string; created_at: string }>;
+}
+
 export default function MasterWineriesPage() {
   const { admin } = useOutletContext<{ admin: MasterAdmin }>();
   const navigate = useNavigate();
@@ -43,7 +52,9 @@ export default function MasterWineriesPage() {
   const [editTarget, setEditTarget] = useState<WineryMetric | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<WineryMetric | null>(null);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[], status: "active", max_locations: "5", currency: "BRL" });
+  const [b2bClients, setB2bClients] = useState<B2BClientOption[]>([]);
+  const [form, setForm] = useState({ client_id: "", name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[], status: "active", max_locations: "5", currency: "BRL" });
+
 
   const fetchData = async () => {
     try {
@@ -60,15 +71,58 @@ export default function MasterWineriesPage() {
 
   useEffect(() => { fetchData(); }, [admin.id]);
 
+  const loadB2BClients = async () => {
+    try {
+      const res = await invokeAuth("master-clients", { action: "list_clients" });
+      if (res.data?.error) throw new Error(res.data.error);
+      // Fetch contracts per client to enable auto-fill — list_clients doesn't include them, so fetch in batch via get_client lazily on demand.
+      // Simpler: store basic info now; fetch contracts on selection.
+      setB2bClients((res.data?.clients ?? []).map((c: any) => ({
+        id: c.id, legal_name: c.legal_name, trade_name: c.trade_name, cnpj: c.cnpj, winery_id: c.winery_id, contracts: [],
+      })));
+    } catch {
+      // silent
+    }
+  };
+
+  const onSelectB2BClient = async (clientId: string) => {
+    setForm(f => ({ ...f, client_id: clientId }));
+    if (!clientId) return;
+    try {
+      const res = await invokeAuth("master-clients", { action: "get_client", client_id: clientId });
+      if (res.data?.error) throw new Error(res.data.error);
+      const client = res.data?.client;
+      const contracts = (res.data?.contracts ?? []) as any[];
+      const latest = contracts[0];
+      setForm(f => ({
+        ...f,
+        client_id: clientId,
+        ...(latest ? {
+          subscription_value: String(latest.monthly_fee ?? "0"),
+          platform_commission_rate: latest.postsales_active ? String(latest.postsales_commission_pct ?? "0") : f.platform_commission_rate,
+        } : {}),
+        ...(!f.name && client?.trade_name ? {
+          name: client.trade_name,
+          slug: String(client.trade_name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+        } : {}),
+      }));
+      if (latest) toast.success(`Mensalidade carregada do contrato (R$ ${Number(latest.monthly_fee).toFixed(2)})`);
+      else toast.info("Cliente sem contrato — preencha os valores manualmente");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao carregar cliente");
+    }
+  };
+
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"], status: "active", max_locations: "5", currency: "BRL" });
+    setForm({ client_id: "", name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"], status: "active", max_locations: "5", currency: "BRL" });
+    loadB2BClients();
     setModalOpen(true);
   };
 
   const openEdit = (w: WineryMetric) => {
     setEditTarget(w);
-    setForm({ name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0"), enabled_modules: (w as any).enabled_modules ?? ["tasting", "restaurant", "shop"], status: (w as any).status ?? "active", max_locations: String((w as any).max_locations ?? "5"), currency: (w as any).currency ?? "BRL" });
+    setForm({ client_id: "", name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0"), enabled_modules: (w as any).enabled_modules ?? ["tasting", "restaurant", "shop"], status: (w as any).status ?? "active", max_locations: String((w as any).max_locations ?? "5"), currency: (w as any).currency ?? "BRL" });
     setModalOpen(true);
   };
 
@@ -292,6 +346,35 @@ export default function MasterWineriesPage() {
             <DialogTitle>{editTarget ? "Editar Vinícola" : "Nova Vinícola"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2 pb-2">
+            {!editTarget && (
+              <div className="rounded-lg border border-border bg-secondary/30 p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <Label className="text-xs">Cliente B2B (vincular)</Label>
+                  <button
+                    type="button"
+                    onClick={() => { setModalOpen(false); navigate("/master/clients"); }}
+                    className="text-[11px] text-accent hover:underline"
+                  >
+                    + Cadastrar novo cliente
+                  </button>
+                </div>
+                <Select value={form.client_id || "none"} onValueChange={(v) => onSelectB2BClient(v === "none" ? "" : v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione um cliente B2B" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem cliente vinculado</SelectItem>
+                    {b2bClients.filter(c => !c.winery_id).map(c => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.trade_name || c.legal_name} — {c.cnpj}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  Apenas clientes ainda não vinculados aparecem. Mensalidade e comissão serão preenchidas pelo contrato mais recente.
+                </p>
+              </div>
+            )}
+
             <div>
               <Label>Nome</Label>
               <Input
