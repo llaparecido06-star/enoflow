@@ -21,9 +21,16 @@ interface CapturePoint {
   linked_shop_cp_id: string | null;
   linked_tasting_cp_id: string | null;
   linked_tasting_package_ids: string[];
+  enabled_modules: string[] | null;
   created_at: string;
   visit_count: number;
 }
+
+const ALL_MODULES: { id: string; label: string; emoji: string }[] = [
+  { id: "tasting", label: "Degustação", emoji: "🍷" },
+  { id: "restaurant", label: "Restaurante", emoji: "🍽️" },
+  { id: "shop", label: "Loja", emoji: "🛒" },
+];
 
 const categoryLabels: Record<string, string> = {
   restaurant: "🍽️ Restaurante",
@@ -51,7 +58,7 @@ export default function AdminLocationsPage() {
   const [editTarget, setEditTarget] = useState<CapturePoint | null>(null);
   const [saving, setSaving] = useState(false);
   const [qrTarget, setQrTarget] = useState<CapturePoint | null>(null);
-  const [form, setForm] = useState({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "", linked_tasting_package_ids: [] as string[] });
+  const [form, setForm] = useState({ name: "", category: "restaurant", redirect_url: "", linked_restaurant_cp_id: "", linked_shop_cp_id: "", linked_tasting_cp_id: "", linked_tasting_package_ids: [] as string[], enabled_modules: [] as string[] });
   const { data: tastingPackages } = useTastingPackages(winery?.id);
 
   const fetchData = async () => {
