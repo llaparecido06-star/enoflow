@@ -28,6 +28,18 @@ Deno.serve(async (req) => {
       .single();
 
     if (adminErr || !admin) return json({ error: "Não autorizado" }, 403);
+
+    // ─── ACTION: self — returns caller's own modules/cps (no role gate)
+    if (action === "self") {
+      const { data: me } = await supabase
+        .from("admin_users")
+        .select("id, role, enabled_modules, capture_point_ids")
+        .eq("id", admin_id)
+        .eq("winery_id", winery_id)
+        .single();
+      return json({ success: true, me });
+    }
+
     if (!hasMinRole(admin.role, "owner")) return json({ error: "Apenas owners podem gerenciar equipe" }, 403);
 
     // ─── ACTION: list
