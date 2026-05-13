@@ -39,7 +39,7 @@ interface B2BClientOption {
   trade_name: string | null;
   cnpj: string;
   winery_id: string | null;
-  contracts: Array<{ id: string; monthly_fee: number; setup_fee: number; postsales_active: boolean; postsales_commission_pct: number; status: string; created_at: string }>;
+  contracts: Array<{ id: string; plan_name: string; monthly_fee: number; setup_fee: number; postsales_active: boolean; postsales_commission_pct: number; status: string; created_at: string }>;
 }
 
 export default function MasterWineriesPage() {
