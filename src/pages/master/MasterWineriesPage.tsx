@@ -53,7 +53,8 @@ export default function MasterWineriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<WineryMetric | null>(null);
   const [saving, setSaving] = useState(false);
   const [b2bClients, setB2bClients] = useState<B2BClientOption[]>([]);
-  const [form, setForm] = useState({ client_id: "", name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[], status: "active", max_locations: "5", currency: "BRL" });
+  const [clientContracts, setClientContracts] = useState<B2BClientOption["contracts"]>([]);
+  const [form, setForm] = useState({ client_id: "", contract_id: "", name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[], status: "active", max_locations: "5", currency: "BRL" });
 
 
   const fetchData = async () => {
