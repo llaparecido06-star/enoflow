@@ -193,7 +193,7 @@ export function generateContractPDF(client: ContractClient, data: ContractData) 
 export async function generateContractDOCX(client: ContractClient, data: ContractData) {
   const s = sectionsText(client, data);
 
-  const para = (text: string, bold = false, align: AlignmentType = AlignmentType.JUSTIFIED) =>
+  const para = (text: string, bold = false, align: typeof AlignmentType[keyof typeof AlignmentType] = AlignmentType.JUSTIFIED) =>
     new Paragraph({
       alignment: align,
       spacing: { after: 120 },
