@@ -39,7 +39,7 @@ interface B2BClientOption {
   trade_name: string | null;
   cnpj: string;
   winery_id: string | null;
-  contracts: Array<{ id: string; monthly_fee: number; setup_fee: number; postsales_active: boolean; postsales_commission_pct: number; status: string; created_at: string }>;
+  contracts: Array<{ id: string; plan_name: string; monthly_fee: number; setup_fee: number; postsales_active: boolean; postsales_commission_pct: number; status: string; created_at: string }>;
 }
 
 export default function MasterWineriesPage() {
@@ -53,7 +53,8 @@ export default function MasterWineriesPage() {
   const [deleteTarget, setDeleteTarget] = useState<WineryMetric | null>(null);
   const [saving, setSaving] = useState(false);
   const [b2bClients, setB2bClients] = useState<B2BClientOption[]>([]);
-  const [form, setForm] = useState({ client_id: "", name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[], status: "active", max_locations: "5", currency: "BRL" });
+  const [clientContracts, setClientContracts] = useState<B2BClientOption["contracts"]>([]);
+  const [form, setForm] = useState({ client_id: "", contract_id: "", name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"] as string[], status: "active", max_locations: "5", currency: "BRL" });
 
 
   const fetchData = async () => {
@@ -85,29 +86,49 @@ export default function MasterWineriesPage() {
     }
   };
 
+  const applyContractValues = (contractId: string, contracts = clientContracts) => {
+    const c = contracts.find(x => x.id === contractId);
+    if (!c) return;
+    setForm(f => ({
+      ...f,
+      contract_id: contractId,
+      subscription_value: String(c.monthly_fee ?? "0"),
+      platform_commission_rate: c.postsales_active ? String(c.postsales_commission_pct ?? "0") : "0",
+    }));
+  };
+
   const onSelectB2BClient = async (clientId: string) => {
-    setForm(f => ({ ...f, client_id: clientId }));
+    setForm(f => ({ ...f, client_id: clientId, contract_id: "" }));
+    setClientContracts([]);
     if (!clientId) return;
+    // Block linking already-bound clients defensively
+    const existing = b2bClients.find(c => c.id === clientId);
+    if (existing?.winery_id) {
+      toast.error("Este cliente B2B já está vinculado a outra vinícola.");
+      setForm(f => ({ ...f, client_id: "" }));
+      return;
+    }
     try {
       const res = await invokeAuth("master-clients", { action: "get_client", client_id: clientId });
       if (res.data?.error) throw new Error(res.data.error);
       const client = res.data?.client;
-      const contracts = (res.data?.contracts ?? []) as any[];
-      const latest = contracts[0];
+      const contracts = (res.data?.contracts ?? []) as B2BClientOption["contracts"];
+      setClientContracts(contracts);
+      const preferred = contracts.find(c => c.status === "active") ?? contracts[0];
       setForm(f => ({
         ...f,
         client_id: clientId,
-        ...(latest ? {
-          subscription_value: String(latest.monthly_fee ?? "0"),
-          platform_commission_rate: latest.postsales_active ? String(latest.postsales_commission_pct ?? "0") : f.platform_commission_rate,
-        } : {}),
         ...(!f.name && client?.trade_name ? {
           name: client.trade_name,
           slug: String(client.trade_name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
         } : {}),
       }));
-      if (latest) toast.success(`Mensalidade carregada do contrato (R$ ${Number(latest.monthly_fee).toFixed(2)})`);
-      else toast.info("Cliente sem contrato — preencha os valores manualmente");
+      if (preferred) {
+        applyContractValues(preferred.id, contracts);
+        toast.success(`Contrato vigente carregado (R$ ${Number(preferred.monthly_fee).toFixed(2)}/mês)`);
+      } else {
+        toast.info("Cliente sem contrato — preencha os valores manualmente");
+      }
     } catch (err: any) {
       toast.error(err.message || "Erro ao carregar cliente");
     }
@@ -115,14 +136,16 @@ export default function MasterWineriesPage() {
 
   const openCreate = () => {
     setEditTarget(null);
-    setForm({ client_id: "", name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"], status: "active", max_locations: "5", currency: "BRL" });
+    setClientContracts([]);
+    setForm({ client_id: "", contract_id: "", name: "", slug: "", primary_color: "#630D16", plan_level: "bronze", logo_url: "", subscription_value: "0", platform_commission_rate: "0", enabled_modules: ["tasting", "restaurant", "shop"], status: "active", max_locations: "5", currency: "BRL" });
     loadB2BClients();
     setModalOpen(true);
   };
 
   const openEdit = (w: WineryMetric) => {
     setEditTarget(w);
-    setForm({ client_id: "", name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0"), enabled_modules: (w as any).enabled_modules ?? ["tasting", "restaurant", "shop"], status: (w as any).status ?? "active", max_locations: String((w as any).max_locations ?? "5"), currency: (w as any).currency ?? "BRL" });
+    setClientContracts([]);
+    setForm({ client_id: "", contract_id: "", name: w.name, slug: w.slug, primary_color: w.primary_color, plan_level: w.plan_level, logo_url: w.logo_url || "", subscription_value: String((w as any).subscription_value ?? "0"), platform_commission_rate: String((w as any).platform_commission_rate ?? "0"), enabled_modules: (w as any).enabled_modules ?? ["tasting", "restaurant", "shop"], status: (w as any).status ?? "active", max_locations: String((w as any).max_locations ?? "5"), currency: (w as any).currency ?? "BRL" });
     setModalOpen(true);
   };
 
@@ -370,8 +393,35 @@ export default function MasterWineriesPage() {
                   </SelectContent>
                 </Select>
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  Apenas clientes ainda não vinculados aparecem. Mensalidade e comissão serão preenchidas pelo contrato mais recente.
+                  Apenas clientes ainda não vinculados aparecem.
                 </p>
+
+                {form.client_id && (
+                  <div className="mt-3">
+                    <Label className="text-xs">Contrato vigente</Label>
+                    {clientContracts.length === 0 ? (
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Nenhum contrato cadastrado para este cliente. Cadastre em Clientes B2B.
+                      </p>
+                    ) : (
+                      <>
+                        <Select value={form.contract_id} onValueChange={(v) => applyContractValues(v)}>
+                          <SelectTrigger><SelectValue placeholder="Selecione o contrato" /></SelectTrigger>
+                          <SelectContent>
+                            {clientContracts.map((c: any) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {String(c.status).toUpperCase()} · {c.plan_name || "Plano"} · R$ {Number(c.monthly_fee).toFixed(2)}/mês{c.postsales_active ? ` · ${c.postsales_commission_pct}% pós` : ""} · {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          Mensalidade e comissão serão preenchidas a partir do contrato escolhido.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
