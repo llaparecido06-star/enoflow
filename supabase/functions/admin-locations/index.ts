@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     // ─── LIST
     if (!action || action === "list") {
       const [locsRes, wineryRes, captureRes] = await Promise.all([
-        supabase.from("capture_points").select("*, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id").eq("winery_id", winery_id).order("created_at", { ascending: true }),
+        supabase.from("capture_points").select("*, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id, enabled_modules").eq("winery_id", winery_id).order("created_at", { ascending: true }),
         supabase.from("wineries").select("max_locations, slug").eq("id", winery_id).single(),
         supabase.from("capture_history").select("capture_point_id").eq("winery_id", winery_id),
       ]);
@@ -50,8 +50,6 @@ Deno.serve(async (req) => {
         slug: wineryRes.data?.slug ?? "",
       });
     }
-
-    // ─── CREATE
     if (action === "create") {
       const { name, category, redirect_url, linked_restaurant_cp_id, linked_shop_cp_id, linked_tasting_cp_id, linked_tasting_package_ids } = body;
       if (!name) return json({ error: "Nome obrigatório" }, 400);
