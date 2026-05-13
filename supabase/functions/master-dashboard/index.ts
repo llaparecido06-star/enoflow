@@ -109,6 +109,18 @@ Deno.serve(async (req) => {
       let finalMonthly = Number(subscription_value) || 0;
       let finalCommission = Number(platform_commission_rate) || 0;
       if (client_id) {
+        // Block if this client is already linked to another winery
+        const { data: existingClient, error: clientErr } = await supabase
+          .from("b2b_clients")
+          .select("id, winery_id, legal_name")
+          .eq("id", client_id)
+          .maybeSingle();
+        if (clientErr) throw clientErr;
+        if (!existingClient) return json({ error: "Cliente B2B não encontrado" }, 404);
+        if (existingClient.winery_id) {
+          return json({ error: `Cliente "${existingClient.legal_name}" já está vinculado a outra vinícola.` }, 409);
+        }
+
         const { data: contract } = await supabase
           .from("b2b_contracts")
           .select("monthly_fee, postsales_commission_pct, postsales_active")
