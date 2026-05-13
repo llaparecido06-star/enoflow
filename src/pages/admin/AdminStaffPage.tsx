@@ -14,7 +14,34 @@ interface StaffMember {
   role: string;
   is_active: boolean;
   created_at: string;
+  enabled_modules: string[] | null;
+  capture_point_ids: string[];
 }
+
+interface CapturePoint { id: string; name: string; category: string }
+
+const MODULES: Array<{ key: string; label: string; group: string }> = [
+  { group: "Operação", key: "checkin", label: "Check-in" },
+  { group: "Operação", key: "reservations", label: "Reservas" },
+  { group: "Operação", key: "settings", label: "Vouchers" },
+  { group: "Relacionamento", key: "dashboard", label: "Dashboard" },
+  { group: "Relacionamento", key: "leads", label: "Leads (CRM)" },
+  { group: "Relacionamento", key: "reviews", label: "Avaliações" },
+  { group: "Relacionamento", key: "campaigns", label: "Campanhas" },
+  { group: "Relacionamento", key: "loyalty", label: "Fidelidade" },
+  { group: "Catálogo", key: "wines", label: "Vinhos" },
+  { group: "Catálogo", key: "stock", label: "Estoque" },
+  { group: "Catálogo", key: "packages", label: "Pacotes" },
+  { group: "Catálogo", key: "menu", label: "Cardápio" },
+  { group: "Catálogo", key: "events", label: "Eventos" },
+  { group: "Insights", key: "finance", label: "Financeiro" },
+  { group: "Insights", key: "performance", label: "Performance" },
+  { group: "Insights", key: "audit", label: "Auditoria" },
+  { group: "Ajustes", key: "locations", label: "Locais" },
+  { group: "Ajustes", key: "training", label: "Treinamento" },
+  { group: "Ajustes", key: "import", label: "Importar" },
+  { group: "Ajustes", key: "config", label: "Configurações" },
+];
 
 const roleLabels: Record<string, string> = {
   staff: "Funcionário",
@@ -39,7 +66,18 @@ export default function AdminStaffPage() {
   const [deleteStaff, setDeleteStaff] = useState<StaffMember | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "staff" });
+  const [form, setForm] = useState<{
+    name: string; email: string; password: string; role: string;
+    enabled_modules: string[] | null; capture_point_ids: string[];
+  }>({ name: "", email: "", password: "", role: "staff", enabled_modules: null, capture_point_ids: [] });
+  const [capturePoints, setCapturePoints] = useState<CapturePoint[]>([]);
+  const [customizeModules, setCustomizeModules] = useState(false);
+
+  useEffect(() => {
+    invokeAuth("admin-locations", { action: "list" })
+      .then(({ data }) => setCapturePoints((data?.locations ?? data?.capture_points ?? []).map((c: any) => ({ id: c.id, name: c.name, category: c.category }))))
+      .catch(() => {});
+  }, []);
 
   const fetchStaff = async () => {
     setLoading(true);
