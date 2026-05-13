@@ -142,6 +142,186 @@ export type Database = {
           },
         ]
       }
+      b2b_clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          cnpj: string
+          created_at: string
+          id: string
+          legal_name: string
+          notes: string | null
+          responsible_cpf: string | null
+          responsible_email: string | null
+          responsible_name: string | null
+          responsible_phone: string | null
+          responsible_role: string | null
+          state: string | null
+          trade_name: string | null
+          updated_at: string
+          winery_id: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          cnpj: string
+          created_at?: string
+          id?: string
+          legal_name: string
+          notes?: string | null
+          responsible_cpf?: string | null
+          responsible_email?: string | null
+          responsible_name?: string | null
+          responsible_phone?: string | null
+          responsible_role?: string | null
+          state?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          winery_id?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          cnpj?: string
+          created_at?: string
+          id?: string
+          legal_name?: string
+          notes?: string | null
+          responsible_cpf?: string | null
+          responsible_email?: string | null
+          responsible_name?: string | null
+          responsible_phone?: string | null
+          responsible_role?: string | null
+          state?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          winery_id?: string | null
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_clients_winery_id_fkey"
+            columns: ["winery_id"]
+            isOneToOne: false
+            referencedRelation: "wineries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      b2b_contracts: {
+        Row: {
+          client_id: string
+          contract_url: string | null
+          created_at: string
+          end_date: string | null
+          id: string
+          monthly_fee: number
+          notes: string | null
+          plan_name: string
+          postsales_active: boolean
+          postsales_commission_pct: number
+          setup_fee: number
+          signed_at: string | null
+          start_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          contract_url?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          monthly_fee?: number
+          notes?: string | null
+          plan_name?: string
+          postsales_active?: boolean
+          postsales_commission_pct?: number
+          setup_fee?: number
+          signed_at?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          contract_url?: string | null
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          monthly_fee?: number
+          notes?: string | null
+          plan_name?: string
+          postsales_active?: boolean
+          postsales_commission_pct?: number
+          setup_fee?: number
+          signed_at?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      b2b_invoices: {
+        Row: {
+          amount: number
+          contract_id: string
+          created_at: string
+          description: string
+          due_date: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          payment_link: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          contract_id: string
+          created_at?: string
+          description: string
+          due_date: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_link?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          contract_id?: string
+          created_at?: string
+          description?: string
+          due_date?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payment_link?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_invoices_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaigns: {
         Row: {
           created_at: string
