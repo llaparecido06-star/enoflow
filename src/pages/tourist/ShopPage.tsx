@@ -215,8 +215,8 @@ export default function ShopPage() {
       const { data, error } = await invokeAuth("tourist-actions", {
         action: "create_voucher",
         code,
-        items: items.map((i) => ({ wine_id: i.wine.id, id: i.wine.id, name: i.wine.name, qty: i.quantity, quantity: i.quantity, price: i.wine.price_bottle * discountMultiplier })),
-        total: discountedTotal,
+        items: items.map((i) => ({ wine_id: i.wine.id, id: i.wine.id, name: i.wine.name, qty: i.quantity, quantity: i.quantity, price: (Number(i.wine.price_bottle) || 0) * discountMultiplier })),
+        total: Number(discountedTotal) || 0,
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
