@@ -99,13 +99,19 @@ export default function AdminStaffPage() {
 
   const openCreate = () => {
     setEditStaff(null);
-    setForm({ name: "", email: "", password: "", role: "staff" });
+    setForm({ name: "", email: "", password: "", role: "staff", enabled_modules: null, capture_point_ids: [] });
+    setCustomizeModules(false);
     setShowForm(true);
   };
 
   const openEdit = (member: StaffMember) => {
     setEditStaff(member);
-    setForm({ name: member.name, email: member.email, password: "", role: member.role });
+    setForm({
+      name: member.name, email: member.email, password: "", role: member.role,
+      enabled_modules: member.enabled_modules ?? null,
+      capture_point_ids: member.capture_point_ids ?? [],
+    });
+    setCustomizeModules(Array.isArray(member.enabled_modules));
     setShowForm(true);
   };
 
@@ -120,6 +126,7 @@ export default function AdminStaffPage() {
     }
 
     try {
+      const modulesPayload = customizeModules ? (form.enabled_modules ?? []) : [];
       if (editStaff) {
         const { data, error } = await invokeAuth("admin-staff", {
           action: "update",
@@ -128,6 +135,8 @@ export default function AdminStaffPage() {
           email: form.email.trim(),
           password: form.password || undefined,
           role: form.role,
+          enabled_modules: customizeModules ? modulesPayload : [],
+          capture_point_ids: form.capture_point_ids,
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
@@ -139,6 +148,8 @@ export default function AdminStaffPage() {
           email: form.email.trim(),
           password: form.password,
           role: form.role,
+          enabled_modules: customizeModules ? modulesPayload : undefined,
+          capture_point_ids: form.capture_point_ids,
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
