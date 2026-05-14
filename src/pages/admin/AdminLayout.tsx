@@ -21,6 +21,7 @@ const navGroups: NavGroup[] = [
       { id: "checkin", label: "Check-in", icon: Smartphone, path: "/checkin", cap: "checkin.use" },
       { id: "reservations", label: "Reservas", icon: CalendarCheck, path: "/reservations", cap: "reservations.view" },
       { id: "settings", label: "Vouchers", icon: QrCode, path: "/settings", cap: "vouchers.issue" },
+      { id: "separations", label: "Separações", icon: Wine, path: "/separations", cap: "vouchers.issue" },
     ],
   },
   {
