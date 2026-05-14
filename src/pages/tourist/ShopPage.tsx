@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useOutletContext, useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useContentTranslation } from "@/hooks/useContentTranslation";
 import QRCode from "qrcode";
 import { useWines, type Winery, type Wine } from "@/hooks/useWinery";
