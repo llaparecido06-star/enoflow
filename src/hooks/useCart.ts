@@ -24,13 +24,40 @@ function persistCart(items: CartItem[], wineryId?: string) {
   } catch {}
 }
 
-export function useCart(wineryId?: string) {
+export function useCart(wineryId?: string, wines?: Wine[]) {
   const [items, setItems] = useState<CartItem[]>(() => loadCart(wineryId));
 
   // Reload cart when wineryId changes
   useEffect(() => {
     setItems(loadCart(wineryId));
   }, [wineryId]);
+
+  // Reconcile stored cart items against fresh wines data (fixes stale/NaN prices)
+  useEffect(() => {
+    if (!wines || wines.length === 0) return;
+    setItems((prev) => {
+      let changed = false;
+      const reconciled = prev
+        .map((item) => {
+          const fresh = wines.find((w) => w.id === item.wine.id);
+          if (!fresh) return item;
+          const storedPrice = Number(item.wine.price_bottle);
+          const freshPrice = Number(fresh.price_bottle);
+          if (
+            !Number.isFinite(storedPrice) ||
+            storedPrice !== freshPrice ||
+            item.wine.name !== fresh.name
+          ) {
+            changed = true;
+            return { ...item, wine: { ...item.wine, ...fresh } };
+          }
+          return item;
+        })
+        .filter((item) => Number.isFinite(Number(item.wine.price_bottle)));
+      if (reconciled.length !== prev.length) changed = true;
+      return changed ? reconciled : prev;
+    });
+  }, [wines]);
 
   // Persist on every change
   useEffect(() => {
@@ -42,7 +69,7 @@ export function useCart(wineryId?: string) {
       const existing = prev.find((i) => i.wine.id === wine.id);
       if (existing) {
         return prev.map((i) =>
-          i.wine.id === wine.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.wine.id === wine.id ? { ...i, quantity: i.quantity + 1, wine: { ...i.wine, ...wine } } : i
         );
       }
       return [...prev, { wine, quantity: 1 }];
@@ -64,7 +91,10 @@ export function useCart(wineryId?: string) {
   }, []);
 
   const total = useMemo(
-    () => items.reduce((sum, i) => sum + (Number(i.wine.price_bottle) || 0) * i.quantity, 0),
+    () => items.reduce((sum, i) => {
+      const p = Number(i.wine.price_bottle);
+      return sum + (Number.isFinite(p) ? p : 0) * i.quantity;
+    }, 0),
     [items]
   );
 
