@@ -30,7 +30,7 @@ export default function ShopPage() {
   const { t, locale } = useI18n();
   const { lead, updateProfile } = useTouristAuth();
   const { data: wines } = useWines(winery.id);
-  const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart(winery.id);
+  const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart(winery.id, wines);
   const { favorites, isFavorite, toggleFavorite } = useFavorites(lead?.id, winery.id);
   const location = useLocation();
   const cur = winery.currency || "BRL";
