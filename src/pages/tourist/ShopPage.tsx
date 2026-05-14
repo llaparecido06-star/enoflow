@@ -30,7 +30,15 @@ export default function ShopPage() {
   const { winery, resolvedCPs } = useOutletContext<{ winery: Winery; resolvedCPs?: { restaurant_cp: string | null; shop_cp: string | null; tasting_cp: string | null } }>();
   const { t, locale } = useI18n();
   const { lead, updateProfile } = useTouristAuth();
+  const queryClient = useQueryClient();
   const { data: wines } = useWines(winery.id);
+
+  // Force fresh wines on every Shop mount so cart reconciliation uses live DB prices/names
+  useEffect(() => {
+    if (!winery.id) return;
+    queryClient.invalidateQueries({ queryKey: ["wines", winery.id] });
+  }, [winery.id, queryClient]);
+
   const { items, addItem, removeItem, updateQuantity, total, clearCart } = useCart(winery.id, wines);
   const { favorites, isFavorite, toggleFavorite } = useFavorites(lead?.id, winery.id);
   const location = useLocation();
