@@ -3,12 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Sparkles, Check } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 
-interface QuizSommelierProps {
-  wineryColor: string;
-  onComplete: (preferences: string) => void;
-  onSkip: () => void;
-}
-
 export interface QuizQuestion {
   id: string;
   emoji: string;
@@ -16,10 +10,16 @@ export interface QuizQuestion {
   options: { label: string; emoji: string; value: string }[];
 }
 
+export interface QuizAnswerEntry {
+  question_id: string;
+  question: string;
+  value: string;
+}
+
 interface QuizSommelierProps {
   wineryColor: string;
   questions?: QuizQuestion[];
-  onComplete: (preferences: string) => void;
+  onComplete: (preferences: string, answers: QuizAnswerEntry[]) => void;
   onSkip: () => void;
 }
 
