@@ -4,7 +4,7 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
-import { Building2, Phone, Clock, Globe, Shield, Share2, Sparkles, Plus, Trash2 } from "lucide-react";
+import { Building2, Phone, Clock, Globe, Shield, Share2, Sparkles, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 
 const DAYS = [
   { id: "mon", label: "Segunda" }, { id: "tue", label: "Terça" }, { id: "wed", label: "Quarta" },
@@ -122,6 +122,13 @@ function QuizCard({ cfg, onSave }: any) {
     } : q));
   const addQuestion = () => setQuestions(qs => [...qs, { id: `q${Date.now()}`, emoji: "✨", question: "Nova pergunta", options: [{ label: "Opção 1", emoji: "🍷", value: "Opção 1" }] }]);
   const removeQuestion = (qi: number) => setQuestions(qs => qs.filter((_, i) => i !== qi));
+  const moveQuestion = (qi: number, dir: -1 | 1) => setQuestions(qs => {
+    const ni = qi + dir;
+    if (ni < 0 || ni >= qs.length) return qs;
+    const copy = [...qs];
+    [copy[qi], copy[ni]] = [copy[ni], copy[qi]];
+    return copy;
+  });
   const addOption = (qi: number) => setQuestions(qs => qs.map((q, i) => i === qi ? { ...q, options: [...q.options, { label: "Nova opção", emoji: "🍷", value: "Nova opção" }] } : q));
   const removeOption = (qi: number, oi: number) => setQuestions(qs => qs.map((q, i) => i === qi ? { ...q, options: q.options.filter((_: any, j: number) => j !== oi) } : q));
 
@@ -165,6 +172,14 @@ function QuizCard({ cfg, onSave }: any) {
                 className="flex-1 border border-border rounded-lg px-3 py-2 text-sm bg-background"
                 placeholder="Texto da pergunta"
               />
+              <div className="flex flex-col gap-0.5">
+                <button onClick={() => moveQuestion(qi, -1)} disabled={qi === 0} className="p-1 rounded text-muted-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed" title="Mover para cima">
+                  <ArrowUp className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => moveQuestion(qi, 1)} disabled={qi === questions.length - 1} className="p-1 rounded text-muted-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed" title="Mover para baixo">
+                  <ArrowDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
               <button onClick={() => removeQuestion(qi)} className="p-2 rounded-lg text-destructive hover:bg-destructive/10" title="Remover pergunta">
                 <Trash2 className="w-4 h-4" />
               </button>

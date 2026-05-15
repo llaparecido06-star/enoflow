@@ -46,6 +46,7 @@ const AdminImportPage = lazy(() => import("./pages/admin/AdminImportPage"));
 const AdminAuditPage = lazy(() => import("./pages/admin/AdminAuditPage"));
 const AdminCheckinPage = lazy(() => import("./pages/admin/AdminCheckinPage"));
 const AdminSeparationHistoryPage = lazy(() => import("./pages/admin/AdminSeparationHistoryPage"));
+const AdminQuizResponsesPage = lazy(() => import("./pages/admin/AdminQuizResponsesPage"));
 
 // Lazy-loaded master routes
 const MasterLayout = lazy(() => import("./pages/master/MasterLayout"));
@@ -132,6 +133,7 @@ const App = () => {
                 <Route path="audit" element={<AdminAuditPage />} />
                 <Route path="checkin" element={<AdminCheckinPage />} />
                 <Route path="separations" element={<AdminSeparationHistoryPage />} />
+                <Route path="quiz-responses" element={<AdminQuizResponsesPage />} />
               </Route>
 
               {/* Privacy */}

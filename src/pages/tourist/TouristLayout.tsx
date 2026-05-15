@@ -131,9 +131,10 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
       <QuizSommelier
         wineryColor={winery.primary_color}
         questions={quizQuestions as any}
-        onComplete={async (preferences) => {
+        onComplete={async (preferences, answers) => {
           try {
             await updateProfile({ preferences_summary: preferences });
+            await invokeAuth("tourist-actions", { action: "save_quiz", answers, summary: preferences });
           } catch {}
           setShowQuiz(false);
           if (pendingRedirectCategory !== null) {
