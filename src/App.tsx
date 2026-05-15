@@ -133,6 +133,7 @@ const App = () => {
                 <Route path="audit" element={<AdminAuditPage />} />
                 <Route path="checkin" element={<AdminCheckinPage />} />
                 <Route path="separations" element={<AdminSeparationHistoryPage />} />
+                <Route path="quiz-responses" element={<AdminQuizResponsesPage />} />
               </Route>
 
               {/* Privacy */}
