@@ -172,6 +172,14 @@ function QuizCard({ cfg, onSave }: any) {
                 className="flex-1 border border-border rounded-lg px-3 py-2 text-sm bg-background"
                 placeholder="Texto da pergunta"
               />
+              <div className="flex flex-col gap-0.5">
+                <button onClick={() => moveQuestion(qi, -1)} disabled={qi === 0} className="p-1 rounded text-muted-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed" title="Mover para cima">
+                  <ArrowUp className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => moveQuestion(qi, 1)} disabled={qi === questions.length - 1} className="p-1 rounded text-muted-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed" title="Mover para baixo">
+                  <ArrowDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
               <button onClick={() => removeQuestion(qi)} className="p-2 rounded-lg text-destructive hover:bg-destructive/10" title="Remover pergunta">
                 <Trash2 className="w-4 h-4" />
               </button>
