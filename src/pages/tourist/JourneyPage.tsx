@@ -148,6 +148,9 @@ export default function JourneyPage() {
   }
 
   const hasProfile = !!lead?.preferences_summary || !!persona;
+  const quizEnabled = (winery as any).quiz_enabled !== false;
+  const quizQuestions = ((winery as any).quiz_config?.questions ?? []) as any[];
+  const quizAvailable = quizEnabled && Array.isArray(quizQuestions) && quizQuestions.length > 0;
 
   if (showQuiz) {
     return (
