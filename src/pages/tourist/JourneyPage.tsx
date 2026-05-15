@@ -153,6 +153,7 @@ export default function JourneyPage() {
     return (
       <QuizSommelier
         wineryColor={winery.primary_color}
+        questions={(winery as any).quiz_config?.questions ?? []}
         onComplete={async (preferences) => {
           try {
             await updateProfile({ preferences_summary: preferences });
