@@ -1744,6 +1744,8 @@ export type Database = {
           plan_level: Database["public"]["Enums"]["plan_level"]
           platform_commission_rate: number
           primary_color: string
+          quiz_config: Json
+          quiz_enabled: boolean
           slug: string
           status: string
           subscription_value: number
@@ -1773,6 +1775,8 @@ export type Database = {
           plan_level?: Database["public"]["Enums"]["plan_level"]
           platform_commission_rate?: number
           primary_color?: string
+          quiz_config?: Json
+          quiz_enabled?: boolean
           slug: string
           status?: string
           subscription_value?: number
@@ -1802,6 +1806,8 @@ export type Database = {
           plan_level?: Database["public"]["Enums"]["plan_level"]
           platform_commission_rate?: number
           primary_color?: string
+          quiz_config?: Json
+          quiz_enabled?: boolean
           slug?: string
           status?: string
           subscription_value?: number
