@@ -3,7 +3,7 @@ import { useWinery } from "@/hooks/useWinery";
 import { useAdminAuth, type AdminRole } from "@/hooks/useAdminAuth";
 import { useAdminSelf } from "@/hooks/useAdminSelf";
 import { useVoucherNotifications } from "@/hooks/useVoucherNotifications";
-import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare, MoreHorizontal, CalendarCheck, Boxes, DollarSign, Building2, Star, Gift, CalendarDays, Upload, Shield, Smartphone } from "lucide-react";
+import { Wine, Package, Users, Loader2, LogOut, UtensilsCrossed, UserCog, LayoutDashboard, Rocket, QrCode, MapPin, Activity, MessageSquare, MoreHorizontal, CalendarCheck, Boxes, DollarSign, Building2, Star, Gift, CalendarDays, Upload, Shield, Smartphone, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import NotificationBell from "@/components/admin/crm/NotificationBell";
 import StaffSeparationBell from "@/components/admin/StaffSeparationBell";
