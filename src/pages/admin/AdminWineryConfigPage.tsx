@@ -122,6 +122,13 @@ function QuizCard({ cfg, onSave }: any) {
     } : q));
   const addQuestion = () => setQuestions(qs => [...qs, { id: `q${Date.now()}`, emoji: "✨", question: "Nova pergunta", options: [{ label: "Opção 1", emoji: "🍷", value: "Opção 1" }] }]);
   const removeQuestion = (qi: number) => setQuestions(qs => qs.filter((_, i) => i !== qi));
+  const moveQuestion = (qi: number, dir: -1 | 1) => setQuestions(qs => {
+    const ni = qi + dir;
+    if (ni < 0 || ni >= qs.length) return qs;
+    const copy = [...qs];
+    [copy[qi], copy[ni]] = [copy[ni], copy[qi]];
+    return copy;
+  });
   const addOption = (qi: number) => setQuestions(qs => qs.map((q, i) => i === qi ? { ...q, options: [...q.options, { label: "Nova opção", emoji: "🍷", value: "Nova opção" }] } : q));
   const removeOption = (qi: number, oi: number) => setQuestions(qs => qs.map((q, i) => i === qi ? { ...q, options: q.options.filter((_: any, j: number) => j !== oi) } : q));
 
