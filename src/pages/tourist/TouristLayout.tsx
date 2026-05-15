@@ -130,6 +130,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
     return (
       <QuizSommelier
         wineryColor={winery.primary_color}
+        questions={quizQuestions as any}
         onComplete={async (preferences) => {
           try {
             await updateProfile({ preferences_summary: preferences });
