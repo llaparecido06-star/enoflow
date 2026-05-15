@@ -198,16 +198,17 @@ export default function JourneyPage() {
           </motion.div>
           <h2 className="font-display text-lg font-bold text-foreground mb-2">{t("journey.no_profile")}</h2>
           <p className="text-xs text-muted-foreground mb-5">{t("journey.empty_state")}</p>
-          <motion.button
-            onClick={() => setShowQuiz(true)}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-colors bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <Sparkles className="w-4 h-4" />
-            {t("journey.take_quiz")}
-          </motion.button>
-        </motion.div>
+          {quizAvailable && (
+            <motion.button
+              onClick={() => setShowQuiz(true)}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-colors bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Sparkles className="w-4 h-4" />
+              {t("journey.take_quiz")}
+            </motion.button>
+          )}
       ) : (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-2 mb-1">
