@@ -45,6 +45,7 @@ Deno.serve(async (req) => {
         hours: ["business_hours"],
         i18n: ["default_language", "supported_languages", "currency"],
         lgpd: ["lgpd_policy_url"],
+        quiz: ["quiz_enabled", "quiz_config"],
       };
       const allowed = ALLOWED[section];
       if (!allowed) return json({ error: "section inválido" }, 400);
