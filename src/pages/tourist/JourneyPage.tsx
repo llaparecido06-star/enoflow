@@ -349,7 +349,7 @@ export default function JourneyPage() {
       </motion.div>
 
       {/* Retake quiz link — only shown when user already has profile data */}
-      {hasProfile && (
+      {hasProfile && quizAvailable && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
           className="text-center pb-4">
           <button
