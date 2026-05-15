@@ -52,6 +52,7 @@ const navGroups: NavGroup[] = [
     items: [
       { id: "finance", label: "Financeiro", icon: DollarSign, path: "/finance", cap: "finance.view" },
       { id: "performance", label: "Performance", icon: Activity, path: "/performance", cap: "performance.view" },
+      { id: "quiz-responses", label: "Quiz", icon: Sparkles, path: "/quiz-responses", cap: "config.view" },
       { id: "audit", label: "Auditoria", icon: Shield, path: "/audit", cap: "audit.view" },
     ],
   },
