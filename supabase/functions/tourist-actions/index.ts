@@ -67,6 +67,24 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
+    // ─── ACTION: save_quiz
+    if (action === "save_quiz") {
+      const answers = Array.isArray(body.answers) ? body.answers.slice(0, 50) : [];
+      const sanitized = answers
+        .filter((a: any) => a && typeof a === "object")
+        .map((a: any) => ({
+          question_id: String(a.question_id ?? "").slice(0, 60),
+          question: String(a.question ?? "").slice(0, 300),
+          value: String(a.value ?? "").slice(0, 200),
+        }));
+      const summary = typeof body.summary === "string" ? body.summary.slice(0, 500) : null;
+      const { error } = await supabase.from("quiz_responses").insert({
+        winery_id, lead_id: user_id, answers: sanitized, summary,
+      });
+      if (error) throw error;
+      return json({ success: true });
+    }
+
     // ─── ACTION: get_ratings
     if (action === "get_ratings") {
       const { data, error } = await supabase
