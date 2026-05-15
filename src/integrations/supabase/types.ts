@@ -1198,6 +1198,33 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_responses: {
+        Row: {
+          answers: Json
+          created_at: string
+          id: string
+          lead_id: string | null
+          summary: string | null
+          winery_id: string
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          summary?: string | null
+          winery_id: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          lead_id?: string | null
+          summary?: string | null
+          winery_id?: string
+        }
+        Relationships: []
+      }
       ratings: {
         Row: {
           created_at: string
