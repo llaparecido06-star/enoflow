@@ -148,11 +148,15 @@ export default function JourneyPage() {
   }
 
   const hasProfile = !!lead?.preferences_summary || !!persona;
+  const quizEnabled = (winery as any).quiz_enabled !== false;
+  const quizQuestions = ((winery as any).quiz_config?.questions ?? []) as any[];
+  const quizAvailable = quizEnabled && Array.isArray(quizQuestions) && quizQuestions.length > 0;
 
   if (showQuiz) {
     return (
       <QuizSommelier
         wineryColor={winery.primary_color}
+        questions={(winery as any).quiz_config?.questions ?? []}
         onComplete={async (preferences) => {
           try {
             await updateProfile({ preferences_summary: preferences });
@@ -194,15 +198,17 @@ export default function JourneyPage() {
           </motion.div>
           <h2 className="font-display text-lg font-bold text-foreground mb-2">{t("journey.no_profile")}</h2>
           <p className="text-xs text-muted-foreground mb-5">{t("journey.empty_state")}</p>
-          <motion.button
-            onClick={() => setShowQuiz(true)}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-colors bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <Sparkles className="w-4 h-4" />
-            {t("journey.take_quiz")}
-          </motion.button>
+          {quizAvailable && (
+            <motion.button
+              onClick={() => setShowQuiz(true)}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-colors bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <Sparkles className="w-4 h-4" />
+              {t("journey.take_quiz")}
+            </motion.button>
+          )}
         </motion.div>
       ) : (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -343,7 +349,7 @@ export default function JourneyPage() {
       </motion.div>
 
       {/* Retake quiz link — only shown when user already has profile data */}
-      {hasProfile && (
+      {hasProfile && quizAvailable && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
           className="text-center pb-4">
           <button

@@ -7,6 +7,7 @@ const WINERY_FIELDS = [
   "google_business_url", "tripadvisor_url", "facebook_url", "youtube_url",
   "lgpd_policy_url", "default_language", "supported_languages",
   "plan_level", "status", "max_locations",
+  "quiz_enabled", "quiz_config",
 ];
 
 Deno.serve(async (req) => {
@@ -44,6 +45,7 @@ Deno.serve(async (req) => {
         hours: ["business_hours"],
         i18n: ["default_language", "supported_languages", "currency"],
         lgpd: ["lgpd_policy_url"],
+        quiz: ["quiz_enabled", "quiz_config"],
       };
       const allowed = ALLOWED[section];
       if (!allowed) return json({ error: "section inválido" }, 400);

@@ -4,7 +4,7 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
-import { Building2, Phone, Clock, Globe, Shield, Share2 } from "lucide-react";
+import { Building2, Phone, Clock, Globe, Shield, Share2, Sparkles, Plus, Trash2 } from "lucide-react";
 
 const DAYS = [
   { id: "mon", label: "Segunda" }, { id: "tue", label: "Terça" }, { id: "wed", label: "Quarta" },
@@ -71,6 +71,143 @@ export default function AdminWineryConfigPage() {
       <SectionCard icon={Shield} title="LGPD" onSave={(v) => save("lgpd", v)} fields={[
         { key: "lgpd_policy_url", label: "URL da política", value: cfg.lgpd_policy_url ?? "" },
       ]} />
+
+      <QuizCard cfg={cfg} onSave={(v) => save("quiz", v)} />
+    </div>
+  );
+}
+
+const DEFAULT_QUIZ_QUESTIONS = [
+  {
+    id: "type", emoji: "🍷", question: "Qual tipo de vinho você prefere?",
+    options: [
+      { label: "Tinto", emoji: "🍷", value: "Tinto" },
+      { label: "Branco", emoji: "🥂", value: "Branco" },
+      { label: "Rosé", emoji: "🌸", value: "Rosé" },
+      { label: "Espumante", emoji: "🍾", value: "Espumante" },
+    ],
+  },
+  {
+    id: "sweetness", emoji: "🍬", question: "Qual nível de doçura?",
+    options: [
+      { label: "Seco", emoji: "🌵", value: "Seco" },
+      { label: "Meio-seco", emoji: "🌤️", value: "Meio-seco" },
+      { label: "Suave", emoji: "🌺", value: "Suave" },
+      { label: "Doce", emoji: "🍯", value: "Doce" },
+    ],
+  },
+  {
+    id: "body", emoji: "💪", question: "Qual corpo você prefere?",
+    options: [
+      { label: "Leve", emoji: "🪶", value: "Leve" },
+      { label: "Médio", emoji: "⚖️", value: "Médio" },
+      { label: "Encorpado", emoji: "🏋️", value: "Encorpado" },
+    ],
+  },
+];
+
+function QuizCard({ cfg, onSave }: any) {
+  const [enabled, setEnabled] = useState<boolean>(cfg.quiz_enabled !== false);
+  const initial = (cfg.quiz_config?.questions && cfg.quiz_config.questions.length > 0)
+    ? cfg.quiz_config.questions
+    : DEFAULT_QUIZ_QUESTIONS;
+  const [questions, setQuestions] = useState<any[]>(initial);
+
+  const updateQ = (qi: number, patch: any) =>
+    setQuestions(qs => qs.map((q, i) => i === qi ? { ...q, ...patch } : q));
+  const updateOpt = (qi: number, oi: number, patch: any) =>
+    setQuestions(qs => qs.map((q, i) => i === qi ? {
+      ...q,
+      options: q.options.map((o: any, j: number) => j === oi ? { ...o, ...patch } : o),
+    } : q));
+  const addQuestion = () => setQuestions(qs => [...qs, { id: `q${Date.now()}`, emoji: "✨", question: "Nova pergunta", options: [{ label: "Opção 1", emoji: "🍷", value: "Opção 1" }] }]);
+  const removeQuestion = (qi: number) => setQuestions(qs => qs.filter((_, i) => i !== qi));
+  const addOption = (qi: number) => setQuestions(qs => qs.map((q, i) => i === qi ? { ...q, options: [...q.options, { label: "Nova opção", emoji: "🍷", value: "Nova opção" }] } : q));
+  const removeOption = (qi: number, oi: number) => setQuestions(qs => qs.map((q, i) => i === qi ? { ...q, options: q.options.filter((_: any, j: number) => j !== oi) } : q));
+
+  return (
+    <div className="admin-card admin-card-hover p-5 mb-4">
+      <h3 className="admin-section-title flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Sparkles className="w-4 h-4 text-primary" />
+        </div>
+        Quiz do Sommelier
+      </h3>
+
+      <label className="flex items-center justify-between gap-3 mb-4 p-3 rounded-lg border border-border bg-background/50">
+        <div>
+          <p className="text-sm font-medium text-foreground">Ativar quiz para visitantes</p>
+          <p className="text-xs text-muted-foreground">Quando desativado, o quiz não é exibido após o login.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setEnabled(e => !e)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? "bg-primary" : "bg-muted"}`}
+          aria-pressed={enabled}
+        >
+          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${enabled ? "translate-x-5" : "translate-x-1"}`} />
+        </button>
+      </label>
+
+      <div className="space-y-4">
+        {questions.map((q, qi) => (
+          <div key={qi} className="border border-border rounded-lg p-4 bg-background/40">
+            <div className="flex items-start gap-2 mb-3">
+              <input
+                value={q.emoji ?? ""}
+                onChange={(e) => updateQ(qi, { emoji: e.target.value })}
+                className="w-14 text-center border border-border rounded-lg px-2 py-2 text-sm bg-background"
+                placeholder="Emoji"
+              />
+              <input
+                value={q.question ?? ""}
+                onChange={(e) => updateQ(qi, { question: e.target.value })}
+                className="flex-1 border border-border rounded-lg px-3 py-2 text-sm bg-background"
+                placeholder="Texto da pergunta"
+              />
+              <button onClick={() => removeQuestion(qi)} className="p-2 rounded-lg text-destructive hover:bg-destructive/10" title="Remover pergunta">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {q.options.map((o: any, oi: number) => (
+                <div key={oi} className="flex items-center gap-2">
+                  <input
+                    value={o.emoji ?? ""}
+                    onChange={(e) => updateOpt(qi, oi, { emoji: e.target.value })}
+                    className="w-12 text-center border border-border rounded-lg px-2 py-1.5 text-xs bg-background"
+                    placeholder="🍷"
+                  />
+                  <input
+                    value={o.label ?? ""}
+                    onChange={(e) => updateOpt(qi, oi, { label: e.target.value, value: e.target.value })}
+                    className="flex-1 border border-border rounded-lg px-3 py-1.5 text-xs bg-background"
+                    placeholder="Texto da opção"
+                  />
+                  <button onClick={() => removeOption(qi, oi)} className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted" title="Remover opção" disabled={q.options.length <= 1}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+              <button onClick={() => addOption(qi)} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                <Plus className="w-3 h-3" /> Adicionar opção
+              </button>
+            </div>
+          </div>
+        ))}
+
+        <button onClick={addQuestion} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:bg-muted/50 w-full justify-center">
+          <Plus className="w-4 h-4" /> Adicionar pergunta
+        </button>
+      </div>
+
+      <button
+        onClick={() => onSave({ quiz_enabled: enabled, quiz_config: { questions } })}
+        className="mt-4 inline-flex items-center gap-2 gradient-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium shadow-card hover:shadow-elevated hover:scale-[1.02] transition-all"
+      >
+        Salvar quiz
+      </button>
     </div>
   );
 }

@@ -92,16 +92,19 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
     }).catch(() => {});
   }, [isAuthenticated, capturePointId]);
 
-  // Show quiz right after first login (no preferences yet)
+  // Show quiz right after first login (no preferences yet) — only if winery has it enabled and configured
+  const quizEnabled = (winery as any).quiz_enabled !== false;
+  const quizQuestions = ((winery as any).quiz_config?.questions ?? []) as any[];
+  const quizAvailable = quizEnabled && Array.isArray(quizQuestions) && quizQuestions.length > 0;
   useEffect(() => {
-    if (isAuthenticated && lead && !lead.preferences_summary) {
+    if (isAuthenticated && lead && !lead.preferences_summary && quizAvailable) {
       setShowQuiz(true);
     } else if (isAuthenticated && pendingRedirectCategory !== null) {
       // No quiz needed, redirect immediately
       navigateToCategory(pendingRedirectCategory);
       setPendingRedirectCategory(null);
     }
-  }, [isAuthenticated, lead?.id]);
+  }, [isAuthenticated, lead?.id, quizAvailable]);
 
   const navigateToCategory = (category: string | null) => {
     const path = categoryToPath[category || ""] ?? "";
@@ -127,6 +130,7 @@ function InnerLayout({ slug, winery }: { slug: string; winery: any }) {
     return (
       <QuizSommelier
         wineryColor={winery.primary_color}
+        questions={quizQuestions as any}
         onComplete={async (preferences) => {
           try {
             await updateProfile({ preferences_summary: preferences });

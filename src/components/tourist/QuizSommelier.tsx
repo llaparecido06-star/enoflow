@@ -9,47 +9,70 @@ interface QuizSommelierProps {
   onSkip: () => void;
 }
 
-export default function QuizSommelier({ wineryColor, onComplete, onSkip }: QuizSommelierProps) {
+export interface QuizQuestion {
+  id: string;
+  emoji: string;
+  question: string;
+  options: { label: string; emoji: string; value: string }[];
+}
+
+interface QuizSommelierProps {
+  wineryColor: string;
+  questions?: QuizQuestion[];
+  onComplete: (preferences: string) => void;
+  onSkip: () => void;
+}
+
+const DEFAULT_QUESTIONS_KEYS = [
+  {
+    id: "type",
+    emoji: "🍷",
+    questionKey: "quiz.q_type",
+    options: [
+      { labelKey: "quiz.opt_red", emoji: "🍷", value: "Tinto" },
+      { labelKey: "quiz.opt_white", emoji: "🥂", value: "Branco" },
+      { labelKey: "quiz.opt_rose", emoji: "🌸", value: "Rosé" },
+      { labelKey: "quiz.opt_sparkling", emoji: "🍾", value: "Espumante" },
+    ],
+  },
+  {
+    id: "sweetness",
+    emoji: "🍬",
+    questionKey: "quiz.q_sweetness",
+    options: [
+      { labelKey: "quiz.opt_dry", emoji: "🌵", value: "Seco" },
+      { labelKey: "quiz.opt_semi_dry", emoji: "🌤️", value: "Meio-seco" },
+      { labelKey: "quiz.opt_smooth", emoji: "🌺", value: "Suave" },
+      { labelKey: "quiz.opt_sweet", emoji: "🍯", value: "Doce" },
+    ],
+  },
+  {
+    id: "body",
+    emoji: "💪",
+    questionKey: "quiz.q_body",
+    options: [
+      { labelKey: "quiz.opt_light", emoji: "🪶", value: "Leve" },
+      { labelKey: "quiz.opt_medium", emoji: "⚖️", value: "Médio" },
+      { labelKey: "quiz.opt_full", emoji: "🏋️", value: "Encorpado" },
+    ],
+  },
+];
+
+export default function QuizSommelier({ wineryColor, questions: customQuestions, onComplete, onSkip }: QuizSommelierProps) {
   const { t } = useI18n();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [selectedValue, setSelectedValue] = useState<string | null>(null);
   const [direction, setDirection] = useState(1);
 
-  const questions = [
-    {
-      id: "type",
-      emoji: "🍷",
-      question: t("quiz.q_type"),
-      options: [
-        { label: t("quiz.opt_red"), emoji: "🍷", value: "Tinto" },
-        { label: t("quiz.opt_white"), emoji: "🥂", value: "Branco" },
-        { label: t("quiz.opt_rose"), emoji: "🌸", value: "Rosé" },
-        { label: t("quiz.opt_sparkling"), emoji: "🍾", value: "Espumante" },
-      ],
-    },
-    {
-      id: "sweetness",
-      emoji: "🍬",
-      question: t("quiz.q_sweetness"),
-      options: [
-        { label: t("quiz.opt_dry"), emoji: "🌵", value: "Seco" },
-        { label: t("quiz.opt_semi_dry"), emoji: "🌤️", value: "Meio-seco" },
-        { label: t("quiz.opt_smooth"), emoji: "🌺", value: "Suave" },
-        { label: t("quiz.opt_sweet"), emoji: "🍯", value: "Doce" },
-      ],
-    },
-    {
-      id: "body",
-      emoji: "💪",
-      question: t("quiz.q_body"),
-      options: [
-        { label: t("quiz.opt_light"), emoji: "🪶", value: "Leve" },
-        { label: t("quiz.opt_medium"), emoji: "⚖️", value: "Médio" },
-        { label: t("quiz.opt_full"), emoji: "🏋️", value: "Encorpado" },
-      ],
-    },
-  ];
+  const questions: QuizQuestion[] = (customQuestions && customQuestions.length > 0)
+    ? customQuestions
+    : DEFAULT_QUESTIONS_KEYS.map((q) => ({
+        id: q.id,
+        emoji: q.emoji,
+        question: t(q.questionKey),
+        options: q.options.map((o) => ({ label: t(o.labelKey), emoji: o.emoji, value: o.value })),
+      }));
 
   const handleAnswer = (value: string) => {
     setSelectedValue(value);
