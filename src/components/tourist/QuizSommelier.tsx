@@ -87,7 +87,10 @@ export default function QuizSommelier({ wineryColor, questions: customQuestions,
     } else {
       // Last question: complete immediately to avoid delay
       setSelectedValue(null);
-      onComplete(next.join(", "));
+      const entries: QuizAnswerEntry[] = next.map((v, i) => ({
+        question_id: questions[i].id, question: questions[i].question, value: v,
+      }));
+      onComplete(next.join(", "), entries);
     }
   };
 
