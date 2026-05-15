@@ -4,7 +4,7 @@ import type { Winery } from "@/hooks/useWinery";
 import type { AdminUser } from "@/hooks/useAdminAuth";
 import { invokeAuth } from "@/lib/auth-api";
 import { toast } from "sonner";
-import { Building2, Phone, Clock, Globe, Shield, Share2 } from "lucide-react";
+import { Building2, Phone, Clock, Globe, Shield, Share2, Sparkles, Plus, Trash2 } from "lucide-react";
 
 const DAYS = [
   { id: "mon", label: "Segunda" }, { id: "tue", label: "Terça" }, { id: "wed", label: "Quarta" },
