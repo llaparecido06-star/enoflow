@@ -7,6 +7,7 @@ const WINERY_FIELDS = [
   "google_business_url", "tripadvisor_url", "facebook_url", "youtube_url",
   "lgpd_policy_url", "default_language", "supported_languages",
   "plan_level", "status", "max_locations",
+  "quiz_enabled", "quiz_config",
 ];
 
 Deno.serve(async (req) => {
