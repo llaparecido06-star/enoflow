@@ -531,6 +531,7 @@ export default function ShopPage() {
             onBuy={() => {
               addItem(pairing.wine);
               toast.success(`${pairing.wine.name} ${t("shop.added_to_cart")}`);
+              setHighlightId(pairing.wine.id);
               setPairing(null);
               setShowCart(true);
             }}
