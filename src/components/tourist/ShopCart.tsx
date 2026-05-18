@@ -22,7 +22,7 @@ interface ShopCartProps {
 export default function ShopCart({
   items, total, discountedTotal, discountApplied, currency,
   showCart, setShowCart, updateQuantity, removeItem,
-  onGenerateVoucher, generating, t,
+  onGenerateVoucher, generating, t, highlightId,
 }: ShopCartProps) {
   if (items.length === 0) return null;
 
