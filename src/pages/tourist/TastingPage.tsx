@@ -341,6 +341,10 @@ export default function TastingPage() {
               isLast={i === tastingWines.length - 1}
               allRated={allTastingRated}
               onFinish={handleFinishTasting}
+              onReserve={() => {
+                toast.success(`${wine.name} reservado na loja`);
+                navigate(`/app/${winery.slug}/shop`, { state: { addToCart: wine } });
+              }}
             />
           ))}
         </div>
