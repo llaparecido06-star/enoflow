@@ -316,6 +316,7 @@ export default function ShopPage() {
           onGenerateVoucher={startVoucherFunnel}
           generating={generating}
           t={t}
+          highlightId={highlightId}
         />
       )}
 
