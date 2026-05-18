@@ -41,6 +41,7 @@ export default function TastingPage() {
   const { data: wines } = useWines(winery.id);
   const { data: allPackages } = useTastingPackages(winery.id);
   const { isFavorite, toggleFavorite } = useFavorites(lead?.id, winery.id);
+  const { addItem, isReserved } = useCart(winery.id, wines);
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const tastingCp = resolvedCPs?.tasting_cp || null;
