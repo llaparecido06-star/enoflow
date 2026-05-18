@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
         supabase.from("users_leads").select("preferences_summary, gender, birth_date").eq("id", user_id).maybeSingle(),
         supabase.from("ratings").select("wine_id, stars_acidity, stars_body, stars_sweetness").eq("user_id", user_id),
         supabase.from("favorites").select("wine_id").eq("user_id", user_id).eq("winery_id", winery_id),
-        supabase.from("wines").select("id, name, type, grape, sensory_acidity, sensory_body, sensory_sweetness, description").eq("winery_id", winery_id).eq("on_shop", true),
+        supabase.from("wines").select("id, name, type, grape, sensory_acidity, sensory_body, sensory_sweetness, description, price_bottle, image_url").eq("winery_id", winery_id).eq("on_shop", true),
         supabase.from("vouchers").select("items").eq("user_id", user_id).eq("winery_id", winery_id),
       ]);
 
