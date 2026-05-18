@@ -50,7 +50,7 @@ function SensoryStars({ label, value }: { label: string; value: number }) {
   );
 }
 
-export default function TastingCard({ wine, isActive, onRate, isFavorite, onToggleFavorite, initialRatings, isLast, allRated, onFinish, onReserve }: TastingCardProps) {
+export default function TastingCard({ wine, isActive, onRate, isFavorite, onToggleFavorite, initialRatings, isLast, allRated, onFinish, onReserve, isReserved }: TastingCardProps) {
   const { t } = useI18n();
 
   const defaultHarmonizations: Record<string, string[]> = {
