@@ -95,7 +95,12 @@ export default function LeadTimelineModal({ lead, wineryId, currency, onClose, o
   const events: { date: string; type: string; label: string; meta?: string }[] = [];
   if (data) {
     for (const v of data.vouchers ?? []) {
-      events.push({ date: v.created_at, type: "voucher", label: `Voucher ${v.code} · ${formatCurrency(Number(v.total), currency)}`, meta: v.redeemed ? "Resgatado" : "Pendente" });
+      const reservedCount = Array.isArray(v.items)
+        ? v.items.filter((it: any) => it?.reserved_from_tasting || it?.origin === "tasting").reduce((s: number, it: any) => s + (Number(it?.qty ?? it?.quantity ?? 1)), 0)
+        : 0;
+      const metaParts = [v.redeemed ? "Resgatado" : "Pendente"];
+      if (reservedCount > 0) metaParts.push(`${reservedCount} reservado(s) na degustação`);
+      events.push({ date: v.created_at, type: "voucher", label: `Voucher ${v.code} · ${formatCurrency(Number(v.total), currency)}`, meta: metaParts.join(" · ") });
     }
     for (const c of data.captures ?? []) {
       events.push({ date: c.created_at, type: "visit", label: `Visita: ${c.capture_location || c.capture_category || "—"}` });
