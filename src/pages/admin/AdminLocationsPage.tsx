@@ -381,13 +381,13 @@ export default function AdminLocationsPage() {
                 </div>
               )}
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSave} disabled={saving || !form.name.trim()}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                {editTarget ? "Salvar" : "Criar"}
-              </Button>
-            </div>
+          </div>
+          <div className="flex justify-end gap-2 px-6 py-3 border-t border-border shrink-0 bg-background">
+            <Button variant="outline" onClick={() => setModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={saving || !form.name.trim()}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {editTarget ? "Salvar" : "Criar"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
