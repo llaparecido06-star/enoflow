@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Minus, Plus, Trash2 } from "lucide-react";
+import { ShoppingBag, Minus, Plus, Trash2, Sparkles } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import type { CartItem } from "@/hooks/useCart";
 
@@ -16,6 +16,7 @@ interface ShopCartProps {
   onGenerateVoucher: () => void;
   generating: boolean;
   t: (k: string) => string;
+  highlightId?: string | null;
 }
 
 export default function ShopCart({
