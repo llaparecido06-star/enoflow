@@ -34,7 +34,11 @@ export default function AIRecommendations({ leadId, slug, currency }: { leadId: 
           const price = Number(wine.price_bottle);
           const hasPrice = Number.isFinite(price) && price > 0;
           return (
-            <div key={wine.id} className="bg-card rounded-xl border border-border/30 p-3 flex items-center gap-3">
+            <div
+              key={wine.id}
+              onClick={() => navigate(`/app/${slug}/shop`, { state: { openWineId: wine.id } })}
+              className="bg-card rounded-xl border border-border/30 p-3 flex items-center gap-3 cursor-pointer hover:bg-muted/40 active:scale-[0.99] transition"
+            >
               <div className="w-10 h-10 rounded-lg bg-wine/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {wine.image_url ? (
                   <img src={wine.image_url} alt={wine.name} className="w-full h-full object-cover rounded-lg" />
@@ -49,7 +53,8 @@ export default function AIRecommendations({ leadId, slug, currency }: { leadId: 
                   <p className="text-[10px] text-gold font-bold mt-0.5">{formatCurrencyShort(price, currency)}</p>
                 )}
               </div>
-              <button onClick={() => navigate(`/app/${slug}/shop`, { state: { addToCart: wine } })}
+              <button
+                onClick={(e) => { e.stopPropagation(); navigate(`/app/${slug}/shop`, { state: { addToCart: wine } }); }}
                 className="bg-gold text-gold-foreground px-3 py-2 rounded-xl text-[10px] font-bold flex items-center gap-1 flex-shrink-0">
                 <ShoppingBag className="w-3 h-3" /> Comprar
               </button>
