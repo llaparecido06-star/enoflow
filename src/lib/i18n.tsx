@@ -192,6 +192,9 @@ const translations: Record<Locale, Record<string, string>> = {
     "rating.body": "Corpo",
     "rating.sweetness": "Doçura",
     "rating.submit": "Enviar avaliação",
+    "rating.submitted": "Avaliação enviada!",
+    "shop.view_details": "Ver detalhes",
+    "shop.rate": "Avaliar",
     // NPS
     "nps.how_was_experience": "Como foi sua experiência?",
     "nps.recommend_scale": "De 0 a 10, o quanto você recomendaria esta vinícola?",
