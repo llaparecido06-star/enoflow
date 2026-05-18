@@ -423,6 +423,7 @@ export default function ShopPage() {
                       winerySlug={winery.slug}
                       onAdd={() => { addItem(wine); toast.success(`${wine.name} ${t("shop.added_to_cart")}`); }}
                       onDetail={() => setDetailWine(wine)}
+                      onRate={() => setRatingWine(wine)}
                       isFavorite={isFavorite(wine.id)}
                       onToggleFavorite={() => {
                         toggleFavorite(wine.id);
