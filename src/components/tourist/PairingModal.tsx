@@ -58,7 +58,7 @@ export default function PairingModal({ wineName, pairings, loading, onClose, onB
               className="w-full bg-gold text-gold-foreground py-3 rounded-xl font-semibold text-sm hover:bg-gold/90 transition-colors flex items-center justify-center gap-2"
             >
               <ShoppingBag className="w-4 h-4" />
-              Comprar este vinho
+              Adicionar ao carrinho e abrir
             </button>
           )}
           <button
