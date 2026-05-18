@@ -148,6 +148,51 @@ Responda APENAS com JSON: {"recommendations":[{"wine_id":"...","reason":"..."}]}
       }
     }
 
+    // ─── AI food pairings for a specific wine
+    if (action === "pair_wine") {
+      const { wine_id } = body;
+      if (!wine_id) return json({ error: "wine_id required" }, 400);
+      const apiKey = Deno.env.get("LOVABLE_API_KEY");
+      if (!apiKey) return json({ success: true, pairings: [] });
+
+      const { data: wine } = await supabase
+        .from("wines")
+        .select("id, name, type, grape, sensory_acidity, sensory_body, sensory_sweetness, description")
+        .eq("id", wine_id)
+        .eq("winery_id", winery_id)
+        .maybeSingle();
+      if (!wine) return json({ success: true, pairings: [] });
+
+      const prompt = `Você é um sommelier brasileiro. Para o vinho abaixo, sugira 3 harmonizações gastronômicas elegantes e específicas (pratos, queijos ou sobremesas).
+Vinho: ${wine.name} (${wine.type}, uva ${wine.grape ?? "-"}). Acidez ${wine.sensory_acidity}/5, Corpo ${wine.sensory_body}/5, Doçura ${wine.sensory_sweetness}/5.
+${wine.description ? `Notas: ${wine.description}` : ""}
+
+Responda APENAS com JSON: {"pairings":[{"dish":"nome do prato","reason":"por que harmoniza (máx 18 palavras)"}]}`;
+
+      try {
+        const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [{ role: "user", content: prompt }],
+            response_format: { type: "json_object" },
+          }),
+        });
+        if (!aiRes.ok) return json({ success: true, pairings: [] });
+        const aiData = await aiRes.json();
+        const content = aiData?.choices?.[0]?.message?.content || "{}";
+        const parsed = JSON.parse(content);
+        const pairings = (parsed.pairings ?? []).slice(0, 3).map((p: any) => ({
+          dish: String(p.dish ?? "").slice(0, 120),
+          reason: String(p.reason ?? "").slice(0, 240),
+        }));
+        return json({ success: true, wine: { id: wine.id, name: wine.name }, pairings });
+      } catch {
+        return json({ success: true, pairings: [] });
+      }
+    }
+
     return json({ error: "Unknown action" }, 400);
   } catch (e) {
     console.error("tourist-loyalty error:", e);
