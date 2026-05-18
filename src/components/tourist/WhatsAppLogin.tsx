@@ -41,6 +41,33 @@ function applyMask(value: string, mask: string): string {
   return result;
 }
 
+/** Returns a brand color guaranteed to have decent contrast against a light background.
+ *  If the input color is too light (luminance > 0.7), darkens it; otherwise returns as-is. */
+function ensureContrastOnLight(color: string): string {
+  try {
+    const hex = color.trim().replace("#", "");
+    if (!/^[0-9a-fA-F]{6}$/.test(hex)) return color;
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    // Relative luminance (sRGB)
+    const toLin = (c: number) => {
+      const s = c / 255;
+      return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+    };
+    const L = 0.2126 * toLin(r) + 0.7152 * toLin(g) + 0.0722 * toLin(b);
+    if (L < 0.55) return color; // already dark enough
+    // Darken toward black until luminance drops below 0.45
+    const factor = L > 0.8 ? 0.45 : 0.65;
+    const dr = Math.round(r * factor);
+    const dg = Math.round(g * factor);
+    const db = Math.round(b * factor);
+    return `#${[dr, dg, db].map(v => v.toString(16).padStart(2, "0")).join("")}`;
+  } catch {
+    return color;
+  }
+}
+
 export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onLogin }: WhatsAppLoginProps) {
   const { t } = useI18n();
   const [name, setName] = useState("");
