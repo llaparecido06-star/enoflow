@@ -52,10 +52,11 @@ export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onTogg
         <h3 className="font-display text-xs font-semibold text-foreground leading-tight line-clamp-2 min-h-[2rem] cursor-pointer" onClick={onDetail}>
           {translatedName}
         </h3>
-        <div className="flex items-center gap-1">
-          <SensoryStarsMini value={Math.round((wine.sensory_acidity + wine.sensory_body + wine.sensory_sweetness) / 3)} />
-          <span className="text-[9px] text-muted-foreground ml-1">{wine.year || ""}</span>
-        </div>
+        {wine.year && (
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] text-muted-foreground">{wine.year}</span>
+          </div>
+        )}
         <div className="flex items-center justify-between pt-1">
           <div>
             <span className="text-[9px] text-muted-foreground line-through">
