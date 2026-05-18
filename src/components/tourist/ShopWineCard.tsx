@@ -1,24 +1,16 @@
 import { motion } from "framer-motion";
-import { Wine as WineIcon, Heart, Star, Plus } from "lucide-react";
+import { Wine as WineIcon, Heart, Plus, Eye, Star } from "lucide-react";
 import { formatCurrencyShort } from "@/lib/currency";
 import ShareWineButton from "./ShareWineButton";
 import { haptic } from "@/lib/haptic";
+import { useI18n } from "@/lib/i18n";
 import type { Wine } from "@/hooks/useWinery";
 
-function SensoryStarsMini({ value }: { value: number }) {
-  return (
-    <div className="flex gap-px">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star key={i} className={`w-2.5 h-2.5 ${i < value ? "fill-gold text-gold" : "text-muted-foreground/20"}`} />
-      ))}
-    </div>
-  );
-}
-
-export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onToggleFavorite, translatedName, currency = "BRL", winerySlug }: {
-  wine: Wine; onAdd: () => void; onDetail: () => void;
+export default function ShopWineCard({ wine, onAdd, onDetail, onRate, isFavorite, onToggleFavorite, translatedName, currency = "BRL", winerySlug }: {
+  wine: Wine; onAdd: () => void; onDetail: () => void; onRate?: () => void;
   isFavorite: boolean; onToggleFavorite: () => void; translatedName: string; currency?: string; winerySlug?: string;
 }) {
+  const { t } = useI18n();
   return (
     <motion.div
       layout
@@ -70,9 +62,29 @@ export default function ShopWineCard({ wine, onAdd, onDetail, isFavorite, onTogg
           <button
             onClick={() => { haptic(); onAdd(); }}
             className="w-8 h-8 rounded-lg bg-gold text-gold-foreground flex items-center justify-center hover:bg-gold/90 transition-colors"
+            aria-label={t("shop.add_to_cart")}
           >
             <Plus className="w-4 h-4" />
           </button>
+        </div>
+        <div className="flex gap-1.5 pt-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); haptic(); onDetail(); }}
+            className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg border border-border/60 text-[10px] font-medium text-foreground hover:bg-muted/50 transition-colors"
+          >
+            <Eye className="w-3 h-3" />
+            {t("shop.view_details")}
+          </button>
+          {onRate && (
+            <button
+              onClick={(e) => { e.stopPropagation(); haptic(); onRate(); }}
+              className="flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg border border-gold/40 text-[10px] font-medium text-gold hover:bg-gold/5 transition-colors"
+              aria-label={t("rating.rate_wine")}
+            >
+              <Star className="w-3 h-3" />
+              {t("shop.rate")}
+            </button>
+          )}
         </div>
       </div>
     </motion.div>

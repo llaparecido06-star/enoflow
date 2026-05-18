@@ -13,6 +13,7 @@ import ProfileForm from "@/components/tourist/ProfileForm";
 import VoucherRedeemedModal from "@/components/tourist/VoucherRedeemedModal";
 import ShopWineCard from "@/components/tourist/ShopWineCard";
 import WineDetailModal from "@/components/tourist/WineDetailModal";
+import RatingModal from "@/components/tourist/RatingModal";
 import ShopFilters, { priceRanges, flavorProfiles } from "@/components/tourist/ShopFilters";
 import ShopCart from "@/components/tourist/ShopCart";
 import ShopVoucher from "@/components/tourist/ShopVoucher";
@@ -53,6 +54,7 @@ export default function ShopPage() {
   const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [detailWine, setDetailWine] = useState<Wine | null>(null);
+  const [ratingWine, setRatingWine] = useState<Wine | null>(null);
   const [discountApplied] = useState(true);
   const [showNps, setShowNps] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -421,6 +423,7 @@ export default function ShopPage() {
                       winerySlug={winery.slug}
                       onAdd={() => { addItem(wine); toast.success(`${wine.name} ${t("shop.added_to_cart")}`); }}
                       onDetail={() => setDetailWine(wine)}
+                      onRate={() => setRatingWine(wine)}
                       isFavorite={isFavorite(wine.id)}
                       onToggleFavorite={() => {
                         toggleFavorite(wine.id);
@@ -449,6 +452,36 @@ export default function ShopPage() {
             t={t}
             currency={cur}
             winerySlug={winery.slug}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Rating Modal */}
+      <AnimatePresence>
+        {ratingWine && (
+          <RatingModal
+            wine={ratingWine}
+            onClose={() => setRatingWine(null)}
+            onSubmit={async (r) => {
+              try {
+                await invokeAuth("tourist-actions", {
+                  action: "upsert_rating",
+                  wine_id: ratingWine.id,
+                  stars_acidity: r.acidity,
+                  stars_body: r.body,
+                  stars_sweetness: r.sweetness,
+                });
+                toast.success(t("rating.submitted") || "Avaliação enviada!");
+                setUserRatings((prev) => {
+                  const others = prev.filter((x) => x.wine_id !== ratingWine.id);
+                  return [...others, { wine_id: ratingWine.id, stars_acidity: r.acidity, stars_body: r.body, stars_sweetness: r.sweetness }];
+                });
+              } catch {
+                toast.error("Erro ao enviar avaliação");
+              } finally {
+                setRatingWine(null);
+              }
+            }}
           />
         )}
       </AnimatePresence>
