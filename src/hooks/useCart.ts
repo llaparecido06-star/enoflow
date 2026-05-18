@@ -4,6 +4,7 @@ import type { Wine } from "./useWinery";
 export interface CartItem {
   wine: Wine;
   quantity: number;
+  reservedFromTasting?: boolean;
 }
 
 function getCartKey(wineryId?: string) {
