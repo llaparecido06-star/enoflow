@@ -333,7 +333,7 @@ export default function AdminLocationsPage() {
                 { key: "linked_shop_cp_id" as const, label: "🛒 Loja", filterCat: "shop" },
                 { key: "linked_tasting_cp_id" as const, label: "🍷 Degustação", filterCat: "tasting" },
               ].map(({ key, label, filterCat }) => {
-                const options = locations.filter(l => l.id !== editTarget?.id);
+                const options = locations.filter(l => l.id !== editTarget?.id && l.category === filterCat);
                 return (
                   <div key={key} className="mb-2">
                     <Label className="text-[11px]">{label}</Label>
@@ -341,7 +341,9 @@ export default function AdminLocationsPage() {
                       <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">— Usar padrão (próprio local)</SelectItem>
-                        {options.map(o => (
+                        {options.length === 0 ? (
+                          <SelectItem value="__empty" disabled>Nenhum local desta categoria</SelectItem>
+                        ) : options.map(o => (
                           <SelectItem key={o.id} value={o.id}>
                             {categoryLabels[o.category]?.split(" ")[0] || "📍"} {o.name}
                           </SelectItem>
