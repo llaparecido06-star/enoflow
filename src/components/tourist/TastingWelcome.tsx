@@ -27,16 +27,16 @@ export default function TastingWelcome({ wineryName, wineryLogo, wineCount, onSt
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+      className="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
     >
       {/* Background */}
-      <div className="absolute inset-0">
+      <div className="fixed inset-0 pointer-events-none">
         <img src={tastingBg} alt="" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/40" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-8 max-w-sm">
+      <div className="relative z-10 min-h-full flex flex-col items-center text-center px-8 max-w-sm mx-auto pt-10 pb-32">
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2 }} className="mb-8">
           {wineryLogo ? (
             <img src={wineryLogo} alt={wineryName} className="w-20 h-20 rounded-full object-cover ring-2 ring-gold/40 shadow-2xl" />
