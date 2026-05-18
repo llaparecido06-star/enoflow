@@ -1,4 +1,4 @@
-import { Sparkles, X, UtensilsCrossed } from "lucide-react";
+import { Sparkles, X, UtensilsCrossed, ShoppingBag } from "lucide-react";
 
 interface Pairing { dish: string; reason: string }
 
@@ -7,9 +7,10 @@ interface PairingModalProps {
   pairings: Pairing[];
   loading: boolean;
   onClose: () => void;
+  onBuy?: () => void;
 }
 
-export default function PairingModal({ wineName, pairings, loading, onClose }: PairingModalProps) {
+export default function PairingModal({ wineName, pairings, loading, onClose, onBuy }: PairingModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/40 backdrop-blur-sm animate-fade-in">
       <div className="bg-card w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 animate-slide-up">
