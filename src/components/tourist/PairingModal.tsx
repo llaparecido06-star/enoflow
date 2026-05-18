@@ -51,12 +51,23 @@ export default function PairingModal({ wineName, pairings, loading, onClose, onB
           </ul>
         )}
 
-        <button
-          onClick={onClose}
-          className="w-full mt-6 bg-primary text-primary-foreground py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors"
-        >
-          Fechar
-        </button>
+        <div className="mt-6 space-y-2">
+          {onBuy && (
+            <button
+              onClick={onBuy}
+              className="w-full bg-gold text-gold-foreground py-3 rounded-xl font-semibold text-sm hover:bg-gold/90 transition-colors flex items-center justify-center gap-2"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Comprar este vinho
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="w-full bg-secondary text-foreground py-3 rounded-xl font-medium text-sm hover:bg-secondary/80 transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
       </div>
     </div>
   );
