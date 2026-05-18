@@ -343,9 +343,16 @@ export default function TastingPage() {
               isLast={i === tastingWines.length - 1}
               allRated={allTastingRated}
               onFinish={handleFinishTasting}
+              isReserved={isReserved(wine.id)}
               onReserve={() => {
-                toast.success(`${wine.name} reservado na loja`);
-                navigate(`/app/${winery.slug}/shop`, { state: { addToCart: wine } });
+                if (isReserved(wine.id)) {
+                  navigate(`/app/${winery.slug}/shop`, { state: { highlightWineId: wine.id, openCart: true } });
+                  return;
+                }
+                addItem(wine as any, { reservedFromTasting: true });
+                toast.success(`${wine.name} reservado! Disponível na Loja.`, {
+                  action: { label: "Ver na loja", onClick: () => navigate(`/app/${winery.slug}/shop`, { state: { highlightWineId: wine.id, openCart: true } }) },
+                });
               }}
             />
           ))}
