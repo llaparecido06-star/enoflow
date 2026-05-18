@@ -14,6 +14,7 @@ import VoucherRedeemedModal from "@/components/tourist/VoucherRedeemedModal";
 import ShopWineCard from "@/components/tourist/ShopWineCard";
 import WineDetailModal from "@/components/tourist/WineDetailModal";
 import RatingModal from "@/components/tourist/RatingModal";
+import PairingModal from "@/components/tourist/PairingModal";
 import ShopFilters, { priceRanges, flavorProfiles } from "@/components/tourist/ShopFilters";
 import ShopCart from "@/components/tourist/ShopCart";
 import ShopVoucher from "@/components/tourist/ShopVoucher";
