@@ -148,10 +148,14 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               {onReserve && (
                 <button
                   onClick={onReserve}
-                  title="Reservar na loja"
-                  className="p-2 rounded-full border border-gold/30 bg-gold/5 hover:bg-gold/10 transition-colors"
+                  title={isReserved ? "Reservado — ver na loja" : "Reservar na loja"}
+                  className={`p-2 rounded-full border transition-colors ${
+                    isReserved
+                      ? "border-gold bg-gold text-gold-foreground hover:bg-gold/90"
+                      : "border-gold/30 bg-gold/5 hover:bg-gold/10 text-gold"
+                  }`}
                 >
-                  <ShoppingBag className="w-4 h-4 text-gold" />
+                  <ShoppingBag className="w-4 h-4" />
                 </button>
               )}
               <button onClick={onToggleFavorite} className="p-2 rounded-full border border-border/30 hover:bg-muted/50 transition-colors">
