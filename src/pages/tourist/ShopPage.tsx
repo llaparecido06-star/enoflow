@@ -90,15 +90,22 @@ export default function ShopPage() {
     return () => { active = false; window.clearInterval(interval); supabase.removeChannel(channel); };
   }, [voucher?.id]);
 
-  // Handle wine added from profile recommendation
+  // Handle wine added from profile recommendation or open detail from another page
   useEffect(() => {
-    const navState = location.state as { addToCart?: Wine } | null;
+    const navState = location.state as { addToCart?: Wine; openWineId?: string } | null;
     if (navState?.addToCart) {
       addItem(navState.addToCart);
       setShowCart(true);
       window.history.replaceState({}, "");
     }
-  }, [location.state]);
+    if (navState?.openWineId && wines) {
+      const target = wines.find((w) => w.id === navState.openWineId);
+      if (target) {
+        setDetailWine(target);
+        window.history.replaceState({}, "");
+      }
+    }
+  }, [location.state, wines]);
 
   const searchParams = new URLSearchParams(location.search);
   const rawCp = searchParams.get("cp");
