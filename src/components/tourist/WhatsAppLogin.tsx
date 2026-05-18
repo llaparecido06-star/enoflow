@@ -185,10 +185,18 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
                   />
                 </div>
               </div>
-              {phoneDigits.length > 0 && (
-                <p className={`text-xs mt-1.5 ${isPhoneValid ? 'text-green-600' : 'text-muted-foreground'}`}>
-                  {phoneDigits.length}/{selectedCountry.digits} {t("login.digits_label") || "dígitos"}
-                </p>
+              {phoneDigits.length > 0 && !isPhoneValid && (
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary/60 transition-all duration-200"
+                      style={{ width: `${Math.min(100, (phoneDigits.length / selectedCountry.digits) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-[11px] tabular-nums text-muted-foreground">
+                    {phoneDigits.length}/{selectedCountry.digits}
+                  </span>
+                </div>
               )}
             </div>
 
