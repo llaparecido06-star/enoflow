@@ -56,7 +56,7 @@ export default function ShopPage() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [detailWine, setDetailWine] = useState<Wine | null>(null);
   const [ratingWine, setRatingWine] = useState<Wine | null>(null);
-  const [pairing, setPairing] = useState<{ wineName: string; pairings: { dish: string; reason: string }[]; loading: boolean } | null>(null);
+  const [pairing, setPairing] = useState<{ wine: Wine; pairings: { dish: string; reason: string }[]; loading: boolean } | null>(null);
   const [discountApplied] = useState(true);
   const [showNps, setShowNps] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -480,12 +480,12 @@ export default function ShopPage() {
                   return [...others, { wine_id: ratedWine.id, stars_acidity: r.acidity, stars_body: r.body, stars_sweetness: r.sweetness }];
                 });
                 setRatingWine(null);
-                setPairing({ wineName: ratedWine.name, pairings: [], loading: true });
+                setPairing({ wine: ratedWine, pairings: [], loading: true });
                 try {
                   const { data } = await invokeAuth("tourist-loyalty", { action: "pair_wine", wine_id: ratedWine.id });
-                  setPairing({ wineName: ratedWine.name, pairings: data?.pairings ?? [], loading: false });
+                  setPairing({ wine: ratedWine, pairings: data?.pairings ?? [], loading: false });
                 } catch {
-                  setPairing({ wineName: ratedWine.name, pairings: [], loading: false });
+                  setPairing({ wine: ratedWine, pairings: [], loading: false });
                 }
               } catch {
                 toast.error("Erro ao enviar avaliação");
@@ -500,10 +500,16 @@ export default function ShopPage() {
       <AnimatePresence>
         {pairing && (
           <PairingModal
-            wineName={pairing.wineName}
+            wineName={pairing.wine.name}
             pairings={pairing.pairings}
             loading={pairing.loading}
             onClose={() => setPairing(null)}
+            onBuy={() => {
+              addItem(pairing.wine);
+              toast.success(`${pairing.wine.name} ${t("shop.added_to_cart")}`);
+              setPairing(null);
+              setShowCart(true);
+            }}
           />
         )}
       </AnimatePresence>

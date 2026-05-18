@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wine, Star, Heart, Grape, MapPin, Thermometer, Clock, User, FlaskConical } from "lucide-react";
+import { Wine, Star, Heart, Grape, MapPin, Thermometer, Clock, User, FlaskConical, ShoppingBag } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import type { Wine as WineType } from "@/hooks/useWinery";
 import { useI18n } from "@/lib/i18n";
@@ -16,6 +16,7 @@ interface TastingCardProps {
   isLast?: boolean;
   allRated?: boolean;
   onFinish?: () => void;
+  onReserve?: () => void;
 }
 
 type TabId = "sobre" | "ficha" | "harmonizacao";
@@ -48,7 +49,7 @@ function SensoryStars({ label, value }: { label: string; value: number }) {
   );
 }
 
-export default function TastingCard({ wine, isActive, onRate, isFavorite, onToggleFavorite, initialRatings, isLast, allRated, onFinish }: TastingCardProps) {
+export default function TastingCard({ wine, isActive, onRate, isFavorite, onToggleFavorite, initialRatings, isLast, allRated, onFinish, onReserve }: TastingCardProps) {
   const { t } = useI18n();
 
   const defaultHarmonizations: Record<string, string[]> = {
@@ -135,6 +136,15 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               </p>
             </div>
             <div className="flex items-center gap-2 ml-2 mt-1">
+              {onReserve && (
+                <button
+                  onClick={onReserve}
+                  title="Reservar na loja"
+                  className="p-2 rounded-full border border-gold/30 bg-gold/5 hover:bg-gold/10 transition-colors"
+                >
+                  <ShoppingBag className="w-4 h-4 text-gold" />
+                </button>
+              )}
               <button onClick={onToggleFavorite} className="p-2 rounded-full border border-border/30 hover:bg-muted/50 transition-colors">
                 <Heart className={`w-4 h-4 transition-colors ${isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
               </button>

@@ -1,4 +1,4 @@
-import { Sparkles, X, UtensilsCrossed } from "lucide-react";
+import { Sparkles, X, UtensilsCrossed, ShoppingBag } from "lucide-react";
 
 interface Pairing { dish: string; reason: string }
 
@@ -7,9 +7,10 @@ interface PairingModalProps {
   pairings: Pairing[];
   loading: boolean;
   onClose: () => void;
+  onBuy?: () => void;
 }
 
-export default function PairingModal({ wineName, pairings, loading, onClose }: PairingModalProps) {
+export default function PairingModal({ wineName, pairings, loading, onClose, onBuy }: PairingModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-foreground/40 backdrop-blur-sm animate-fade-in">
       <div className="bg-card w-full max-w-md rounded-t-2xl sm:rounded-2xl p-6 animate-slide-up">
@@ -50,12 +51,23 @@ export default function PairingModal({ wineName, pairings, loading, onClose }: P
           </ul>
         )}
 
-        <button
-          onClick={onClose}
-          className="w-full mt-6 bg-primary text-primary-foreground py-3 rounded-xl font-medium text-sm hover:bg-primary/90 transition-colors"
-        >
-          Fechar
-        </button>
+        <div className="mt-6 space-y-2">
+          {onBuy && (
+            <button
+              onClick={onBuy}
+              className="w-full bg-gold text-gold-foreground py-3 rounded-xl font-semibold text-sm hover:bg-gold/90 transition-colors flex items-center justify-center gap-2"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Comprar este vinho
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="w-full bg-secondary text-foreground py-3 rounded-xl font-medium text-sm hover:bg-secondary/80 transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
       </div>
     </div>
   );
