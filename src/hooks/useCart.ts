@@ -116,5 +116,5 @@ export function useCart(wineryId?: string, wines?: Wine[]) {
     try { localStorage.removeItem(getCartKey(wineryId)); } catch {}
   }, [wineryId]);
 
-  return { items, addItem, removeItem, updateQuantity, total, clearCart };
+  return { items, addItem, removeItem, updateQuantity, total, clearCart, isReserved };
 }
