@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { invokeAuth } from "@/lib/auth-api";
 import { formatCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
-import { motion } from "framer-motion";
-import { Receipt, CheckCircle, Clock, Loader2, ShoppingBag } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Receipt, CheckCircle, Clock, Loader2, ShoppingBag, QrCode, ChevronDown, ChevronUp } from "lucide-react";
+import QRCode from "qrcode";
 
 interface VoucherRecord {
   id: string;
