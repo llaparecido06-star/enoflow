@@ -65,17 +65,29 @@ export function useCart(wineryId?: string, wines?: Wine[]) {
     persistCart(items, wineryId);
   }, [items, wineryId]);
 
-  const addItem = useCallback((wine: Wine) => {
+  const addItem = useCallback((wine: Wine, opts?: { reservedFromTasting?: boolean }) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.wine.id === wine.id);
       if (existing) {
         return prev.map((i) =>
-          i.wine.id === wine.id ? { ...i, quantity: i.quantity + 1, wine: { ...i.wine, ...wine } } : i
+          i.wine.id === wine.id
+            ? {
+                ...i,
+                quantity: i.quantity + 1,
+                wine: { ...i.wine, ...wine },
+                reservedFromTasting: i.reservedFromTasting || !!opts?.reservedFromTasting,
+              }
+            : i
         );
       }
-      return [...prev, { wine, quantity: 1 }];
+      return [...prev, { wine, quantity: 1, reservedFromTasting: !!opts?.reservedFromTasting }];
     });
   }, []);
+
+  const isReserved = useCallback(
+    (wineId: string) => items.some((i) => i.wine.id === wineId && i.reservedFromTasting),
+    [items]
+  );
 
   const removeItem = useCallback((wineId: string) => {
     setItems((prev) => prev.filter((i) => i.wine.id !== wineId));
