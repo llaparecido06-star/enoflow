@@ -249,7 +249,16 @@ export default function ShopPage() {
       const { data, error } = await invokeAuth("tourist-actions", {
         action: "create_voucher",
         code,
-        items: items.map((i) => ({ wine_id: i.wine.id, id: i.wine.id, name: i.wine.name, qty: i.quantity, quantity: i.quantity, price: (Number(i.wine.price_bottle) || 0) * discountMultiplier })),
+        items: items.map((i) => ({
+          wine_id: i.wine.id,
+          id: i.wine.id,
+          name: i.wine.name,
+          qty: i.quantity,
+          quantity: i.quantity,
+          price: (Number(i.wine.price_bottle) || 0) * discountMultiplier,
+          reserved_from_tasting: !!i.reservedFromTasting,
+          origin: i.reservedFromTasting ? "tasting" : "shop",
+        })),
         total: Number(discountedTotal) || 0,
         capture_point_id: resolvedCPs?.shop_cp ?? new URLSearchParams(location.search).get("cp") ?? undefined,
         channel: "shop",
