@@ -3,6 +3,7 @@ import { useOutletContext, useNavigate } from "react-router-dom";
 import { useWines, useTastingPackages, type Winery, type Wine } from "@/hooks/useWinery";
 import { useTouristAuth } from "@/hooks/useTouristAuth";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useCart } from "@/hooks/useCart";
 import TastingCard from "@/components/tourist/TastingCard";
 import TastingWelcome from "@/components/tourist/TastingWelcome";
 
@@ -40,6 +41,7 @@ export default function TastingPage() {
   const { data: wines } = useWines(winery.id);
   const { data: allPackages } = useTastingPackages(winery.id);
   const { isFavorite, toggleFavorite } = useFavorites(lead?.id, winery.id);
+  const { addItem, isReserved } = useCart(winery.id, wines);
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const tastingCp = resolvedCPs?.tasting_cp || null;
@@ -341,9 +343,16 @@ export default function TastingPage() {
               isLast={i === tastingWines.length - 1}
               allRated={allTastingRated}
               onFinish={handleFinishTasting}
+              isReserved={isReserved(wine.id)}
               onReserve={() => {
-                toast.success(`${wine.name} reservado na loja`);
-                navigate(`/app/${winery.slug}/shop`, { state: { addToCart: wine } });
+                if (isReserved(wine.id)) {
+                  navigate(`/app/${winery.slug}/shop`, { state: { highlightWineId: wine.id, openCart: true } });
+                  return;
+                }
+                addItem(wine as any, { reservedFromTasting: true });
+                toast.success(`${wine.name} reservado! Disponível na Loja.`, {
+                  action: { label: "Ver na loja", onClick: () => navigate(`/app/${winery.slug}/shop`, { state: { highlightWineId: wine.id, openCart: true } }) },
+                });
               }}
             />
           ))}

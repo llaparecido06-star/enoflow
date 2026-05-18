@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Minus, Plus, Trash2 } from "lucide-react";
+import { ShoppingBag, Minus, Plus, Trash2, Sparkles } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import type { CartItem } from "@/hooks/useCart";
 
@@ -16,12 +16,13 @@ interface ShopCartProps {
   onGenerateVoucher: () => void;
   generating: boolean;
   t: (k: string) => string;
+  highlightId?: string | null;
 }
 
 export default function ShopCart({
   items, total, discountedTotal, discountApplied, currency,
   showCart, setShowCart, updateQuantity, removeItem,
-  onGenerateVoucher, generating, t,
+  onGenerateVoucher, generating, t, highlightId,
 }: ShopCartProps) {
   if (items.length === 0) return null;
 
@@ -52,29 +53,47 @@ export default function ShopCart({
           >
             <div className="bg-card rounded-xl border border-border/30 p-4 space-y-3 luxury-shadow">
               <h3 className="font-display text-sm font-semibold">{t("shop.your_cart")}</h3>
-              {items.map((item) => (
-                <div key={item.wine.id} className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{item.wine.name}</p>
-                    <p className="text-[11px] text-muted-foreground">{formatCurrency(Number(item.wine.price_bottle), currency)}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => updateQuantity(item.wine.id, item.quantity - 1)}
-                      className="w-7 h-7 rounded-lg border border-border flex items-center justify-center hover:bg-muted">
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="text-sm font-medium w-5 text-center">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.wine.id, item.quantity + 1)}
-                      className="w-7 h-7 rounded-lg border border-border flex items-center justify-center hover:bg-muted">
-                      <Plus className="w-3 h-3" />
-                    </button>
-                    <button onClick={() => removeItem(item.wine.id)}
-                      className="w-7 h-7 rounded-lg flex items-center justify-center text-destructive hover:bg-destructive/10">
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+              {items.map((item) => {
+                const isHighlight = highlightId === item.wine.id;
+                return (
+                  <motion.div
+                    key={item.wine.id}
+                    animate={isHighlight ? { backgroundColor: ["hsl(var(--gold) / 0.18)", "hsl(var(--gold) / 0)"] } : {}}
+                    transition={{ duration: 2.2, repeat: isHighlight ? 1 : 0 }}
+                    className={`flex items-center justify-between rounded-lg px-2 py-1.5 -mx-2 ${
+                      isHighlight ? "ring-1 ring-gold/40" : ""
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{item.wine.name}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-[11px] text-muted-foreground">{formatCurrency(Number(item.wine.price_bottle), currency)}</p>
+                        {item.reservedFromTasting && (
+                          <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-gold/15 text-gold border border-gold/30">
+                            <Sparkles className="w-2.5 h-2.5" />
+                            Reservado na degustação
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 ml-2">
+                      <button onClick={() => updateQuantity(item.wine.id, item.quantity - 1)}
+                        className="w-7 h-7 rounded-lg border border-border flex items-center justify-center hover:bg-muted">
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="text-sm font-medium w-5 text-center">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.wine.id, item.quantity + 1)}
+                        className="w-7 h-7 rounded-lg border border-border flex items-center justify-center hover:bg-muted">
+                        <Plus className="w-3 h-3" />
+                      </button>
+                      <button onClick={() => removeItem(item.wine.id)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-destructive hover:bg-destructive/10">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
               <div className="pt-3 border-t border-border flex items-center justify-between">
                 <div>
                   {discountApplied && <p className="text-[10px] text-muted-foreground line-through">{formatCurrency(total, currency)}</p>}

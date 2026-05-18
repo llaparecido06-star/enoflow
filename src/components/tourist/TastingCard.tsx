@@ -17,6 +17,7 @@ interface TastingCardProps {
   allRated?: boolean;
   onFinish?: () => void;
   onReserve?: () => void;
+  isReserved?: boolean;
 }
 
 type TabId = "sobre" | "ficha" | "harmonizacao";
@@ -49,7 +50,7 @@ function SensoryStars({ label, value }: { label: string; value: number }) {
   );
 }
 
-export default function TastingCard({ wine, isActive, onRate, isFavorite, onToggleFavorite, initialRatings, isLast, allRated, onFinish, onReserve }: TastingCardProps) {
+export default function TastingCard({ wine, isActive, onRate, isFavorite, onToggleFavorite, initialRatings, isLast, allRated, onFinish, onReserve, isReserved }: TastingCardProps) {
   const { t } = useI18n();
 
   const defaultHarmonizations: Record<string, string[]> = {
@@ -124,6 +125,14 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               </span>
             </div>
           )}
+          {isReserved && (
+            <div className="absolute bottom-2 left-4">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-gold text-gold-foreground border border-gold/50 shadow-md">
+                <ShoppingBag className="w-3 h-3" />
+                Reservado na loja
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Header with title + favorite */}
@@ -139,10 +148,14 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               {onReserve && (
                 <button
                   onClick={onReserve}
-                  title="Reservar na loja"
-                  className="p-2 rounded-full border border-gold/30 bg-gold/5 hover:bg-gold/10 transition-colors"
+                  title={isReserved ? "Reservado — ver na loja" : "Reservar na loja"}
+                  className={`p-2 rounded-full border transition-colors ${
+                    isReserved
+                      ? "border-gold bg-gold text-gold-foreground hover:bg-gold/90"
+                      : "border-gold/30 bg-gold/5 hover:bg-gold/10 text-gold"
+                  }`}
                 >
-                  <ShoppingBag className="w-4 h-4 text-gold" />
+                  <ShoppingBag className="w-4 h-4" />
                 </button>
               )}
               <button onClick={onToggleFavorite} className="p-2 rounded-full border border-border/30 hover:bg-muted/50 transition-colors">

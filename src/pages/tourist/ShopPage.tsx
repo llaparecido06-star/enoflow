@@ -47,6 +47,7 @@ export default function ShopPage() {
   const cur = winery.currency || "BRL";
   const [voucher, setVoucher] = useState<{ code: string; id?: string } | null>(null);
   const [showCart, setShowCart] = useState(false);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
@@ -96,10 +97,16 @@ export default function ShopPage() {
 
   // Handle wine added from profile recommendation or open detail from another page
   useEffect(() => {
-    const navState = location.state as { addToCart?: Wine; openWineId?: string } | null;
+    const navState = location.state as { addToCart?: Wine; openWineId?: string; highlightWineId?: string; openCart?: boolean } | null;
     if (navState?.addToCart) {
       addItem(navState.addToCart);
       setShowCart(true);
+      setHighlightId(navState.addToCart.id);
+      window.history.replaceState({}, "");
+    }
+    if (navState?.highlightWineId) {
+      setHighlightId(navState.highlightWineId);
+      if (navState.openCart) setShowCart(true);
       window.history.replaceState({}, "");
     }
     if (navState?.openWineId && wines) {
@@ -110,6 +117,13 @@ export default function ShopPage() {
       }
     }
   }, [location.state, wines]);
+
+  // Auto-clear highlight after a few seconds
+  useEffect(() => {
+    if (!highlightId) return;
+    const t = window.setTimeout(() => setHighlightId(null), 4500);
+    return () => window.clearTimeout(t);
+  }, [highlightId]);
 
   const searchParams = new URLSearchParams(location.search);
   const rawCp = searchParams.get("cp");
@@ -235,7 +249,16 @@ export default function ShopPage() {
       const { data, error } = await invokeAuth("tourist-actions", {
         action: "create_voucher",
         code,
-        items: items.map((i) => ({ wine_id: i.wine.id, id: i.wine.id, name: i.wine.name, qty: i.quantity, quantity: i.quantity, price: (Number(i.wine.price_bottle) || 0) * discountMultiplier })),
+        items: items.map((i) => ({
+          wine_id: i.wine.id,
+          id: i.wine.id,
+          name: i.wine.name,
+          qty: i.quantity,
+          quantity: i.quantity,
+          price: (Number(i.wine.price_bottle) || 0) * discountMultiplier,
+          reserved_from_tasting: !!i.reservedFromTasting,
+          origin: i.reservedFromTasting ? "tasting" : "shop",
+        })),
         total: Number(discountedTotal) || 0,
         capture_point_id: resolvedCPs?.shop_cp ?? new URLSearchParams(location.search).get("cp") ?? undefined,
         channel: "shop",
@@ -293,6 +316,7 @@ export default function ShopPage() {
           onGenerateVoucher={startVoucherFunnel}
           generating={generating}
           t={t}
+          highlightId={highlightId}
         />
       )}
 
@@ -507,6 +531,7 @@ export default function ShopPage() {
             onBuy={() => {
               addItem(pairing.wine);
               toast.success(`${pairing.wine.name} ${t("shop.added_to_cart")}`);
+              setHighlightId(pairing.wine.id);
               setPairing(null);
               setShowCart(true);
             }}
