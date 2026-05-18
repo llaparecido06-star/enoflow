@@ -54,6 +54,7 @@ export default function ShopPage() {
   const [selectedFlavor, setSelectedFlavor] = useState<string | null>(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [detailWine, setDetailWine] = useState<Wine | null>(null);
+  const [ratingWine, setRatingWine] = useState<Wine | null>(null);
   const [discountApplied] = useState(true);
   const [showNps, setShowNps] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
