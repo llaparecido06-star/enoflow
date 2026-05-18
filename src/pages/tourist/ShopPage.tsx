@@ -56,7 +56,7 @@ export default function ShopPage() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [detailWine, setDetailWine] = useState<Wine | null>(null);
   const [ratingWine, setRatingWine] = useState<Wine | null>(null);
-  const [pairing, setPairing] = useState<{ wineName: string; pairings: { dish: string; reason: string }[]; loading: boolean } | null>(null);
+  const [pairing, setPairing] = useState<{ wine: Wine; pairings: { dish: string; reason: string }[]; loading: boolean } | null>(null);
   const [discountApplied] = useState(true);
   const [showNps, setShowNps] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
