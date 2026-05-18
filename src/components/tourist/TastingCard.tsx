@@ -16,6 +16,7 @@ interface TastingCardProps {
   isLast?: boolean;
   allRated?: boolean;
   onFinish?: () => void;
+  onReserve?: () => void;
 }
 
 type TabId = "sobre" | "ficha" | "harmonizacao";
