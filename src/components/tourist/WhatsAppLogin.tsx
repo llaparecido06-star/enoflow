@@ -79,6 +79,7 @@ export default function WhatsAppLogin({ wineryName, wineryColor, wineryLogo, onL
   const [acceptedTerms, setAcceptedTerms] = useState(true);
 
   const selectedCountry = countryCodes.find(c => c.code === countryCode) ?? countryCodes[0];
+  const safeBrand = ensureContrastOnLight(wineryColor);
 
   const handleNameSubmit = () => {
     if (name.trim().length < 2) {
