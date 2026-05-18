@@ -47,6 +47,7 @@ export default function ShopPage() {
   const cur = winery.currency || "BRL";
   const [voucher, setVoucher] = useState<{ code: string; id?: string } | null>(null);
   const [showCart, setShowCart] = useState(false);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
