@@ -125,6 +125,14 @@ export default function TastingCard({ wine, isActive, onRate, isFavorite, onTogg
               </span>
             </div>
           )}
+          {isReserved && (
+            <div className="absolute bottom-2 left-4">
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-full bg-gold text-gold-foreground border border-gold/50 shadow-md">
+                <ShoppingBag className="w-3 h-3" />
+                Reservado na loja
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Header with title + favorite */}
