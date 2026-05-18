@@ -97,10 +97,16 @@ export default function ShopPage() {
 
   // Handle wine added from profile recommendation or open detail from another page
   useEffect(() => {
-    const navState = location.state as { addToCart?: Wine; openWineId?: string } | null;
+    const navState = location.state as { addToCart?: Wine; openWineId?: string; highlightWineId?: string; openCart?: boolean } | null;
     if (navState?.addToCart) {
       addItem(navState.addToCart);
       setShowCart(true);
+      setHighlightId(navState.addToCart.id);
+      window.history.replaceState({}, "");
+    }
+    if (navState?.highlightWineId) {
+      setHighlightId(navState.highlightWineId);
+      if (navState.openCart) setShowCart(true);
       window.history.replaceState({}, "");
     }
     if (navState?.openWineId && wines) {
@@ -111,6 +117,13 @@ export default function ShopPage() {
       }
     }
   }, [location.state, wines]);
+
+  // Auto-clear highlight after a few seconds
+  useEffect(() => {
+    if (!highlightId) return;
+    const t = window.setTimeout(() => setHighlightId(null), 4500);
+    return () => window.clearTimeout(t);
+  }, [highlightId]);
 
   const searchParams = new URLSearchParams(location.search);
   const rawCp = searchParams.get("cp");
