@@ -14,6 +14,7 @@ import VoucherRedeemedModal from "@/components/tourist/VoucherRedeemedModal";
 import ShopWineCard from "@/components/tourist/ShopWineCard";
 import WineDetailModal from "@/components/tourist/WineDetailModal";
 import RatingModal from "@/components/tourist/RatingModal";
+import PairingModal from "@/components/tourist/PairingModal";
 import ShopFilters, { priceRanges, flavorProfiles } from "@/components/tourist/ShopFilters";
 import ShopCart from "@/components/tourist/ShopCart";
 import ShopVoucher from "@/components/tourist/ShopVoucher";
@@ -55,6 +56,7 @@ export default function ShopPage() {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [detailWine, setDetailWine] = useState<Wine | null>(null);
   const [ratingWine, setRatingWine] = useState<Wine | null>(null);
+  const [pairing, setPairing] = useState<{ wineName: string; pairings: { dish: string; reason: string }[]; loading: boolean } | null>(null);
   const [discountApplied] = useState(true);
   const [showNps, setShowNps] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -463,25 +465,45 @@ export default function ShopPage() {
             wine={ratingWine}
             onClose={() => setRatingWine(null)}
             onSubmit={async (r) => {
+              const ratedWine = ratingWine;
               try {
                 await invokeAuth("tourist-actions", {
                   action: "upsert_rating",
-                  wine_id: ratingWine.id,
+                  wine_id: ratedWine.id,
                   stars_acidity: r.acidity,
                   stars_body: r.body,
                   stars_sweetness: r.sweetness,
                 });
                 toast.success(t("rating.submitted") || "Avaliação enviada!");
                 setUserRatings((prev) => {
-                  const others = prev.filter((x) => x.wine_id !== ratingWine.id);
-                  return [...others, { wine_id: ratingWine.id, stars_acidity: r.acidity, stars_body: r.body, stars_sweetness: r.sweetness }];
+                  const others = prev.filter((x) => x.wine_id !== ratedWine.id);
+                  return [...others, { wine_id: ratedWine.id, stars_acidity: r.acidity, stars_body: r.body, stars_sweetness: r.sweetness }];
                 });
+                setRatingWine(null);
+                setPairing({ wineName: ratedWine.name, pairings: [], loading: true });
+                try {
+                  const { data } = await invokeAuth("tourist-loyalty", { action: "pair_wine", wine_id: ratedWine.id });
+                  setPairing({ wineName: ratedWine.name, pairings: data?.pairings ?? [], loading: false });
+                } catch {
+                  setPairing({ wineName: ratedWine.name, pairings: [], loading: false });
+                }
               } catch {
                 toast.error("Erro ao enviar avaliação");
-              } finally {
                 setRatingWine(null);
               }
             }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Pairing Recommendations Modal (auto after rating) */}
+      <AnimatePresence>
+        {pairing && (
+          <PairingModal
+            wineName={pairing.wineName}
+            pairings={pairing.pairings}
+            loading={pairing.loading}
+            onClose={() => setPairing(null)}
           />
         )}
       </AnimatePresence>
