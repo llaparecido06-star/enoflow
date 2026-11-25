@@ -1,73 +1,46 @@
-# Welcome to your Lovable project
+# EnoFlow
 
-## Project info
+**Open-source Progressive Web App (PWA) for wine tourism lead capture, visitor flows, and tasting management.**
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## Why EnoFlow?
 
-**Use Lovable**
+Small and mid-sized wineries often rely on spreadsheets, generic form builders, or expensive closed-source hospitality suites to manage cellar-door visitors and enotourism leads.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+**EnoFlow** provides an open, self-hostable TypeScript foundation tailored to wine tourism operations — giving wineries and developers full ownership of visitor data, multi-tenant isolation, and mobile-first workflows out of the box.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Key Features
 
-**Use your preferred IDE**
+- **Multi-Tenant Architecture:** Isolate data cleanly across multiple wineries, properties, or tasting rooms within a single deployment.
+- **Omnichannel Lead Capture & Tracking:** Capture visitor interest across cellar-door check-ins, tasting bookings, and digital touchpoints in one unified pipeline.
+- **Role-Based Access Control (RBAC):** Separate permissions for administrators, hospitality staff, and operational users.
+- **Row Level Security (RLS):** Database-level tenant isolation and data integrity enforced directly in PostgreSQL via Supabase RLS policies.
+- **Progressive Web App (PWA):** Mobile-friendly experience designed for hospitality teams working on tablets and phones at the winery.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Tech Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **Frontend:** React, TypeScript, Vite, Tailwind CSS
+- **Backend & Database:** Supabase (PostgreSQL, Auth, Row Level Security)
+- **Database Schema:** Managed via SQL migrations
 
-Follow these steps:
+## Getting Started
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Prerequisites
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Node.js 18+ and npm (or pnpm / bun)
+- A [Supabase](https://supabase.com/) project (cloud or local via Supabase CLI)
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Installation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+1. **Clone the repository**
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+   ```bash
+   git clone [https://github.com/llaparecido06-star/enoflow.git](https://github.com/llaparecido06-star/enoflow.git)
+   cd enoflow
